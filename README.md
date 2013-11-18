@@ -1,2 +1,2 @@
-WPG
+WPG - Wave ProperGator
 ===
