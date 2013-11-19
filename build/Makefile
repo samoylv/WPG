@@ -82,7 +82,7 @@ srw:
 	tar xzvf $(SRC_DIR)/fftw-2.1.5.tar.gz --directory=$(TMP_DIR)
 	cd $(TMP_DIR)/fftw-2.1.5; ./configure  --prefix=$(BUILD_DIR) --with-pic --enable-float; make clean; make -j ;make install;
 
-	cd $(SRC_DIR); wget -nc https://github.com/ochubar/SRW/archive/master.zip
+	cd $(SRC_DIR); wget -nc -O master.zip https://github.com/ochubar/SRW/archive/master.zip
 	cd $(SRC_DIR); unzip master.zip -d $(TMP_DIR)
 	cp $(BUILD_DIR)/lib/libfftw.a $(TMP_DIR)/SRW-master/ext_lib/
 	cp $(BUILD_DIR)/lib/librfftw.a $(TMP_DIR)/SRW-master/ext_lib/
