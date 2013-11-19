@@ -38,8 +38,11 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
             try:
                 group.create_dataset(name, data=value, chunks=True,
                                      compression='gzip', compression_opts=9)
+            except ValueError: #if h5py not support compression
+                group.create_dataset(name, data=value, chunks=True)
             except TypeError:
                 group.create_dataset(name, data=value)
+
 
     with h5py.File(hdf5_file_name, 'w') as res_file:
         store_group(input_dict, res_file)
