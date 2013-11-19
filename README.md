@@ -1,2 +1,3 @@
-WPG - Wave ProperGator
+WPG 
 ===
+Wave ProperGator (WPG)
