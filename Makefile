@@ -1,3 +1,5 @@
+all: core modules
+	
 core:
 	cd build; make srw
 
@@ -11,8 +13,6 @@ clean:
 	rm wpg/srwlpy.so
 	rm wpg/srwlib.py
 	rm wpg/uti_plot.py
-
-all: core modules
 
 ipython: core
 	cd modules/ipython_env; make all
