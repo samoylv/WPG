@@ -7,12 +7,14 @@ modules: core
 	cp build/lib/srwlpy.so wpg/
 	cp build/tmp/SRW-master/env/work/srw_python/srwlib.py wpg/
 	cp build/tmp/SRW-master/env/work/srw_python/uti_plot.py wpg/
+	cp build/tmp/SRW-master/cpp/src/lib/srwlib.h docs/
 
 clean:
 	cd build; make clean
 	rm wpg/srwlpy.so
 	rm wpg/srwlib.py
 	rm wpg/uti_plot.py
+	rm docs/srwlib.h
 
 ipython: core
 	cd modules/ipython_env; make all
