@@ -110,7 +110,7 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
     xa = numpy.linspace(xmin, xmax, nx)
     ya = numpy.linspace(ymin, ymax, ny)
 
-    pylab.figure()
+    pylab.figure(figsize=(15,10))
     if onePlot:
         pylab.subplot(221)
     [x1, x2, y1, y2] = mwf.get_limits()
@@ -144,7 +144,7 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
         pylab.xlabel('y (mm)')
         pylab.xlim(min(ya[numpy.where(irr_y >= imax * i_y_min)])
                    * 1e3, max(ya[numpy.where(irr_y >= imax * i_y_min)]) * 1e3)
-    pylab.title('Vertical cut \n xc = ' + str(int(xc * 1e6)) + ' um')
+    pylab.title('Vertical cut,  xc = ' + str(int(xc * 1e6)) + ' um')
     pylab.grid(True)
     if onePlot:
         pylab.subplot(223)
@@ -162,7 +162,7 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
         pylab.xlabel('x (mm)')
         pylab.xlim(min(xa[numpy.where(irr_x >= imax * i_x_min)])
                    * 1e3, max(xa[numpy.where(irr_x >= imax * i_x_min)]) * 1e3)
-    pylab.title('Horizontal cut \n yc = ' + str(int(yc * 1e6)) + ' um')
+    pylab.title('Horizontal cut, yc = ' + str(int(yc * 1e6)) + ' um')
     pylab.grid(True)
 
     if bPlotPha:
