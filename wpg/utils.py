@@ -1,0 +1,203 @@
+# -*- coding: utf-8 -*-
+
+import h5py
+import sys
+import numpy
+from collections import defaultdict
+import array
+
+
+def store_dict_hdf5(hdf5_file_name, input_dict):
+    """ Store dictionary in hdf5 file
+    :param hdf5_file_name:
+    :param input_dict:
+    """
+
+    def store_group(group, pearent_goup):
+        """
+        Store group (not a value)in HDF5 file.
+        :param group:
+        :param pearent_goup:
+        """
+
+        for (k, v) in group.items():
+            if isinstance(v, dict):
+                tmp_group = pearent_goup.create_group(k)
+                store_group(v, tmp_group)
+            else:
+                store_value(k, v, pearent_goup)
+
+    def store_value(name, value, group):
+        """
+        Store value (scalar, string, array, etc.) in HDF5 file
+        :param name:
+        :param value:
+        :param group:
+        """
+        if not value is None:
+            try:
+                group.create_dataset(name, data=value, chunks=True,
+                                     compression='gzip', compression_opts=9)
+            except ValueError: #if h5py not support compression
+                group.create_dataset(name, data=value, chunks=True)
+            except TypeError:
+                group.create_dataset(name, data=value)
+
+
+    with h5py.File(hdf5_file_name, 'w') as res_file:
+        store_group(input_dict, res_file)
+
+
+def load_dict_slash_hdf5(hdf5_file_name):
+    """Load dictionary with fields of wavefront
+    :param hdf5_file_name: Input file name
+    """
+    out_dict = {}
+
+    def add_item(name, obj):
+        if not isinstance(obj, h5py.Group):
+            out_dict.update({name.encode(): obj.value})
+
+    with h5py.File(hdf5_file_name, 'r') as h5_file:
+        h5_file.visititems(add_item)
+
+    return out_dict
+
+
+def tree():
+    """
+    Simple tree
+    :return:
+    """
+    return defaultdict(tree)
+
+
+def dicts(t):
+    """
+    Convert tree to dict
+    :param t:
+    :return:
+    """
+    try:
+        return dict((k, dicts(t[k])) for k in t)
+    except TypeError:
+        return t
+
+
+def set_value(dic, keys_chain, value):
+    """
+    Set value in dictionary by  chain of keys
+
+    :param value:
+    :param dic:
+    :param keys_chain: list of keys
+    :raise : KeyError
+    """
+    node = dic
+    for key in keys_chain[:-1]:
+        if key in node:
+            node = node[key]
+        else:
+            node[key] = {}
+            node = node[key]
+    node[keys_chain[-1]] = value
+
+
+def get_value(dic, keys_chain):
+    """
+    Get node from dictionary by  chain of keys
+
+    :param dic:
+    :param keys_chain: list of keys
+    :raise : KeyError
+    """
+    res = dic
+    for key in keys_chain:
+        res = res[key]
+    return res
+
+
+def set_value_attr(obj, keys_chain, value):
+    """
+    Return node from dictionary by  chain of keys
+
+    :param obj:
+    :param keys_chain: list of keys
+    :param value:
+    :raise : KeyError
+    """
+
+    class glossary_folder(object):
+        """Glossary folder"""
+        pass
+
+    node = obj
+    for key in keys_chain[:-1]:
+        if not key in node.__dict__:
+            node.__dict__[key] = glossary_folder()
+        node = node.__dict__[key]
+    node.__dict__[keys_chain[-1]] = value
+
+
+def load_hdf5_tree(hdf5_file_name):
+    """convert h5file to the tree"""
+    out_dict = {}
+
+    def add_item(name, obj):
+        if not isinstance(obj, h5py.Group):
+            tmp = {}
+            if type(obj.value) == numpy.ndarray:
+                tmp['value'] = 'array shape = {}'.format(obj.shape)
+            else:
+                tmp['value'] = obj.value
+            tmp['attrs'] = dict((k.encode(), v) for k, v in obj.attrs.items())
+            out_dict.update({name.encode(): tmp})
+
+    with h5py.File(hdf5_file_name, 'r') as h5_file:
+        h5_file.visititems(add_item)
+
+    return out_dict
+
+
+def print_hdf5(hdf5_file_name):
+    """print h5file to the tree"""
+    from pprint import PrettyPrinter
+
+    class MyPrettyPrinter(PrettyPrinter):
+        def format(self, *args, **kwargs):
+            repr, readable, recursive = PrettyPrinter.format(self, *args, **kwargs)
+            if repr:
+                if repr[0] in ('"', "'"):
+                    repr = repr.decode('string_escape')
+                elif repr[0:2] in ("u'", 'u"'):
+                    repr = repr.decode('unicode_escape').encode(sys.stdout.encoding)
+            return repr, readable, recursive
+
+    def pprint(obj, stream=None, indent=1, width=80, depth=None):
+        printer = MyPrettyPrinter(stream=stream, indent=indent, width=width, depth=depth)
+        printer.pprint(obj)
+
+    def pformat(obj, stream=None, indent=1, width=80, depth=None):
+        printer = MyPrettyPrinter(stream=stream, indent=indent, width=width, depth=depth)
+        return printer.pformat(obj)
+
+    pprint(load_hdf5_tree(hdf5_file_name))
+
+
+def srw_obj2str(obj, start_str=''):
+    fields = [field for field in dir(obj) if not field.startswith('__') if not callable(getattr(obj, field))]
+    res = ''
+    for f in fields:
+        val = getattr(obj, f)
+        if 'glossary_folder' in str(val):
+            continue
+        s = ''
+        if not isinstance(val, array.array):
+            if 'srwlib.' in str(val):
+                s = val.__doc__ + '\n' + srw_obj2str(val, start_str + '\t')
+            else:
+                s = str(val)
+        else:
+            s = 'array of size ' + str(len(val))
+        res += '{0}{1} = {2}\n'.format(start_str, f, s)
+    return res
