@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+__author__ = 'A. Buzmakov'
 
 import h5py
 import sys

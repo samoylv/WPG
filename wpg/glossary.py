@@ -1,5 +1,5 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
+__author__ = 'A. Buzmakov'
 
 import inspect
 import sys

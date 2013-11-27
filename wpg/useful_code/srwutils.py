@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
-# <nbformat>3.0</nbformat>
-
-# <codecell>
+__author__ = 'O. Chubar, A. Buzmakov'
 
 import os
 import math
 # Import standart libraries and addnig "../wavefront" directory to python search path
 import sys
 sys.path.insert(0, os.path.join('..', '..'))
-# <codecell>
 
 #**********************Auxiliary Functions
 # Read data comumns from ASCII file:
@@ -30,7 +27,6 @@ def AuxReadInDataColumns(filePath, nCol, strSep):
     f.close()
     return resCols  # attn: returns lists, not arrays!
 
-# <codecell>
 
 # Write tabulated resulting Intensity data to ASCII file:
 
@@ -51,7 +47,6 @@ def AuxSaveIntData(arI, wfr, filePath):
         f.write(' ' + repr(arI[i]) + '\n')
     f.close()
 
-# <codecell>
 
 # NEEDED??
 # Write tabulated resulting Wavefront  data to HDF5 file:
@@ -79,7 +74,6 @@ def AuxSaveWfrData(arI, wfr, filePath):
     wf_struct['misc'] = {
     }
 
-# <codecell>
 
 # Write Optical Transmission characteristic data to ASCII file:
 
@@ -111,7 +105,6 @@ def AuxSaveOpTransmData(optTr, t, filePath):
         f.write(' ' + repr(tr) + '\n')
     f.close()
 
-# <codecell>
 
 # Setup Transmission optical element with 1D heght profile data
 
@@ -169,4 +162,3 @@ def AuxTransmAddSurfHeightProfileScaled(optSlopeErr, heightProfData, dim, ang, s
             x += xStep
         y += yStep
 
-# <codecell>

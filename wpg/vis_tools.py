@@ -1,4 +1,5 @@
-__author__ = 'Alexey Buzmakov'
+# -*- coding: utf-8 -*-
+__author__ = 'A. Buzmakov'
 
 import pylab as plt
 import numpy as np

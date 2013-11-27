@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+__author__ = 'A. Buzmakov'
+
 import os
 import sys
 sys.path.insert(0,os.path.join('..','..'))

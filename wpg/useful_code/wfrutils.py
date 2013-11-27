@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+__author__ = 'A. Buzmakov, L. Samoylova'
+
 import time
 import numpy
 import pylab
