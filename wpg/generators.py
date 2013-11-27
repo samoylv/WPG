@@ -1,4 +1,6 @@
-__author__ = 'makov'
+# -*- coding: utf-8 -*-
+__author__ = 'A. Buzmakov'
+
 import warnings
 import srwlib
 import srwlpy

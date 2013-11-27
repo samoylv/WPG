@@ -1,6 +1,5 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-__author__ = 'makov'
+__author__ = 'A. Buzmakov'
 
 import srwlib
 from utils import srw_obj2str
