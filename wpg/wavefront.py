@@ -9,7 +9,6 @@ import h5py
 
 import srwlib
 
-
 import utils
 import glossary
 
@@ -83,7 +82,8 @@ class Wavefront(object):
         res = {}
         for (key, value) in self._wf_fields.iteritems():
             res[key] = value.value
-            res.update(self.custom_fields)
+        
+        res.update(self.custom_fields)
         return res
 
     def update_from_dict(self, in_dict):
@@ -91,7 +91,7 @@ class Wavefront(object):
             if key in self._wf_fields:
                 self._wf_fields[key].value = value
             else:
-                self.custom_fields[key] = value
+                utils.update_dict_slash_string(self.custom_fields, key, value)
 
     def store_attributes(self, file_name):
         with h5py.File(file_name) as h5f:

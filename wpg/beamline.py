@@ -5,6 +5,7 @@ import wpg.srwlib as srwlib
 from wpg.srwlib import srwl
 from utils import srw_obj2str
 
+
 class Beamline(object):
     def __init__(self, srwl_beamline=None):
         if srwl_beamline is None:
@@ -23,6 +24,10 @@ class Beamline(object):
 
     def propagate(self, wfr):
         srwl.PropagElecField(wfr._srwl_wf, self.srwl_beamline)
+        #fix wf._srwl_wf.mesh.zStart bug for Drift
+        for opt_element in self.srwl_beamline.arOpt:
+            if isinstance(opt_element, srwlib.SRWLOptD):
+                wfr.params.Mesh.zCoord = wfr.params.Mesh.zCoord+opt_element.L
 
 def flatten(lst):
     for x in lst:
