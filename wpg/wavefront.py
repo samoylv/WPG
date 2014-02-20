@@ -97,7 +97,7 @@ class Wavefront(object):
         with h5py.File(file_name) as h5f:
             for (key, wff) in self._wf_fields.iteritems():
                 try:
-                    if wff.glossary_name in h5f.keys():
+                    if wff.glossary_name in h5f:
                         for (k, v) in wff.attributes.items():
                             h5f[wff.glossary_name].attrs[k] = v
                 except KeyError:
