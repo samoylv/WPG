@@ -43,6 +43,9 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
                 group.create_dataset(name, data=value, chunks=True)
             except TypeError:
                 group.create_dataset(name, data=value)
+            except Exception:
+                print "Error at name='{}' value='{}' group='{}'".format(name, value, group)
+                raise
 
 
     with h5py.File(hdf5_file_name, 'w') as res_file:
@@ -64,6 +67,20 @@ def load_dict_slash_hdf5(hdf5_file_name):
 
     return out_dict
 
+def update_dict_slash_string(input_dict, keys_string, value):
+    """
+    Update dictionary from slash separated keys_string by value
+    :param input_dict: dictionary to be updated
+    :param keys_string: slash separated keys_string
+    :param value: value 
+    """
+    keys=keys_string.split('/')
+    tdict=input_dict
+    for k in keys[:-1]:
+        if not k in tdict:
+            tdict[k]={}
+        tdict=tdict[k]
+    tdict[keys[-1]]=value
 
 def tree():
     """
