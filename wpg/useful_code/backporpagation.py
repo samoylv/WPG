@@ -3,7 +3,9 @@ import errno
 import gc
 import pylab as plt
 import numpy as np
+import scipy
 
+import wpg.srwlib
 from wpg.srwlib import SRWLOptC
 from wpg import Wavefront
 from wpg import Beamline # new class for fixing bugs of srw classes
