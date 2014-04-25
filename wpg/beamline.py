@@ -9,9 +9,23 @@ import wpg.optical_elements
 
 class Beamline(object):
 
-    def __init__(self):
+    def __init__(self, srwl_beamline=None):
         self.propagation_options = [{'optical_elements': [],
                                     'propagation_parameters':[]}]
+        if not srwl_beamline is None:
+            tolal_elements = max(
+                len(srwl_beamline.arProp), len(srwl_beamline.arOpt))
+            for ti in range(tolal_elements):
+                try:
+                    elem = srwl_beamline.arOpt[ti]
+                except IndexError:
+                    elem = wpg.optical_elements.Empty()
+
+                try:
+                    pp = srwl_beamline.arProp[ti]
+                except IndexError:
+                    pp = None
+                self.append(elem, pp)
 
     def __str__(self):
         # TODO: fix beamline printing
