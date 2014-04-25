@@ -105,7 +105,7 @@ class Beamline(object):
 
 def check_srw_pp(pp):
     """ Check is propagation parameters valid SRW propagation parameters"""
-    return isinstance(pp, list) and len(pp) == 12
+    return isinstance(pp, list) and len(pp) >= 12
 
 
 def get_srw_pp(propagation_parameters):
