@@ -1,7 +1,6 @@
 import os
 import errno
 import gc
-import pylab as plt
 import numpy as np
 import scipy
 
@@ -100,7 +99,7 @@ def fit_gaussian_pulse(wf, polarization='vertical'):
     data_pulse = pulse_intensity
     fit_result_pulse = fit_gaussian(data_pulse)
     (height_pulse, center_x_pulse, center_y_pulse,
-     width_x_pulse, width_y_pulse) = fit_result_pulse['params']
+        width_x_pulse, width_y_pulse) = fit_result_pulse['params']
     rsquared_pulse = fit_result_pulse['rsquared']
 
     fit_pulse = gaussian(height_pulse, center_x_pulse,
@@ -114,6 +113,10 @@ def fit_gaussian_pulse(wf, polarization='vertical'):
         pulse_intensity * (fit_data_pulse > height_pulse * 0.50))
     pulse_total_intensity_0_75 = np.sum(
         pulse_intensity * (fit_data_pulse > height_pulse * 0.75))
+
+    pulse_variance_x = np.var(pulse_intensity, axis=1)
+    pulse_variance_y = np.var(pulse_intensity, axis=0)
+    pulse_variance = np.var(pulse_intensity)
 
     if not 'misc' in wf.custom_fields:
         wf.custom_fields['misc'] = {}
@@ -154,6 +157,16 @@ def fit_gaussian_pulse(wf, polarization='vertical'):
     wf.custom_fields['misc']['gaussian_parameters'][
         'pulse_total_intensity_0_75'] = pulse_total_intensity_0_75
 
+    wf.custom_fields['misc']['gaussian_parameters'][
+       'pulse_variance_x'] = pulse_variance_x
+    
+    wf.custom_fields['misc']['gaussian_parameters'][
+       'pulse_variance_y'] = pulse_variance_y
+
+    wf.custom_fields['misc']['gaussian_parameters'][
+       'pulse_variance'] = pulse_variance
+
+
 
 def show_slices(wfr, slice_numbers=None):
     """
@@ -163,9 +176,11 @@ def show_slices(wfr, slice_numbers=None):
     :params wfr: wpg.Wavefront
     :params slice_numbers: slices to be shown, may by list, int, or None (for all slices)
     """
+
+    import pylab as plt
+
     wf_intensity = wfr.get_intensity(polarization='vertical')
     wf_phase = wfr.get_phase(polarization='vertical')
-
 #     print wf_intensity.shape
 
     if slice_numbers is None:
@@ -290,6 +305,13 @@ def forward_propagate(root_dir, distance, propagation_parameters):
     # forward propagate to L0 meters
     wf_L0 = Wavefront()
     wf_L0.load_hdf5(os.path.join(root_dir, '0.h5'))
+
+    tmin = wf_L0.params.Mesh.sliceMin
+    tmax = wf_L0.params.Mesh.sliceMax
+    wf_L0.params.Mesh.sliceMin = -(tmax-tmin)/2
+    wf_L0.params.Mesh.sliceMax =  (tmax-tmin)/2
+
+    # wpg.srwlib.srwl.ResizeElecField(wf_L0._srwl_wf, 't',[0,3.,1.])
 
     wpg.srwlib.srwl.SetRepresElecField(wf_L0._srwl_wf, 'f')
     bl0.propagate(wf_L0)
