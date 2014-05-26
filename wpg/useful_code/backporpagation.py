@@ -170,109 +170,151 @@ def fit_gaussian_pulse(wf, polarization='vertical'):
 
 def show_slices(wfr, slice_numbers=None):
     """
-    Show slices: intensity, phase, gaussian approximation parameters and cuts.
-    All gaussina parameters in pixels now. Should be fixed.
+        Show slices: intensity, phase, gaussian approximation parameters and cuts.
+        All gaussina parameters in pixels now. Should be fixed.
+        
+        :params wfr: wpg.Wavefront
+        :params slice_numbers: slices to be shown, may by list, int, or None (for all slices)
+        """
     
-    :params wfr: wpg.Wavefront
-    :params slice_numbers: slices to be shown, may by list, int, or None (for all slices)
-    """
-
     import pylab as plt
-
+    
     wf_intensity = wfr.get_intensity(polarization='vertical')
     wf_phase = wfr.get_phase(polarization='vertical')
-#     print wf_intensity.shape
-
+    dx = (wfr.params.Mesh.xMax - wfr.params.Mesh.xMin)/(wfr.params.Mesh.nx - 1)
+    dy = (wfr.params.Mesh.yMax - wfr.params.Mesh.yMin)/(wfr.params.Mesh.ny - 1)
+    dt = (wfr.params.Mesh.sliceMax - wfr.params.Mesh.sliceMin)/(wfr.params.Mesh.nSlices - 1)
+    #    wf_intensity = wf_intensity*dx*dy*1e6
+    #     print wf_intensity.shape
+    pulse_energy=wfr.get_intensity().sum(axis=0).sum(axis=0).sum(axis=0)
+    J2eV = 6.24150934e18
+    print 'Number of photons per pulse:',pulse_energy*dx*dx*1e6*dt*J2eV/wfr.params.photonEnergy
+    
     if slice_numbers is None:
         slice_numbers = range(wf_intensity.shape[-1])
-
+    
     if isinstance(slice_numbers, int):
         slice_numbers = [slice_numbers, ]
-
+    
     intense = wf_intensity.sum(0).sum(0)
     intense = np.squeeze(intense)
-#     print intense.shape
+    intense = intense*dx*dy*1e6*1e-9 # [GW],  dx,dy [mm] 
+    #     print intense.shape
     print 'Z coord: {0:.4f} m.'.format(wfr.params.Mesh.zCoord)
+    
     plt.figure()
-    plt.plot(slice_numbers, intense[slice_numbers])
-    plt.title('Slices intensity')
+    plt.plot(range(wf_intensity.shape[-1]), intense)
+    plt.plot(slice_numbers, intense[slice_numbers],color='g',linestyle='None',
+             markersize=5, marker='o',markerfacecolor='w',markeredgecolor='g')
+    plt.title('Instanteneous power')
+    plt.ylabel('[GW]')
     plt.show()
-
+             
     total_intensity = wf_intensity.sum(axis=-1)
-    data = total_intensity
+    data = total_intensity*dt
+    #@
     fit_result = fit_gaussian(data)
     fit_result = fit_gaussian(data)
     (height, center_x, center_y, width_x, width_y) = fit_result['params']
     rsquared = fit_result['rsquared']
     fit = gaussian(height, center_x, center_y, width_x, width_y)
     fit_data = fit(*np.indices(data.shape))
-
-    print 'Total pulse intinsity'
+    #$center_x = int(wfr.params.Mesh.nSlices/2); center_y = center_x
+             
+    print 'Total pulse intinsity [mJ]',wf_intensity.sum(axis=0).sum(axis=0).sum(axis=0)*dx*dy*1e6*dt*1e3 
     print '''Gaussian approximation parameters:
-            center_x : {0:.1f}px.\t center_y : {1:.1f}px.
-            width_x : {2:.1f}px\twidth_y : {3:.1f}px.
-            rsquared: {4:0.4f}.'''.format(center_x, center_y, width_x, width_y, rsquared)
-
+        center_x : {0:.2f}um.\t center_y : {1:.2f}um.
+        width_x  : {2:.2f}um\t width_y : {3:.2f}um.
+        rsquared : {4:0.4f}.'''.format((center_x-np.floor(wfr.params.Mesh.nx/2))*dx*1e6, 
+                                      (center_y-np.floor(wfr.params.Mesh.ny/2))*dy*1e6, 
+                                      width_x*dx*1e6, width_y*dy*1e6, rsquared)
+             
+    x_axis = np.linspace(wfr.params.Mesh.xMin,wfr.params.Mesh.xMax,wfr.params.Mesh.nx)
+    y_axis = x_axis
+             
+             
     plt.figure(figsize=(20, 7))
     plt.subplot(131)
-    plt.imshow(data)
+    plt.imshow(data*dx*dy*1e6*J2eV/wfr.params.photonEnergy)
     plt.colorbar(orientation='horizontal')
-
+    plt.title('Nphotons per '+ str(np.floor(dx*1e6))+'x'+str(np.floor(dx*1e6))+' $\mu m ^2$ pixel')
+             
     plt.contour(fit_data, cmap=plt.cm.copper)
-
+             
     plt.subplot(132)
-    plt.plot(data[:, int(center_x)], label='Data')
+    plt.plot(y_axis*1e6,     data[:, int(center_x)]*1e3, 'b', label='Y-cut')
     plt.hold(True)
-    plt.plot(fit_data[:, int(center_x)], label='Gaussian fit')
-    plt.legend()
-
-    plt.subplot(133)
-    plt.plot(data[int(center_y), :], label='Data')
+    plt.plot(y_axis*1e6, fit_data[:, int(center_x)]*1e3, 'b:',label='Gaussian fit')
     plt.hold(True)
-    plt.plot(fit_data[int(center_y), :], label='Gaussian fit')
+    plt.plot(x_axis*1e6,     data[int(center_y), :]*1e3,  'g', label='X-cut')
+    plt.hold(True)
+    plt.plot(x_axis*1e6, fit_data[int(center_y), :]*1e3,  'g--', label='Gaussian fit')
+    plt.xlabel('[$\mu$m]')
+    plt.ylabel('mJ/mm$^2$')
+    plt.grid(True)
     plt.legend()
-
+             
+    #plt.subplot(133)
+    #plt.plot(x_axis*1e6, data[int(center_y), :], label='Data')
+    #plt.hold(True)
+    #plt.plot(x_axis*1e6, fit_data[int(center_y), :], label='Gaussian fit')
+    #plt.xlabel('[$\mu$m]')
+    #plt.legend()
+             
     plt.show()
-
+             
     for sn in slice_numbers:
         data = wf_intensity[:, :, sn]
+        data = data*dt
+        phase = wf_phase[:, :, sn]
         fit_result = fit_gaussian(data)
         fit_result = fit_gaussian(data)
         (height, center_x, center_y, width_x, width_y) = fit_result['params']
         rsquared = fit_result['rsquared']
         fit = gaussian(height, center_x, center_y, width_x, width_y)
         fit_data = fit(*np.indices(data.shape))
-
+        #$center_x = int(wfr.params.Mesh.nSlices/2); center_y = center_x
+                 
         print 'Slice number: {}'.format(sn)
         print '''Gaussian approximation parameters:
-                center_x : {0:.1f}px.\t center_y : {1:.1f}px.
-                width_x : {2:.1f}px\twidth_y : {3:.1f}px.
-                rsquared: {4:0.4f}.'''.format(center_x, center_y, width_x, width_y, rsquared)
-
+            center_x : {0:.2f}um.\t center_y : {1:.2f}um.
+            width_x  : {2:.2f}um\t width_y : {3:.2f}um.
+            rsquared : {4:0.4f}.'''.format((center_x-np.floor(wfr.params.Mesh.nx/2))*dx*1e6, 
+                                           (center_y-np.floor(wfr.params.Mesh.ny/2))*dy*1e6, 
+                                           width_x*dx*1e6, width_y*dy*1e6, rsquared)
+                 
         plt.figure(figsize=(20, 7))
         plt.subplot(141)
-        plt.imshow(data)
+        plt.imshow(data*dx*dy*1e6*J2eV/wfr.params.photonEnergy*1e-6) #number of photons in a slice of thickness dt
         plt.colorbar(orientation='horizontal')
-
+        plt.title('Nphotons x10$^6$ per '+ str(np.floor(dx*1e6))+'x'+str(np.floor(dx*1e6))+' $\mu m ^2$ pixel')
         plt.contour(fit_data, cmap=plt.cm.copper)
 
         plt.subplot(142)
         plt.imshow(wf_phase[:, :, sn])
-
+                 
         plt.colorbar(orientation='horizontal')
-
+                 
         plt.subplot(143)
-        plt.plot(data[:, int(center_x)], label='Data')
+        plt.plot(y_axis*1e6,     data[:, int(center_x)]*1e3,  'b', label='Y-cut')
         plt.hold(True)
-        plt.plot(fit_data[:, int(center_x)], label='Gaussian fit')
+        plt.plot(y_axis*1e6, fit_data[:, int(center_x)]*1e3,  'b:',label='Gaussian fit')
+        plt.hold(True)
+        plt.plot(x_axis*1e6,     data[int(center_y), :]*1e3,  'g', label='X-cut')
+        plt.hold(True)
+        plt.plot(x_axis*1e6, fit_data[int(center_y), :]*1e3,  'g--',label='Gaussian fit')
+        plt.xlabel('[$\mu$m]')
+        plt.ylabel('mJ/mm$^2$')
+        plt.grid(True)
         plt.legend()
-
+                 
+                 
         plt.subplot(144)
-        plt.plot(data[int(center_y), :], label='Data')
-        plt.hold(True)
-        plt.plot(fit_data[int(center_y), :], label='Gaussian fit')
+        plt.plot(y_axis*1e6, phase[:, int(center_x)], label='Y-cut', marker='d', markersize=4)
+        plt.plot(x_axis*1e6, phase[int(center_y), :], label='X-cut', marker='o', markersize=4)
+        plt.xlabel('[$\mu$m]')
         plt.legend()
-
+                 
         plt.show()
 
 
