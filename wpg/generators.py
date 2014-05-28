@@ -6,7 +6,7 @@ import srwlib
 import srwlpy
 
 
-def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, sigY, d2waist):
+def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, sigY, d2waist, pulseEn=None):
     """
     Build 3D Gaussian beam.
 
@@ -21,7 +21,8 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
     :param tau: Pulse duration [s]
     :param sigX: Horiz. RMS size at Waist [m]
     :param sigY:  Vert. RMS size at Waist [m]
-    :param d2waist: distance to Gaussian waist
+    :param d2waist: Distance to Gaussian waist
+    :param pulseEn: Energy per Pulse [J]
     :return:
     """
     # TODO: fix comment
@@ -34,7 +35,10 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
     GsnBm.yp = 0
 
     GsnBm.avgPhotEn = ekev * 1.e3  # 15000. #Photon Energy [eV]
-    GsnBm.pulseEn = 0.001  # Energy per Pulse [J] - to be corrected
+    if pulseEn is not None:
+        GsnBm.pulseEn = pulseEn 
+    else:
+        GsnBm.pulseEn = 0.001 # was 1 mJ in the Tutorial exampes as well
     GsnBm.repRate = 1  # Rep. Rate [Hz] - to be corrected
     GsnBm.polar = 2  # 1- linear hoirizontal
     # Far field angular divergence: 14.1e-6 ./ (ekev) .^0.75

@@ -188,7 +188,7 @@ def show_slices(wfr, slice_numbers=None):
     #     print wf_intensity.shape
     pulse_energy=wfr.get_intensity().sum(axis=0).sum(axis=0).sum(axis=0)
     J2eV = 6.24150934e18
-    print 'Number of photons per pulse:',pulse_energy*dx*dx*1e6*dt*J2eV/wfr.params.photonEnergy
+    print 'Number of photons per pulse: %e' %(pulse_energy*dx*dx*1e6*dt*J2eV/wfr.params.photonEnergy)
     
     if slice_numbers is None:
         slice_numbers = range(wf_intensity.shape[-1])
