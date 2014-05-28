@@ -93,7 +93,7 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
 
 
 def build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d2waist,
-                            xoff=0., yoff=0., tiltX=0., tiltY=0.):
+                            xoff=0., yoff=0., tiltX=0., tiltY=0., pulseEn=None):
     """
     Build 2D Gaussian beam.
     
@@ -122,7 +122,10 @@ def build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d
     GsnBm.xp = tiltX  # Average Angles of Gaussian Beam at Waist [rad]
     GsnBm.yp = tiltY
     GsnBm.avgPhotEn = ekev * 1e3  # 5000 #Photon Energy [eV]
-    GsnBm.pulseEn = 0.001  # Energy per Pulse [J] - to be corrected
+    if pulseEn is not None:
+        GsnBm.pulseEn = pulseEn 
+    else:
+        GsnBm.pulseEn = 0.001  # Energy per Pulse [J] - to be corrected
     GsnBm.repRate = 1  # Rep. Rate [Hz] - to be corrected
     GsnBm.polar = 2  # 1- linear hoirizontal
     GsnBm.sigX = sigX  # Horiz. RMS size at Waist [m]
