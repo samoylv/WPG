@@ -1,5 +1,6 @@
 from wpg.srwlib import SRWLOptD as Drift
 from wpg.srwlib import SRWLOptL as Lens
+from wpg.srwlib import SRWLOptA as Aperture
 from wpg.srwlib import srwl
 import wpg.srwlib
 
