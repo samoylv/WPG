@@ -116,9 +116,10 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
     imax = numpy.max(ii)
     [nx, ny, xmin, xmax, ymin, ymax] = get_mesh(mwf)
     ph = mwf.get_phase(slice_number=0, polarization='vertical')
-    print 'stepX, stepY [um]:', -(xmin - xmax) / (nx - 1) * 1e6, -(ymin - ymax) / (ny - 1) * 1e6, '\n'
-    xa = numpy.linspace(xmin, xmax, nx); dx = (xmax-xmin)/(nx-1)
-    ya = numpy.linspace(ymin, ymax, ny); dy = (ymax-ymin)/(ny-1)
+    dx = (xmax-xmin)/(nx-1); dy = (ymax-ymin)/(ny-1)
+    print 'stepX, stepY [um]:', dx * 1e6, dy * 1e6, '\n'
+    xa = numpy.linspace(xmin, xmax, nx); 
+    ya = numpy.linspace(ymin, ymax, ny); 
 
     print 'Total power (integrated over full range): %g [GW]' %(ii.sum(axis=0).sum(axis=0)*dx*dy*1e6*1e-9) 
     print 'Peak power calculated using FWHM:         %g [GW]' %(imax*1e-9*1e6*2*numpy.pi*(calculate_fwhm_x(mwf)/2.35)*(calculate_fwhm_y(mwf)/2.35))
