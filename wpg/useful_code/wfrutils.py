@@ -14,7 +14,9 @@ sys.path.insert(0, os.path.join('..','..'))
 from wpg import Wavefront, Beamline
 # from srwlib import *
 import wpg.srwlib
-from wpg.srwlib import srwl
+from wpg.srwlib import srwl\
+
+J2EV = 6.24150934e18
 
 
 def print_beamline(bl):
@@ -106,22 +108,32 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
     [xc, yc] = calculate_peak_pos(mwf)
     print 'Coordinates of center, [mm]:', xc * 1e3, yc * 1e3
     ii = mwf.get_intensity(slice_number=0, polarization='vertical')
+    # [LS14-06-02] 
+    # for 2D Gaussian the intrincic SRW GsnBeam wave field units Nph/mm^2/0.1%BW 
+    # to get fluence W/mm^2 
+    # (Note: coherence time for Gaussian beam duration should be specified):  
+    ii = ii*mwf.params.photonEnergy/J2EV#*1e3
     imax = numpy.max(ii)
     [nx, ny, xmin, xmax, ymin, ymax] = get_mesh(mwf)
     ph = mwf.get_phase(slice_number=0, polarization='vertical')
-    print 'stepX, stepY [um]:', -(xmin - xmax) / (nx - 1) * 1e6, -(ymin - ymax) / (ny - 1) * 1e6, '\n'
-    xa = numpy.linspace(xmin, xmax, nx)
-    ya = numpy.linspace(ymin, ymax, ny)
+    dx = (xmax-xmin)/(nx-1); dy = (ymax-ymin)/(ny-1)
+    print 'stepX, stepY [um]:', dx * 1e6, dy * 1e6, '\n'
+    xa = numpy.linspace(xmin, xmax, nx); 
+    ya = numpy.linspace(ymin, ymax, ny); 
 
-    pylab.figure(figsize=(15,10))
+    print 'Total power (integrated over full range): %g [GW]' %(ii.sum(axis=0).sum(axis=0)*dx*dy*1e6*1e-9) 
+    print 'Peak power calculated using FWHM:         %g [GW]' %(imax*1e-9*1e6*2*numpy.pi*(calculate_fwhm_x(mwf)/2.35)*(calculate_fwhm_y(mwf)/2.35))
+    print 'Max irradiance: %g [GW/mm^2]'    %(imax*1e-9) 
+    
+    pylab.figure(figsize=(21,6))
     if onePlot:
-        pylab.subplot(221)
+        pylab.subplot(131)
     [x1, x2, y1, y2] = mwf.get_limits()
     pylab.imshow(ii, extent=[x1 * 1e3, x2 * 1e3, y1 * 1e3, y2 * 1e3])
     pylab.set_cmap('bone')
-    pylab.set_cmap('hot')
-    pylab.axis('auto')
-    pylab.colorbar()
+    #pylab.set_cmap('hot')
+    pylab.axis('tight')
+    #pylab.colorbar(orientation='horizontal')
     pylab.xlabel('x (mm)')
     pylab.ylabel('y (mm)')
     pylab.title(title_fig)
@@ -132,7 +144,7 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
     pha_x = ph[numpy.max(numpy.where(ya == yc)), :]
 
     if onePlot:
-        pylab.subplot(222)
+        pylab.subplot(132)
     else:
         pylab.figure()
     if isVlog and max(irr_y) > 0:
@@ -147,10 +159,11 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
         pylab.xlabel('y (mm)')
         pylab.xlim(min(ya[numpy.where(irr_y >= imax * i_y_min)])
                    * 1e3, max(ya[numpy.where(irr_y >= imax * i_y_min)]) * 1e3)
+    pylab.ylabel('Irradiance (W/$mm^2$)')
     pylab.title('Vertical cut,  xc = ' + str(int(xc * 1e6)) + ' um')
     pylab.grid(True)
     if onePlot:
-        pylab.subplot(223)
+        pylab.subplot(133)
     else:
         pylab.figure()
     if isHlog and max(irr_x) > 0:
@@ -165,6 +178,7 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
         pylab.xlabel('x (mm)')
         pylab.xlim(min(xa[numpy.where(irr_x >= imax * i_x_min)])
                    * 1e3, max(xa[numpy.where(irr_x >= imax * i_x_min)]) * 1e3)
+    pylab.ylabel('Irradiance (W/$mm^2$)')
     pylab.title('Horizontal cut, yc = ' + str(int(yc * 1e6)) + ' um')
     pylab.grid(True)
 

@@ -60,11 +60,11 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
      # Numbers of points vs Photon Energy (1), Horizontal and
      # Vertical Positions (dummy)
     wfr.presFT = 1  # Defining Initial Wavefront in Time Domain
-    # wfr.presFT = 0 #Defining Initial Wavefront in Frequency Domain
+    #wfr.presFT = 0 #Defining Initial Wavefront in Frequency Domain
 
     wfr.avgPhotEn = GsnBm.avgPhotEn
-    wfr.mesh.eStart = -6 * GsnBm.sigT  # Initial Time [s]
-    wfr.mesh.eFin = 6 * GsnBm.sigT  # Final Time [s]
+    wfr.mesh.eStart = -3 * GsnBm.sigT  # Initial Time [s]
+    wfr.mesh.eFin = 3 * GsnBm.sigT  # Final Time [s]
 
     # Longitudinal Position [m] at which Electric Field has to be calculated,
     # i.e. the position of the first optical element
@@ -93,7 +93,8 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
 
 
 def build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d2waist,
-                            xoff=0., yoff=0., tiltX=0., tiltY=0., pulseEn=None):
+                             xoff=0., yoff=0., tiltX=0., tiltY=0., 
+                             pulseEn=None, pulseTau=None,repRate=None):
     """
     Build 2D Gaussian beam.
     
@@ -108,10 +109,12 @@ def build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d
     :param sigX: Horiz. RMS size at Waist [m]
     :param sigY:  Vert. RMS size at Waist [m]
     :param d2waist: distance to Gaussian waist
-    :param xoff: Horizonal Coordinate of Gaussian Beam Center at Waist [m]
-    :param yoff: Vertical  Coordinate of Gaussian Beam Center at Waist [m]
-    :param tiltX: Average Angle of Gaussian Beam at Waist in Horizontal plane [rad] 
-    :param tiltY: Average Angle of Gaussian Beam at Waist in Vertical plane [rad]
+    :param xoff:    Horizonal Coordinate of Gaussian Beam Center at Waist [m]
+    :param yoff:    Vertical  Coordinate of Gaussian Beam Center at Waist [m]
+    :param tiltX:   Average Angle of Gaussian Beam at Waist in Horizontal plane [rad] 
+    :param tiltY:   Average Angle of Gaussian Beam at Waist in Vertical plane [rad]
+    :param pulseEn  Energy per Pulse [J]
+    :param pulseTau Coherence time [s] to get proper BW
     :return: wavefront structure
     """
     GsnBm = srwlib.SRWLGsnBm()  # Gaussian Beam structure (just parameters)
@@ -126,11 +129,17 @@ def build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d
         GsnBm.pulseEn = pulseEn 
     else:
         GsnBm.pulseEn = 0.001  # Energy per Pulse [J] - to be corrected
-    GsnBm.repRate = 1  # Rep. Rate [Hz] - to be corrected
+    if repRate is not None:
+        GsnBm.repRate = repRate 
+    else:
+        GsnBm.repRate = 1  # Rep. Rate [Hz] - to be corrected
     GsnBm.polar = 2  # 1- linear hoirizontal
     GsnBm.sigX = sigX  # Horiz. RMS size at Waist [m]
     GsnBm.sigY = sigY  # Vert. RMS size at Waist [m]
-    GsnBm.sigT = 10e-15  # Pulse duration [fs] (not used?)
+    if pulseTau is not None:
+        GsnBm.sigT = pulseTau 
+    else:
+        GsnBm.sigT = 0.2e-15  # should be about coherence time to get proper BW
     GsnBm.mx = 0  # Transverse Gauss-Hermite Mode Orders
     GsnBm.my = 0
 
@@ -146,6 +155,9 @@ def build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d
     wfr.mesh.xFin = xMax  # Final Horizontal Position [m]
     wfr.mesh.yStart = yMin  # Initial Vertical Position [m]
     wfr.mesh.yFin = yMax  # Final Vertical Position [m]
+
+    #wfr.presFT = 1  # Defining Initial Wavefront in Time Domain
+    wfr.presFT = 0  # Defining Initial Wavefront in Freq Domain
 
     # Some information about the source in the Wavefront structure
     wfr.partBeam.partStatMom1.x = GsnBm.x
