@@ -121,9 +121,13 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
     xa = numpy.linspace(xmin, xmax, nx); 
     ya = numpy.linspace(ymin, ymax, ny); 
 
-    print 'Total power (integrated over full range): %g [GW]' %(ii.sum(axis=0).sum(axis=0)*dx*dy*1e6*1e-9) 
-    print 'Peak power calculated using FWHM:         %g [GW]' %(imax*1e-9*1e6*2*numpy.pi*(calculate_fwhm_x(mwf)/2.35)*(calculate_fwhm_y(mwf)/2.35))
-    print 'Max irradiance: %g [GW/mm^2]'    %(imax*1e-9) 
+    if mwf.params.wEFieldUnit <> 'arbitrary':
+        print 'Total power (integrated over full range): %g [GW]' %(ii.sum(axis=0).sum(axis=0)*dx*dy*1e6*1e-9) 
+        print 'Peak power calculated using FWHM:         %g [GW]' %(imax*1e-9*1e6*2*numpy.pi*(calculate_fwhm_x(mwf)/2.35)*(calculate_fwhm_y(mwf)/2.35))
+        print 'Max irradiance: %g [GW/mm^2]'    %(imax*1e-9) 
+        label4irradiance = 'Irradiance (W/$mm^2$)'
+    else:
+        label4irradiance = 'Irradiance (a.u.)'
     
     pylab.figure(figsize=(21,6))
     if onePlot:
@@ -159,7 +163,7 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
         pylab.xlabel('y (mm)')
         pylab.xlim(min(ya[numpy.where(irr_y >= imax * i_y_min)])
                    * 1e3, max(ya[numpy.where(irr_y >= imax * i_y_min)]) * 1e3)
-    pylab.ylabel('Irradiance (W/$mm^2$)')
+    pylab.ylabel(label4irradiance)
     pylab.title('Vertical cut,  xc = ' + str(int(xc * 1e6)) + ' um')
     pylab.grid(True)
     if onePlot:
@@ -178,7 +182,7 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
         pylab.xlabel('x (mm)')
         pylab.xlim(min(xa[numpy.where(irr_x >= imax * i_x_min)])
                    * 1e3, max(xa[numpy.where(irr_x >= imax * i_x_min)]) * 1e3)
-    pylab.ylabel('Irradiance (W/$mm^2$)')
+    pylab.ylabel(label4irradiance)
     pylab.title('Horizontal cut, yc = ' + str(int(yc * 1e6)) + ' um')
     pylab.grid(True)
     
