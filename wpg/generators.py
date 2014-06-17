@@ -166,6 +166,9 @@ def build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d
     wfr.partBeam.partStatMom1.xp = GsnBm.xp
     wfr.partBeam.partStatMom1.yp = GsnBm.yp
 
+    if (pulseEn is None) and (pulseTau is None):
+        wfr.unitElFld = 0 # set to 'arbitrary'
+
     sampFactNxNyForProp = -1  # sampling factor for adjusting nx, ny (effective if > 0)
     arPrecPar = [sampFactNxNyForProp]
     srwlpy.CalcElecFieldGaussian(wfr, GsnBm, arPrecPar)
