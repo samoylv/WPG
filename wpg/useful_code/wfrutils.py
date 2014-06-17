@@ -127,6 +127,7 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
         print 'Max irradiance: %g [GW/mm^2]'    %(imax*1e-9) 
         label4irradiance = 'Irradiance (W/$mm^2$)'
     else:
+        ii = ii / imax
         label4irradiance = 'Irradiance (a.u.)'
     
     pylab.figure(figsize=(21,6))
@@ -163,6 +164,7 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
         pylab.xlabel('y (mm)')
         pylab.xlim(min(ya[numpy.where(irr_y >= imax * i_y_min)])
                    * 1e3, max(ya[numpy.where(irr_y >= imax * i_y_min)]) * 1e3)
+    pylab.ylim(0,numpy.max(ii)*1.1)
     pylab.ylabel(label4irradiance)
     pylab.title('Vertical cut,  xc = ' + str(int(xc * 1e6)) + ' um')
     pylab.grid(True)
@@ -182,6 +184,7 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
         pylab.xlabel('x (mm)')
         pylab.xlim(min(xa[numpy.where(irr_x >= imax * i_x_min)])
                    * 1e3, max(xa[numpy.where(irr_x >= imax * i_x_min)]) * 1e3)
+    pylab.ylim(0,numpy.max(ii)*1.1)
     pylab.ylabel(label4irradiance)
     pylab.title('Horizontal cut, yc = ' + str(int(yc * 1e6)) + ' um')
     pylab.grid(True)
