@@ -82,7 +82,7 @@ def get_mesh(mwf):
     return [nx, ny, xmin, xmax, ymin, ymax]
 
 
-def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlot, bPlotPha=None):
+def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlot, bPlotPha=None,saveDir=None):
     """
         Plot 2D wavefront (a slice).
         
@@ -181,7 +181,12 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
     pylab.ylabel('Irradiance (W/$mm^2$)')
     pylab.title('Horizontal cut, yc = ' + str(int(yc * 1e6)) + ' um')
     pylab.grid(True)
-
+    
+    if saveDir is not None: 
+        epsname="%s/%s.eps" % (saveDir,title_fig.split("at ")[1].split(" m")[0])
+        pylab.savefig(epsname)
+        #pylab.close(epsfig)
+    
     if bPlotPha:
         pylab.figure()
         pylab.plot(ya * 1e3, pha_y, '-ok')
