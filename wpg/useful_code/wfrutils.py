@@ -14,14 +14,22 @@ sys.path.insert(0, os.path.join('..','..'))
 from wpg import Wavefront, Beamline
 # from srwlib import *
 import wpg.srwlib
-from wpg.srwlib import srwl\
+from wpg.srwlib import srwl
 
 J2EV = 6.24150934e18
 
 
 def print_beamline(bl):
-    mbl = Beamline(bl)
-    print mbl
+    if isinstance(bl, Beamline):
+        print bl
+    elif isinstance(bl, wpg.srwlib.SRWLOptC):
+        mbl = Beamline(bl)
+        print mbl
+    else:
+        raise ValueError(
+            'Input type must be wpg.srwlib.SRWLOptC or wpg.Beamline, given: {}'.format(
+                type(bl))
+            )
 
 
 def create_numpy_array_from_rows(rows, slices=None):
