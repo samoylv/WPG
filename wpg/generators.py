@@ -6,7 +6,7 @@ import srwlib
 import srwlpy
 
 
-def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, sigY, d2waist, pulseEn=None):
+def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, sigY, d2waist, pulseEn=None,_mx=None,_my=None):
     """
     Build 3D Gaussian beam.
 
@@ -23,6 +23,8 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
     :param sigY:  Vert. RMS size at Waist [m]
     :param d2waist: Distance to Gaussian waist
     :param pulseEn: Energy per Pulse [J]
+    :param _mx: transverse Gauss-Hermite mode order in horizontal direction
+    :param _my: transverse Gauss-Hermite mode order in vertical direction
     :return:
     """
     # TODO: fix comment
@@ -52,8 +54,14 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
     # 0.12e-15 #0.17e-15 for 15 keV #Pulse duration [s] #To check: Is it 0.12
     # fs or 12 fs ?
     GsnBm.sigT = tau
-    GsnBm.mx = 0  # Transverse Gauss-Hermite Mode Orders
-    GsnBm.my = 0
+    if _mx is not None:
+        GsnBm.mx = _mx 
+    else:
+        GsnBm.mx = 0  # Transverse Gauss-Hermite Mode Orders
+    if _mx is not None:
+        GsnBm.my = _my 
+    else:
+        GsnBm.my = 0
 
     wfr = srwlib.SRWLWfr()  # Initial Electric Field Wavefront
     wfr.allocate(nz, nx, ny)
@@ -94,7 +102,7 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
 
 def build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d2waist,
                              xoff=0., yoff=0., tiltX=0., tiltY=0., 
-                             pulseEn=None, pulseTau=None,repRate=None):
+                             pulseEn=None, pulseTau=None,repRate=None,_mx=None,_my=None):
     """
     Build 2D Gaussian beam.
     
@@ -116,6 +124,8 @@ def build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d
     :param pulseEn  Energy per Pulse [J]
     :param pulseTau Coherence time [s] to get proper BW
     :return: wavefront structure
+    :param _mx: transverse Gauss-Hermite mode order in horizontal direction
+    :param _my: transverse Gauss-Hermite mode order in vertical direction
     """
     GsnBm = srwlib.SRWLGsnBm()  # Gaussian Beam structure (just parameters)
     # Transverse Coordinates of Gaussian Beam Center at Waist [m]
@@ -140,8 +150,14 @@ def build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d
         GsnBm.sigT = pulseTau 
     else:
         GsnBm.sigT = 0.2e-15  # should be about coherence time to get proper BW
-    GsnBm.mx = 0  # Transverse Gauss-Hermite Mode Orders
-    GsnBm.my = 0
+    if _mx is not None:
+        GsnBm.mx = _mx 
+    else:
+        GsnBm.mx = 0  # Transverse Gauss-Hermite Mode Orders
+    if _mx is not None:
+        GsnBm.my = _my 
+    else:
+        GsnBm.my = 0
 
     wfr = srwlib.SRWLWfr()  # Initial Electric Field Wavefront
     wfr.allocate(1, nx, ny)
