@@ -12,6 +12,11 @@ Contents:
    :maxdepth: 2
 
    wpg
+   wavefront
+   beamline
+   optical_elements
+   generators
+..   others
 
 Indices and tables
 ==================
