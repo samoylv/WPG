@@ -25,7 +25,7 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
     :param pulseEn: Energy per Pulse [J]
     :param _mx: transverse Gauss-Hermite mode order in horizontal direction
     :param _my: transverse Gauss-Hermite mode order in vertical direction
-    :return:
+    :return: wpg.Wavefront structure
     """
     # TODO: fix comment
 
@@ -121,11 +121,12 @@ def build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d
     :param yoff:    Vertical  Coordinate of Gaussian Beam Center at Waist [m]
     :param tiltX:   Average Angle of Gaussian Beam at Waist in Horizontal plane [rad] 
     :param tiltY:   Average Angle of Gaussian Beam at Waist in Vertical plane [rad]
-    :param pulseEn  Energy per Pulse [J]
-    :param pulseTau Coherence time [s] to get proper BW
-    :return: wavefront structure
+    :param pulseEn:  Energy per Pulse [J]
+    :param pulseTau: Coherence time [s] to get proper BW
     :param _mx: transverse Gauss-Hermite mode order in horizontal direction
     :param _my: transverse Gauss-Hermite mode order in vertical direction
+    :return: wpg.Wavefront structure
+
     """
     GsnBm = srwlib.SRWLGsnBm()  # Gaussian Beam structure (just parameters)
     # Transverse Coordinates of Gaussian Beam Center at Waist [m]
@@ -192,5 +193,8 @@ def build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d
 
 
 def build_gauss_wavefront_xy_(xoff, yoff, tiltX, tiltY, nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d2waist):
+    """
+    This function depricated and will removed in next releases, use build_gauss_wavefront_xy instead. 
+    """
     warnings.warn('This function depricated and will removed in next releases, use build_gauss_wavefront_xy instead.', DeprecationWarning)
     return build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d2waist, xoff, yoff, tiltX, tiltY)
