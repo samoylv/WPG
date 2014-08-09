@@ -1,3 +1,8 @@
+TODOs
+-----
+.. todo::
+    Add documentation of srwlib.h functions
+
 Other modules
 -------------
 

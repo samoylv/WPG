@@ -398,7 +398,7 @@ class WFRadiationMeshNSlices(RadiationField):
     @value.setter
     def value(self, val):
         self._wf._srwl_wf.mesh.ne = int(val)
-        self._wf.allocate_moments()
+        self._wf._allocate_srw_moments()
 
 
 class WFRadiationMeshXMin(RadiationField):
@@ -914,8 +914,8 @@ class WFDataArrEhor(RadiationField):
 
         :param val: complex numpy 3D array or array.array. if array.array - just copy
         """
-        n_total = self._wf.get_total_elements() * self._wf.params.nval
-        self._wf.allocate_moments()
+        n_total = self._wf._get_total_elements() * self._wf.params.nval
+        self._wf._allocate_srw_moments()
         if type(val) == array.array:
             if not val.count() == n_total:
                 warnings.warn('New array size not equal to wavefront size. You must set it by yourself.')
@@ -964,8 +964,8 @@ class WFDataArrEver(RadiationField):
 
     @value.setter
     def value(self, val):
-        n_total = self._wf.get_total_elements() * self._wf.params.nval
-        self._wf.allocate_moments()
+        n_total = self._wf._get_total_elements() * self._wf.params.nval
+        self._wf._allocate_srw_moments()
         if type(val) == array.array:
             if not val.count() == n_total:
                 warnings.warn('New array size not equal to wavefront size. You must set it by yourself.')

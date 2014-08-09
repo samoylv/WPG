@@ -248,4 +248,5 @@ texinfo_documents = [
 #texinfo_no_detailmenu = False
 
 todo_include_todos = True
+autoclass_content = 'both'
 sys.path.insert(0, os.path.join('..'))
