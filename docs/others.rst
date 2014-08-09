@@ -6,11 +6,6 @@ TODOs
 Other modules
 -------------
 
-.. automodule:: wpg.glossary
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. automodule:: wpg.utils
     :members:
     :undoc-members:

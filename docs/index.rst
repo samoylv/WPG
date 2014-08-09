@@ -13,6 +13,7 @@ Contents:
    beamline
    optical_elements
    generators
+   glossary
    tutorials
 
 ..   others

@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-This module contains base wrapper for SRWLWfr (Wavefront). It's implement np interop to SRWLWfr structure, serialization to HDF5, vizualization tools, etc.
+This module contains base wrapper for SRWLWfr (Wavefront). It's implement numpy inter operations to SRWLWfr structure, serialization to HDF5, visualization tools, etc.
 
-.. module:: wavefront
+.. module:: wpg.wavefront
    :platform: Linux, Mac OSX, Windows
-   :synopsis: A useful module indeed.
 
 .. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
 """
