@@ -10,11 +10,13 @@ Contents:
 
    wpg
    wavefront
+   glossary
+   srwlib
    beamline
    optical_elements
    generators
-   glossary
    tutorials
+
 
 ..   others
 

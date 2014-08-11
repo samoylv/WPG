@@ -251,8 +251,15 @@ todo_include_todos = True
 autoclass_content = 'both'
 sys.path.insert(0, os.path.join('..'))
 
-import mock
 
-MOCK_MODULES = ['srwlib','wpg.srwlib','srwlpy','numpy','h5py','pylab']
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = mock.Mock()
+
+try:
+    import wpg.srwlib, wpg.srwlpy, numpy, h5py, pylab
+except ImportError, e:
+    raise e
+    import mock
+    MOCK_MODULES = ['srwlib','wpg.srwlib','wpg.srwlpy','srwlpy','numpy','h5py','pylab']
+    for mod_name in MOCK_MODULES:
+        sys.modules[mod_name] = mock.Mock()
+else:
+    pass
