@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
-__author__ = 'A. Buzmakov'
+"""
+This module contains  wrapper for SRWLOptC (optical container) and propagetion parameters. 
+
+.. module:: wpg.beamline
+   :platform: Linux, Mac OSX, Windows
+
+.. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
+"""
 
 import wpg.srwlib as srwlib
 from wpg.srwlib import srwl
@@ -8,8 +15,17 @@ import wpg.optical_elements
 
 
 class Beamline(object):
+    """
+    Set of optical elements and propagation parameters.
+    """
 
     def __init__(self, srwl_beamline=None):
+        """
+        Init beamline.
+
+        :params srwl_beamline: if present will used for initialization.
+        :type srwl_wavefront: SRWLOptC
+        """
         self.propagation_options = [{'optical_elements': [],
                                     'propagation_parameters':[]}]
         if not srwl_beamline is None:
@@ -28,7 +44,11 @@ class Beamline(object):
                 self.append(elem, pp)
 
     def __str__(self):
-        # TODO: fix beamline printing
+        """
+        String representaion of beamline (used with print function).
+
+        :return: string 
+        """
         res = ''
         for po in self.propagation_options:
             tolal_elements = max(
