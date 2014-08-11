@@ -226,6 +226,8 @@ class Use_PP(object):
         return self.pp
 
     def __str__(self):
+        """
+        """
         return '\n'.join([
             "zoom_h = {}".format(self.zoom_h),
             "zoom_v = {}".format(self.zoom_v),
