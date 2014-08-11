@@ -254,10 +254,10 @@ sys.path.insert(0, os.path.join('..'))
 
 
 try:
-    import wpg.srwlib, wpg.srwlpy, numpy, h5py, pylab
+    import wpg.srwlpy, numpy, h5py, pylab
 except ImportError, e:
     import mock
-    MOCK_MODULES = ['srwlib','wpg.srwlib','wpg.srwlpy','srwlpy','numpy','h5py','pylab']
+    MOCK_MODULES = ['wpg.srwlpy','srwlpy','numpy','h5py','pylab']
     for mod_name in MOCK_MODULES:
         sys.modules[mod_name] = mock.Mock()
 else:
