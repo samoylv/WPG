@@ -45,9 +45,9 @@ Download and build library
 
 Extract package:
 
-.. code:: sh
+	.. code:: sh
 
-	unzip master.zip
+		unzip master.zip
 
 Change the directory:
 
