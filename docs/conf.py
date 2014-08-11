@@ -253,6 +253,6 @@ sys.path.insert(0, os.path.join('..'))
 
 import mock
 
-MOCK_MODULES = ['srwlib','wpg.srwlib','numpy','h5py','pylab']
+MOCK_MODULES = ['srwlib','wpg.srwlib','srwlpy','numpy','h5py','pylab']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
