@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This module contains definitions (glossary) of Wavefront fields. Described mapptin fields SRWLWfr <-> wpg.Wavefront
+This module contains definitions (glossary) of Wavefront fields. Described mapping fields SRWLWfr <-> wpg.Wavefront
 
 .. module:: wpg.glossary
    :platform: Linux, Mac OSX, Windows

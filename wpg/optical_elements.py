@@ -1,3 +1,12 @@
+"""
+This module contains definitions custom optical elements. Described mapping (or aliases) of some of SRW optical elements (SRWLOpt* <-> wpg)
+
+.. module:: wpg.optical_elements
+   :platform: Linux, Mac OSX, Windows
+
+.. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
+"""
+
 from wpg.srwlib import SRWLOptD as Drift
 from wpg.srwlib import SRWLOptL as Lens
 from wpg.srwlib import SRWLOptA as Aperture
@@ -6,13 +15,11 @@ import wpg.srwlib
 
 
 class WPGOpticalElement(object):
-
     """Base class for optical elements"""
 
     def __init__(self):
         pass
-
-
+      
 class Empty(WPGOpticalElement):
 
     """Optical element: Empty

@@ -250,3 +250,9 @@ texinfo_documents = [
 todo_include_todos = True
 autoclass_content = 'both'
 sys.path.insert(0, os.path.join('..'))
+
+import mock
+
+MOCK_MODULES = ['srwlib']
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()

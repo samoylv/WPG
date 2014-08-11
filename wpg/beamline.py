@@ -115,6 +115,7 @@ class Beamline(object):
                 srwl.PropagElecField(wfr._srwl_wf, srwl_beamline)
 
                 # fixing wf._srwl_wf.mesh.zStart bug for Drift
+                #TODO: Try to fix it with _treat parameter
                 for opt_element in propagation_option['optical_elements']:
                     if isinstance(opt_element, srwlib.SRWLOptD):
                         wfr.params.Mesh.zCoord = wfr.params.Mesh.zCoord + \
