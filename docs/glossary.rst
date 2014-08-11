@@ -63,7 +63,7 @@ Current glossary contains the list of dynamically loading fields of wavefront. I
 **version** - Hdf5 format version (glossary) - **
 
 :mod:`wpg.glossary` module
-----------------------------
+==========================
 
 .. automodule:: wpg.glossary
     :members:

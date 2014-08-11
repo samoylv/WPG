@@ -75,6 +75,13 @@ class Beamline(object):
         return res
 
     def append(self, optical_element, propagation_parameters):
+        """
+        Appends optical element and propagation propagation parameters to the end of beamline
+
+        :param optical_element: SRW or wpg optical element
+        :param propagation_parameters: SRW propagation parameters list or wpg.optical_elements.UsePP object
+        """
+
         # TODO: check types
         last_pp_opt = self.propagation_options[-1]
         # if numbers of propagation parameters and optical elements different
@@ -92,20 +99,26 @@ class Beamline(object):
         # stack it
         if isinstance(optical_element, srwlib.SRWLOpt):
             opt = optical_element
-            pp = get_srw_pp(propagation_parameters)
+            pp = _get_srw_pp(propagation_parameters)
 
             last_pp_opt['optical_elements'].append(opt)
             last_pp_opt['propagation_parameters'].append(pp)
 
         # support resizing element
         if optical_element == [] or isinstance(optical_element, wpg.optical_elements.Empty):
-            pp = get_srw_pp(propagation_parameters)
+            pp = _get_srw_pp(propagation_parameters)
 
             last_pp_opt['propagation_parameters'].append(pp)
 
         # self.srwl_beamline.arOpt.append(optical_element)
         # self.srwl_beamline.arProp.append(propagation_parameters)
     def propagate(self, wfr):
+        """
+        Propagate wavefront through beamline.
+
+        :param wfr: Input wavefront (will be re-writed after propagation)
+        :type wfr: wpg.wavefront.Wavefront
+        """
         for propagation_option in self.propagation_options:
             if all([isinstance(o, srwlib.SRWLOpt) for o in propagation_option['optical_elements']]):
                 srwl_beamline = srwlib.SRWLOptC(
@@ -124,18 +137,28 @@ class Beamline(object):
                 raise ValueError('Unknown type of propagators')
 
 
-def check_srw_pp(pp):
-    """ Check is propagation parameters valid SRW propagation parameters"""
+def _check_srw_pp(pp):
+    """
+    Check is propagation parameters valid SRW propagation parameters
+
+    :param pp: propagation parameters
+    :type pp: list of floats
+    """
     return isinstance(pp, list) and len(pp) >= 12
 
 
-def get_srw_pp(propagation_parameters):
-    """ Try to get propagation parameters from object call in get_srw_pp() method"""
-    if check_srw_pp(propagation_parameters):
+def _get_srw_pp(propagation_parameters):
+    """ Try to get propagation parameters from object calling get_srw_pp() method
+
+    :param propagation_parameters: propagation parameters
+    :type propagation_parameters: list of floats
+    :return: propagation SRW parameters
+    """
+    if _check_srw_pp(propagation_parameters):
         return propagation_parameters
     elif 'get_srw_pp' in dir(propagation_parameters):
         tmp_pp = propagation_parameters.get_srw_pp()
-        if check_srw_pp(tmp_pp):
+        if _check_srw_pp(tmp_pp):
             return tmp_pp
 
     raise TypeError(
