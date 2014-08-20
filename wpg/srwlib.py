@@ -50,6 +50,7 @@ class SRWLParticle(object):
 
     def drift(self, _dist):
         """Propagates particle beam statistical moments over a distance in free space
+
         :param _dist: distance the beam has to be propagated over [m]
         """
         self.z += _dist
@@ -116,6 +117,7 @@ class SRWLPartBeam(object):
 
     def drift(self, _dist):
         """Propagates particle beam statistical moments over a distance in free space
+
         :param _dist: distance the beam has to be propagated over [m]
         """
         self.partStatMom1.drift(_dist)
@@ -514,14 +516,19 @@ class SRWLStokes(object):
 
     def add_stokes(self, _st, _n_comp=4, _mult=1, _meth=0):
         """Add Another Stokes structure
+
         :param _st: Stokes structure to be added
         :param _n_comp: number of components to treat
         :param _mult: multiplier 
         :param _meth: method of adding the Stokes structure _st:
-        0- simple addition assuming _wfr to have same mesh as this wavefront
-        1- add using bilinear interpolation (taking into account meshes of the two wavefronts)
-        2- add using bi-quadratic interpolation (taking into account meshes of the two wavefronts)
-        3- add using bi-cubic interpolation (taking into account meshes of the two wavefronts)
+
+            0- simple addition assuming _wfr to have same mesh as this wavefront
+
+            1- add using bilinear interpolation (taking into account meshes of the two wavefronts)
+
+            2- add using bi-quadratic interpolation (taking into account meshes of the two wavefronts)
+
+            3- add using bi-cubic interpolation (taking into account meshes of the two wavefronts)
         """
 
         nTot = _n_comp*self.mesh.ne*self.mesh.nx*self.mesh.ny #eventually allow for storage of less than 4 Stokes components!
@@ -555,6 +562,7 @@ class SRWLStokes(object):
 
     def avg_update_same_mesh(self, _more_stokes, _iter, _n_stokes_comp=4, _mult=1.):
         """ Update this Stokes data structure with new data, contained in the _more_stokes structure, calculated on the same mesh, so that this structure would represent estimation of average of (_iter + 1) structures
+        
         :param _more_stokes: Stokes data structure to "add" to the estimation of average
         :param _iter: number of Stokes structures already "added" previously
         :param _n_stokes_comp: number of Stokes components to treat (1 to 4)
