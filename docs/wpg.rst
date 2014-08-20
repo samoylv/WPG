@@ -145,7 +145,7 @@ If ypu have some errors runing IPython notebook, which ends with
 	    export LANG=en_US.UTF-8
 
 On xfel servers
-===============
++++++++++++++++
 
 Select the directory where WPG will be located
 
@@ -204,7 +204,7 @@ On Windows you can use putty and setup ssh tunnel in the following way: `putty.p
 Open your local browser with the following web address: http://localhost:YOUR_UNIQUE_PORT_NUMBER
 
 On ubuntu workstation
-=====================
++++++++++++++++++++++
 
 Select the directory were you WPG will located
 
@@ -247,7 +247,7 @@ Run web interface.
 f web page not pop up automatically, open your browser in http://localhost:8888
 
 If you have SRW already installed
-=================================
++++++++++++++++++++++++++++++++++
 
 Just copy ``srwlib.py``, ``uti_plot.py`` and ``srwlpy.so`` in 'wpg'
 folder
@@ -261,6 +261,6 @@ Please download HDFVeiw tool from
 [[http://www.hdfgroup.org/hdf-java-html/hdfview/]]
 
 :mod:`wpg` module
-----------------------------
+=================
 
 .. automodule:: wpg
