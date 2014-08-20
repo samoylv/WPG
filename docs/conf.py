@@ -187,7 +187,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'WPG.tex', u'WPG Documentation',
-   u'Alexey Buzmakov, Liubov Samoilova', 'manual'),
+   u'Alexey Buzmakov (WPG), Liubov Samoilova (WPG), Oleg Chubar (SRWLib)', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -217,7 +217,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'wpg', u'WPG Documentation',
-     [u'Alexey Buzmakov, Liubov Samoilova'], 1)
+     [u'Alexey Buzmakov (WPG), Liubov Samoilova (WPG), Oleg Chubar (SRWLib)'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -231,7 +231,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'WPG', u'WPG Documentation',
-   u'Alexey Buzmakov, Liubov Samoilova', 'WPG', 'One line description of project.',
+   u'Alexey Buzmakov (WPG), Liubov Samoilova (WPG), Oleg Chubar (SRWLib)', 'WPG', 'One line description of project.',
    'Miscellaneous'),
 ]
 
