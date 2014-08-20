@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'WPG'
-copyright = u'2014, Alexey Buzmakov, Liubov Samoilova'
+copyright = u'2014, Alexey Buzmakov (WPG), Liubov Samoilova (WPG), Oleg Chubar (SRWLib)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
