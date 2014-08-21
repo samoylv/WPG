@@ -6,6 +6,8 @@ WPG provides intuitive interface to the [SRW library](https://github.com/ochubar
 
 The application examples oriented on [European XFEL](http://www.xfel.eu) design parameters. 
 
+[Online documentation pages](http://wpg.readthedocs.org) 
+
 
 
 
