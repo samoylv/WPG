@@ -106,10 +106,9 @@ def set_value(dic, keys_chain, value):
     """
     Set value in dictionary by  chain of keys
 
-    :param value:
-    :param dic:
+    :param value: value
+    :param dic: dic
     :param keys_chain: list of keys
-    :raise : KeyError
     """
     node = dic
     for key in keys_chain[:-1]:
@@ -125,9 +124,9 @@ def get_value(dic, keys_chain):
     """
     Get node from dictionary by  chain of keys
 
-    :param dic:
+    :param dic: dict from which value will taken
     :param keys_chain: list of keys
-    :raise : KeyError
+    :return res: return value
     """
     res = dic
     for key in keys_chain:
@@ -142,7 +141,6 @@ def set_value_attr(obj, keys_chain, value):
     :param obj:
     :param keys_chain: list of keys
     :param value:
-    :raise : KeyError
     """
 
     class glossary_folder(object):

@@ -1,3 +1,12 @@
+"""
+This module contains definitions custom optical elements. Described mapping (or aliases) of some of SRW optical elements (SRWLOpt* <-> wpg)
+
+.. module:: wpg.optical_elements
+   :platform: Linux, Mac OSX, Windows
+
+.. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
+"""
+
 from wpg.srwlib import SRWLOptD as Drift
 from wpg.srwlib import SRWLOptL as Lens
 from wpg.srwlib import SRWLOptA as Aperture
@@ -6,13 +15,11 @@ import wpg.srwlib
 
 
 class WPGOpticalElement(object):
-
     """Base class for optical elements"""
 
     def __init__(self):
         pass
-
-
+      
 class Empty(WPGOpticalElement):
 
     """Optical element: Empty
@@ -36,7 +43,7 @@ class Empty(WPGOpticalElement):
 
 class Use_PP(object):
 
-    """Short version of propagation parameters"""
+    """Short version of propagation parameters. Should be used with `wpg.beamline.Beamline`"""
 
     def __init__(self, auto_resize_before=None, auto_resize_after=None,
                  releative_precision=None, semi_analytical_treatment=None,
@@ -216,9 +223,17 @@ class Use_PP(object):
         self.sampling_v = s
 
     def get_srw_pp(self):
+        """
+        Return SRW propagation parameters list. Useful for interoperations with SRW tools.
+        
+        :return: list of floats (propagation parameters)
+        """
         return self.pp
 
     def __str__(self):
+        """
+        Print propagation parameters in human readable format.
+        """
         return '\n'.join([
             "zoom_h = {}".format(self.zoom_h),
             "zoom_v = {}".format(self.zoom_v),

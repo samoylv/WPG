@@ -76,8 +76,8 @@ def calculate_peak_pos(mwf):
     nc = numpy.where(irr == irr_max)
     irr_x = irr[ny / 2, :]
     irr_y = irr[:, nx / 2]
-    x0 = numpy.max(x_axis[numpy.where(irr_x == max(irr_x))])
-    y0 = numpy.max(y_axis[numpy.where(irr_y == max(irr_y))])
+    x0 = numpy.max(x_axis[numpy.where(irr_x == numpy.max(irr_x))])
+    y0 = numpy.max(y_axis[numpy.where(irr_y == numpy.max(irr_y))])
     return [x0, y0]
 
 
@@ -160,18 +160,18 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
         pylab.subplot(132)
     else:
         pylab.figure()
-    if isVlog and max(irr_y) > 0:
+    if isVlog and numpy.max(irr_y) > 0:
         #ya = ya*1e6
         pylab.semilogy(ya * 1e6, irr_y, '-vk')
         pylab.xlabel('(um)')
-        pylab.xlim(min(ya[numpy.where(irr_y >= imax * i_y_min)])
-                   * 1e6, max(ya[numpy.where(irr_y >= imax * i_y_min)]) * 1e6)
+        pylab.xlim(numpy.min(ya[numpy.where(irr_y >= imax * i_y_min)])
+                   * 1e6, numpy.max(ya[numpy.where(irr_y >= imax * i_y_min)]) * 1e6)
     else:
         #ya = ya*1e3
         pylab.plot(ya * 1e3, irr_y)
         pylab.xlabel('y (mm)')
-        pylab.xlim(min(ya[numpy.where(irr_y >= imax * i_y_min)])
-                   * 1e3, max(ya[numpy.where(irr_y >= imax * i_y_min)]) * 1e3)
+        pylab.xlim(numpy.min(ya[numpy.where(irr_y >= imax * i_y_min)])
+                   * 1e3, numpy.max(ya[numpy.where(irr_y >= imax * i_y_min)]) * 1e3)
     pylab.ylim(0,numpy.max(ii)*1.1)
     pylab.ylabel(label4irradiance)
     pylab.title('Vertical cut,  xc = ' + str(int(xc * 1e6)) + ' um')
@@ -180,18 +180,18 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
         pylab.subplot(133)
     else:
         pylab.figure()
-    if isHlog and max(irr_x) > 0:
+    if isHlog and numpy.max(irr_x) > 0:
         #xa = xa*1e6
         pylab.semilogy(xa * 1e6, irr_x, '-vr')
         pylab.xlabel('x, (um)')
-        pylab.xlim(min(xa[numpy.where(irr_x >= imax * i_x_min)])
-                   * 1e6, max(xa[numpy.where(irr_x >= imax * i_x_min)]) * 1e6)
+        pylab.xlim(numpy.min(xa[numpy.where(irr_x >= imax * i_x_min)])
+                   * 1e6, numpy.max(xa[numpy.where(irr_x >= imax * i_x_min)]) * 1e6)
     else:
         #xa = xa*1e3
         pylab.plot(xa * 1e3, irr_x)
         pylab.xlabel('x (mm)')
-        pylab.xlim(min(xa[numpy.where(irr_x >= imax * i_x_min)])
-                   * 1e3, max(xa[numpy.where(irr_x >= imax * i_x_min)]) * 1e3)
+        pylab.xlim(numpy.min(xa[numpy.where(irr_x >= imax * i_x_min)])
+                   * 1e3, numpy.max(xa[numpy.where(irr_x >= imax * i_x_min)]) * 1e3)
     pylab.ylim(0,numpy.max(ii)*1.1)
     pylab.ylabel(label4irradiance)
     pylab.title('Horizontal cut, yc = ' + str(int(yc * 1e6)) + ' um')
@@ -205,8 +205,8 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
     if bPlotPha:
         pylab.figure()
         pylab.plot(ya * 1e3, pha_y, '-ok')
-        pylab.xlim(min(ya[numpy.where(irr_y >= imax * i_y_min)])
-                   * 1e3, max(ya[numpy.where(irr_y >= imax * i_y_min)]) * 1e3)
+        pylab.xlim(numpy.min(ya[numpy.where(irr_y >= imax * i_y_min)])
+                   * 1e3, numpy.max(ya[numpy.where(irr_y >= imax * i_y_min)]) * 1e3)
         pylab.ylim(-numpy.pi, numpy.pi)
         pylab.xlabel('y (mm)')
         pylab.title('phase, vertical cut, x=0')
@@ -214,8 +214,8 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
 
         pylab.figure()
         pylab.plot(xa * 1e3, pha_x, '-or')
-        pylab.xlim(min(xa[numpy.where(irr_x >= imax * i_x_min)])
-                   * 1e3, max(xa[numpy.where(irr_x >= imax * i_x_min)]) * 1e3)
+        pylab.xlim(numpy.min(xa[numpy.where(irr_x >= imax * i_x_min)])
+                   * 1e3, numpy.max(xa[numpy.where(irr_x >= imax * i_x_min)]) * 1e3)
         pylab.ylim(-numpy.pi, numpy.pi)
         pylab.xlabel('x (mm)')
         pylab.title('phase, horizontal cut, y=0')
@@ -238,8 +238,8 @@ def calculate_fwhm(dd):
     irr_x = dd[:, 1]
     irr_max = numpy.max(irr_x)
     x_axis = dd[:, 0]
-    fwhm = max(x_axis[numpy.where(irr_x >= irr_max / 2)]) - \
-        min(x_axis[numpy.where(irr_x >= irr_max / 2)])
+    fwhm = numpy.max(x_axis[numpy.where(irr_x >= irr_max / 2)]) - \
+        numpy.min(x_axis[numpy.where(irr_x >= irr_max / 2)])
     return fwhm
 
 
@@ -247,8 +247,8 @@ def calculate_mediane(dd):
     irr_x = dd[:, 1]
     irr_max = numpy.max(irr_x)
     x_axis = dd[:, 0]
-    mediane = (max(x_axis[numpy.where(irr_x >= irr_max / 2)])
-               + min(x_axis[numpy.where(irr_x >= irr_max / 2)])) / 2
+    mediane = (numpy.max(x_axis[numpy.where(irr_x >= irr_max / 2)])
+               + numpy.min(x_axis[numpy.where(irr_x >= irr_max / 2)])) / 2
     return mediane
 
 
@@ -264,7 +264,7 @@ def calculate_fwhm_x(mwf):
     fwhm = 0.
     idx = numpy.where(irr_x >= irr_max / 2)
     if numpy.size(idx) > 0:
-        fwhm = max(x_axis[numpy.where(irr_x >= irr_max / 2)]) - min(
+        fwhm = numpy.max(x_axis[numpy.where(irr_x >= irr_max / 2)]) - numpy.min(
             x_axis[numpy.where(irr_x >= irr_max / 2)])
     return fwhm
 
@@ -280,7 +280,7 @@ def calculate_fwhm_y(mwf):
     fwhm = 0.
     idx = numpy.where(irr_y >= irr_max / 2)
     if numpy.size(idx) > 0:
-        fwhm = max(y_axis[numpy.where(irr_y >= irr_max / 2)]) - min(
+        fwhm = numpy.max(y_axis[numpy.where(irr_y >= irr_max / 2)]) - numpy.min(
             y_axis[numpy.where(irr_y >= irr_max / 2)])
     return fwhm
 
@@ -310,4 +310,38 @@ def propagate_run(ifname, ofname, optBL, bSaved=False):
         mwf.store_hdf5(ofname + '.h5')
     print 'done'
     print 'propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min'
+    return wfr
+
+def propagate_wavefront(wavefront, beamline, output_file = None):
+    """
+    Propagate wavefront and store it in output file.
+    
+    :param wavefront: Wavefront object or path to HDF5 file
+    :param beamline: SRWLOptC container of beamline
+    :param output_file: if parameter present - store propagaed wavefront to file
+    :return: propagated wavefront object:
+    """
+    
+    if not isinstance(beamline, Beamline):
+        bl = Beamline(beamline)
+    else:
+        bl = beamline
+    
+    if isinstance(wavefront, Wavefront):
+        wfr = Wavefront(srwl_wavefront=wavefront._srw_wf)
+    else:
+        print '*****reading wavefront from h5 file...'
+        wfr = Wavefront()
+        wfr.load_hdf5(wavefront)
+        
+    
+    print '*****propagating wavefront (with resizing)...'
+    bl.propagate(wfr)
+
+    print '[nx, ny, xmin, xmax, ymin, ymax]', get_mesh(wfr)
+    
+    if not output_file is None:
+        print 'save hdf5:', output_file
+        wfr.store_hdf5(output_file)
+    print 'done'
     return wfr

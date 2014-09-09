@@ -23,5 +23,7 @@ ipython: core
 	cp lib/srwlpy.so samples/srw_python/wavefront
 	cd samples/srw_python; ln -s ../../modules/ipython_env/build/bin/ipython
 
-
-.PHONY: all core modules clean ipython
+doc:
+	cd docs; make html
+	
+.PHONY: all core modules clean ipython doc
