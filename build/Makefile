@@ -82,12 +82,14 @@ srw:
 	tar xzvf $(SRC_DIR)/fftw-2.1.5.tar.gz --directory=$(TMP_DIR)
 	cd $(TMP_DIR)/fftw-2.1.5; ./configure  --prefix=$(BUILD_DIR) --with-pic --enable-float; make clean; make -j ;make install;
 
-	wget -nc -O $(SRC_DIR)/master.zip http://github.com/ochubar/SRW/archive/master.zip; echo 'Done'
-	unzip -o $(SRC_DIR)/master.zip -d $(TMP_DIR)
-	cp $(BUILD_DIR)/lib/libfftw.a $(TMP_DIR)/SRW-master/ext_lib/
-	cp $(BUILD_DIR)/lib/librfftw.a $(TMP_DIR)/SRW-master/ext_lib/
+	wget --no-check-certificate -nc -O $(SRC_DIR)/srw.zip https://github.com/ochubar/SRW/archive/ebdb80779f333edcdb35e3cd966869cbaf9538c0.zip; echo 'Done'
+	unzip -o $(SRC_DIR)/srw.zip -d $(TMP_DIR)
+	rm -rf $(TMP_DIR)/SRW
+	mv -u $(TMP_DIR)/SRW-ebdb80779f333edcdb35e3cd966869cbaf9538c0 $(TMP_DIR)/SRW
+	cp $(BUILD_DIR)/lib/libfftw.a $(TMP_DIR)/SRW/ext_lib/
+	cp $(BUILD_DIR)/lib/librfftw.a $(TMP_DIR)/SRW/ext_lib/
 
-	cd $(TMP_DIR)/SRW-master; make all;
-	cp $(TMP_DIR)/SRW-master/cpp/gcc/libsrw.a $(BUILD_DIR)/lib
-	cp $(TMP_DIR)/SRW-master/cpp/gcc/srwlpy.so $(BUILD_DIR)/lib
-	cp $(TMP_DIR)/SRW-master/cpp/gcc/srwlpy.so $(TMP_DIR)/SRW-master/env/work/srw_python
+	cd $(TMP_DIR)/SRW; make all;
+	cp $(TMP_DIR)/SRW/cpp/gcc/libsrw.a $(BUILD_DIR)/lib
+	cp $(TMP_DIR)/SRW/cpp/gcc/srwlpy.so $(BUILD_DIR)/lib
+	cp $(TMP_DIR)/SRW/cpp/gcc/srwlpy.so $(TMP_DIR)/SRW/env/work/srw_python
