@@ -11,6 +11,7 @@ from wpg.srwlib import SRWLOptD as Drift
 from wpg.srwlib import SRWLOptL as Lens
 from wpg.srwlib import SRWLOptA as Aperture
 from wpg.srwlib import SRWLOptMirEl as Mirror_elliptical
+from wpg.srwlib import SRWLOptT as WF_dist
 from wpg.srwlib import srwl
 import wpg.srwlib
 
