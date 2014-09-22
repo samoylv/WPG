@@ -85,7 +85,7 @@ srw:
 	wget --no-check-certificate -nc -O $(SRC_DIR)/srw.zip https://github.com/buzmakov/SRW/archive/80c89e0961965c9d77d6f2f623a4c3f2c2302a5d.zip; echo 'Done'
 	unzip -o $(SRC_DIR)/srw.zip -d $(TMP_DIR)
 	rm -rf $(TMP_DIR)/SRW
-	mv -u $(TMP_DIR)/SRW-80c89e0961965c9d77d6f2f623a4c3f2c2302a5d $(TMP_DIR)/SRW
+	mv $(TMP_DIR)/SRW-80c89e0961965c9d77d6f2f623a4c3f2c2302a5d $(TMP_DIR)/SRW
 	cp $(BUILD_DIR)/lib/libfftw.a $(TMP_DIR)/SRW/ext_lib/
 	cp $(BUILD_DIR)/lib/librfftw.a $(TMP_DIR)/SRW/ext_lib/
 
