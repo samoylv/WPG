@@ -249,8 +249,27 @@ f web page not pop up automatically, open your browser in http://localhost:8888
 If you have SRW already installed
 +++++++++++++++++++++++++++++++++
 
-Just copy ``srwlib.py``, ``uti_plot.py`` and ``srwlpy.so`` in 'wpg'
+Just copy all pyhon files ``SRW-master/env/work/srw_python/*.py`` and ``srwlpy.so`` in 'wpg'
 folder
+
+
+How to install WGP on MS Windows.
++++++++++++++++++++++++++++++++++
+
+You should have installed python2.7 with modules numpy, matplotlib, h5py and ipython. If these modules have not been installed yet, you can download a free python bundle with preinstalled packages `here <http://continuum.io/downloads>`_ 
+
+Download `WPG package <https://github.com/samoylv/WPG/archive/master.zip>`_ and unpack it.
+
+Download `SRW library <https://github.com/ochubar/SRW/archive/master.zip>`_ and unpack it in any folder.
+
+Copy the following files from the SRW folder to WPG folder:	
+
+- SRW-master/env/work/srw_python/*.py to WGP/wpg
+- SRW-master/env/work/srw_python/lib/srwlpy2_x64.pyd to WGP/wpg
+
+Rename srwlpy2_x64.pyd to srwlpy.pyd
+
+Run ```ipython notebook --pylab=inline``` in ```WGP/samples```
 
 Useful links
 ------------
