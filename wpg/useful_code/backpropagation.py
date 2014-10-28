@@ -67,7 +67,7 @@ def fit_gaussian(data):
     return {'params': x, 'rsquared': rsquared}
 
 
-def fit_gaussian_pulse(wf, polarization='vertical'):
+def fit_gaussian_pulse(wf, polarization='horizontal'):
     """
     Calculate gaussian parameters for all slices in wavefront and add it to custom_fields['misc']['gaussain_parameters']
     """
@@ -179,8 +179,8 @@ def show_slices(wfr, slice_numbers=None):
     
     import pylab as plt
     
-    wf_intensity = wfr.get_intensity(polarization='vertical')
-    wf_phase = wfr.get_phase(polarization='vertical')
+    wf_intensity = wfr.get_intensity(polarization='horizontal')
+    wf_phase = wfr.get_phase(polarization='horizontal')
     dx = (wfr.params.Mesh.xMax - wfr.params.Mesh.xMin)/(wfr.params.Mesh.nx - 1)
     dy = (wfr.params.Mesh.yMax - wfr.params.Mesh.yMin)/(wfr.params.Mesh.ny - 1)
     dt = (wfr.params.Mesh.sliceMax - wfr.params.Mesh.sliceMin)/(wfr.params.Mesh.nSlices - 1)
