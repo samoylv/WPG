@@ -42,7 +42,7 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
     else:
         GsnBm.pulseEn = 0.001 # was 1 mJ in the Tutorial exampes as well
     GsnBm.repRate = 1  # Rep. Rate [Hz] - to be corrected
-    GsnBm.polar = 2  # 1- linear hoirizontal
+    GsnBm.polar = 1  # 1- linear hoirizontal; 2 - linear vertical
     # Far field angular divergence: 14.1e-6 ./ (ekev) .^0.75
     # 0.17712e-09/(4*Pi)/(14.1e-06/((7)^0.75)) for 7 keV, 3.55561e-06 =
     # 0.0826561e-09/(4*Pi)/(14.1e-06/((15)^0.75)) for 15 keV #Horiz. RMS size
@@ -144,7 +144,7 @@ def build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d
         GsnBm.repRate = repRate 
     else:
         GsnBm.repRate = 1  # Rep. Rate [Hz] - to be corrected
-    GsnBm.polar = 2  # 1- linear hoirizontal
+    GsnBm.polar = 1  # 1- linear hoirizontal; 2 - linear vertical
     GsnBm.sigX = sigX  # Horiz. RMS size at Waist [m]
     GsnBm.sigY = sigY  # Vert. RMS size at Waist [m]
     if pulseTau is not None:
