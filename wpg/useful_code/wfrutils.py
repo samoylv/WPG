@@ -68,7 +68,7 @@ def plot_2d(amap, xmin, xmax, ymin, ymax, title_fig, title_x, title_y):
 
 def calculate_peak_pos(mwf):
     # irradiance
-    irr = mwf.get_intensity(slice_number=0, polarization='vertical')
+    irr = mwf.get_intensity(slice_number=0, polarization='horizontal')
     irr_max = numpy.max(irr)
     [nx, ny, xmin, xmax, ymin, ymax] = get_mesh(mwf)
     x_axis = numpy.linspace(xmin, xmax, nx)
@@ -115,7 +115,7 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
         print 'FWHMy [mm]:', calculate_fwhm_y(mwf) * 1e3
     [xc, yc] = calculate_peak_pos(mwf)
     print 'Coordinates of center, [mm]:', xc * 1e3, yc * 1e3
-    ii = mwf.get_intensity(slice_number=0, polarization='vertical')
+    ii = mwf.get_intensity(slice_number=0, polarization='horizontal')
     # [LS14-06-02] 
     # for 2D Gaussian the intrincic SRW GsnBeam wave field units Nph/mm^2/0.1%BW 
     # to get fluence W/mm^2 
@@ -123,7 +123,7 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
     ii = ii*mwf.params.photonEnergy/J2EV#*1e3
     imax = numpy.max(ii)
     [nx, ny, xmin, xmax, ymin, ymax] = get_mesh(mwf)
-    ph = mwf.get_phase(slice_number=0, polarization='vertical')
+    ph = mwf.get_phase(slice_number=0, polarization='horizontal')
     dx = (xmax-xmin)/(nx-1); dy = (ymax-ymin)/(ny-1)
     print 'stepX, stepY [um]:', dx * 1e6, dy * 1e6, '\n'
     xa = numpy.linspace(xmin, xmax, nx); 
@@ -254,7 +254,7 @@ def calculate_mediane(dd):
 
 def calculate_fwhm_x(mwf):
     # irradiance
-    irr = mwf.get_intensity(slice_number=0, polarization='vertical')
+    irr = mwf.get_intensity(slice_number=0, polarization='horizontal')
     irr_max = numpy.max(irr)
     [nx, ny, xmin, xmax, ymin, ymax] = get_mesh(mwf)
     [xc, yc] = calculate_peak_pos(mwf)
@@ -270,7 +270,7 @@ def calculate_fwhm_x(mwf):
 
 
 def calculate_fwhm_y(mwf):
-    irr = mwf.get_intensity(slice_number=0, polarization='vertical')
+    irr = mwf.get_intensity(slice_number=0, polarization='horizontal')
     irr_max = numpy.max(irr)
     [nx, ny, xmin, xmax, ymin, ymax] = get_mesh(mwf)
     [xc, yc] = calculate_peak_pos(mwf)
