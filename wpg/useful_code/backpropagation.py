@@ -3,6 +3,7 @@ import errno
 import gc
 import numpy as np
 import scipy
+import scipy.optimize
 
 import wpg.srwlib
 from wpg.srwlib import SRWLOptC
