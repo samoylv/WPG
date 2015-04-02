@@ -43,6 +43,9 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
                 group.create_dataset(name, data=value, chunks=True)
             except TypeError:
                 group.create_dataset(name, data=value)
+            except Exception:
+                print "Error at name='{}' value='{}' group='{}'".format(name, value, group)
+                raise
 
 
     with h5py.File(hdf5_file_name, 'w') as res_file:
@@ -64,6 +67,20 @@ def load_dict_slash_hdf5(hdf5_file_name):
 
     return out_dict
 
+def update_dict_slash_string(input_dict, keys_string, value):
+    """
+    Update dictionary from slash separated keys_string by value
+    :param input_dict: dictionary to be updated
+    :param keys_string: slash separated keys_string
+    :param value: value 
+    """
+    keys=keys_string.split('/')
+    tdict=input_dict
+    for k in keys[:-1]:
+        if not k in tdict:
+            tdict[k]={}
+        tdict=tdict[k]
+    tdict[keys[-1]]=value
 
 def tree():
     """
@@ -89,10 +106,9 @@ def set_value(dic, keys_chain, value):
     """
     Set value in dictionary by  chain of keys
 
-    :param value:
-    :param dic:
+    :param value: value
+    :param dic: dic
     :param keys_chain: list of keys
-    :raise : KeyError
     """
     node = dic
     for key in keys_chain[:-1]:
@@ -108,9 +124,9 @@ def get_value(dic, keys_chain):
     """
     Get node from dictionary by  chain of keys
 
-    :param dic:
+    :param dic: dict from which value will taken
     :param keys_chain: list of keys
-    :raise : KeyError
+    :return res: return value
     """
     res = dic
     for key in keys_chain:
@@ -125,7 +141,6 @@ def set_value_attr(obj, keys_chain, value):
     :param obj:
     :param keys_chain: list of keys
     :param value:
-    :raise : KeyError
     """
 
     class glossary_folder(object):

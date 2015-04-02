@@ -1,19 +1,35 @@
 # -*- coding: utf-8 -*-
-__author__ = 'A. Buzmakov'
+"""
+This module contains definitions (glossary) of Wavefront fields. Described mapping fields SRWLWfr <-> wpg.Wavefront
+
+.. module:: wpg.glossary
+   :platform: Linux, Mac OSX, Windows
+
+.. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
+"""
 
 import inspect
 import sys
-import utils
+import wpg.utils as utils
 import warnings
 import numpy
 import array
 
 
 class RadiationField(object):
-    glossary_name = None
+    """
+    This is base class for all Wavefront fileds.
+    """
+
+    glossary_name = None # used as path for mapping in wpg.Wavefront
 
     def __init__(self, wf):
-        # TODO: fixit
+        """
+        Used for map values to Wavefront. Also map description string from docstrings and attributes.
+
+        :param wf: Wavefront
+        :type wf: wpg.Wavefront
+        """
 
         if not wf.__class__.__name__ == 'Wavefront':
             raise TypeError
@@ -23,7 +39,10 @@ class RadiationField(object):
                            'units': self.find_units_label()}
 
     def find_units_label(self):
-        """Search [units] in field docstring"""
+        """Search [units] in field docstring
+
+        :return: units string 
+        """
 
         descr = self.__doc__
         descr = descr.replace('\n', ' ')
@@ -39,19 +58,28 @@ class RadiationField(object):
         return units
 
     def _map_to_dict(self):
-        """Map Radiation field to dictionary"""
+        """
+        Map Radiation field to dictionary
+        
+        :return: dictionary
+        """
 
         t = {}
         utils.set_value(t, self.keys_chain, self.value)
         return t
 
     def _map_from_dict(self, dic):
-        """Map Radiation field from dictionary"""
+        """Map Radiation field from dictionary
+        :param dic: dictionary
+        """
 
         self.value = utils.get_value(dic, self.keys_chain)
 
     @property
     def value(self):
+        """
+        Property where value stored.
+        """
         raise NotImplemented
 
     @value.setter
@@ -60,6 +88,11 @@ class RadiationField(object):
 
     @property
     def keys_chain(self):
+        """
+        Split field name to the parts.
+
+        :return: tpule of strings
+        """
         return self.glossary_name.split('/')
 
 
@@ -73,7 +106,8 @@ class WFVersion(RadiationField):
         """
         Version field.
 
-        :param wf:
+        :param wf: Wavefront
+        :type wf: wpg.Wavefront
         """
 
         super(WFVersion, self).__init__(wf)
@@ -107,7 +141,8 @@ class WFRadiationPhotonEnergy(RadiationField):
         """
         params/photonEnergy field.
 
-        :param wf:
+        :param wf: Wavefront
+        :type wf: wpg.Wavefront
         """
 
         super(WFRadiationPhotonEnergy, self).__init__(wf)
@@ -398,7 +433,7 @@ class WFRadiationMeshNSlices(RadiationField):
     @value.setter
     def value(self, val):
         self._wf._srwl_wf.mesh.ne = int(val)
-        self._wf.allocate_moments()
+        self._wf._allocate_srw_moments()
 
 
 class WFRadiationMeshXMin(RadiationField):
@@ -914,8 +949,8 @@ class WFDataArrEhor(RadiationField):
 
         :param val: complex numpy 3D array or array.array. if array.array - just copy
         """
-        n_total = self._wf.get_total_elements() * self._wf.params.nval
-        self._wf.allocate_moments()
+        n_total = self._wf._get_total_elements() * self._wf.params.nval
+        self._wf._allocate_srw_moments()
         if type(val) == array.array:
             if not val.count() == n_total:
                 warnings.warn('New array size not equal to wavefront size. You must set it by yourself.')
@@ -964,8 +999,8 @@ class WFDataArrEver(RadiationField):
 
     @value.setter
     def value(self, val):
-        n_total = self._wf.get_total_elements() * self._wf.params.nval
-        self._wf.allocate_moments()
+        n_total = self._wf._get_total_elements() * self._wf.params.nval
+        self._wf._allocate_srw_moments()
         if type(val) == array.array:
             if not val.count() == n_total:
                 warnings.warn('New array size not equal to wavefront size. You must set it by yourself.')
@@ -988,7 +1023,9 @@ class WFDataArrEver(RadiationField):
 
 def get_wf_fields():
     """
-    return iterator over wafefront fields in glossary
+    Return fields in proper order to map it in Wavefront
+
+    :return: iterator over wavefront fields in glossary
     """
 
     clsmembers = inspect.getmembers(sys.modules[__name__],
@@ -1023,7 +1060,7 @@ def get_glosary_info():
 
 def print_glossary():
     """
-    Print glossry docs
+    Print glossary docs
     """
 
     for wf in get_wf_fields():
@@ -1045,7 +1082,7 @@ def print_glossary():
 
 def print_glossary_html():
     """
-    Print glossry docsas html table
+    Print glossry docsas html table. Used to build alfresco documentaion page.
     """
 
     gloss = []

@@ -5,9 +5,9 @@ core:
 
 modules: core
 	cp build/lib/srwlpy.so wpg/
-	cp build/tmp/SRW-master/env/work/srw_python/srwlib.py wpg/
-	cp build/tmp/SRW-master/env/work/srw_python/uti_plot.py wpg/
-	cp build/tmp/SRW-master/cpp/src/lib/srwlib.h docs/
+	cp build/tmp/SRW/env/work/srw_python/*.py wpg/
+	cp -r build/tmp/SRW/env/work/srw_python/data_example_* wpg/
+	cp build/tmp/SRW/cpp/src/lib/srwlib.h docs/
 
 clean:
 	cd build; make clean
@@ -23,5 +23,7 @@ ipython: core
 	cp lib/srwlpy.so samples/srw_python/wavefront
 	cd samples/srw_python; ln -s ../../modules/ipython_env/build/bin/ipython
 
-
-.PHONY: all core modules clean ipython
+doc:
+	cd docs; make html
+	
+.PHONY: all core modules clean ipython doc

@@ -9,6 +9,8 @@ import numpy as np
 
 import wpg
 from wpg.generators import build_gauss_wavefront
+from wpg.beamline import Beamline
+from wpg.optical_elements import Drift, Use_PP
 
 
 if __name__ == "__main__":
