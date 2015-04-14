@@ -207,7 +207,7 @@ class Wavefront(object):
         res = array.array('f', [0] * self._get_total_elements())
         res = srwlib.srwl.CalcIntFromElecField(
             res, self._srwl_wf, pol, 0, 6, self.params.photonEnergy, 0, 0)
-        res = np.array(res, dtype='float32')
+        res = np.array(res, dtype='float32', copy=False)
         res.shape = (
             self.params.Mesh.ny, self.params.Mesh.nx, self.params.Mesh.nSlices)
         if not slice_number is None:

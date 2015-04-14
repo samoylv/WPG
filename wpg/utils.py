@@ -38,7 +38,8 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
         if not value is None:
             try:
                 group.create_dataset(name, data=value, chunks=True,
-                                     compression='gzip', compression_opts=9)
+                                    compression='gzip', compression_opts=3
+                                     )
             except ValueError: #if h5py not support compression
                 group.create_dataset(name, data=value, chunks=True)
             except TypeError:

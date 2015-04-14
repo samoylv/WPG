@@ -937,7 +937,7 @@ class WFDataArrEhor(RadiationField):
         Horizontal polarization
         """
 
-        res = numpy.array(self._wf._srwl_wf.arEx, dtype='float32')
+        res = numpy.array(self._wf._srwl_wf.arEx, dtype='float32', copy=False)
         if res.shape:
             res.shape = (self._wf.params.Mesh.ny, self._wf.params.Mesh.nx,
                          self._wf.params.Mesh.nSlices,self._wf.params.nval)
@@ -956,7 +956,7 @@ class WFDataArrEhor(RadiationField):
                 warnings.warn('New array size not equal to wavefront size. You must set it by yourself.')
             self._wf._srwl_wf.arEx = array.array('f', val)
         else:
-            val = numpy.array(val)
+            val = numpy.array(val, dtype='float32')
             if not numpy.prod(val.shape) == n_total:
                 warnings.warn('New array size not equal to wavefront size. It will set automaticaly to array size.')
                 self._wf.params.nx = val.shape[1]
@@ -991,7 +991,7 @@ class WFDataArrEver(RadiationField):
         Vertical polarization
         """
 
-        res = numpy.array(self._wf._srwl_wf.arEy, dtype='float32')
+        res = numpy.array(self._wf._srwl_wf.arEy, dtype='float32', copy=False)
         if res.shape:
             res.shape = (self._wf.params.Mesh.ny, self._wf.params.Mesh.nx,
                          self._wf.params.Mesh.nSlices,self._wf.params.nval)
@@ -1006,7 +1006,7 @@ class WFDataArrEver(RadiationField):
                 warnings.warn('New array size not equal to wavefront size. You must set it by yourself.')
             self._wf._srwl_wf.arEy = array.array('f', val)
         else:
-            val = numpy.array(val)
+            val = numpy.array(val, dtype='float32')
             if not numpy.prod(val.shape) == n_total:
                 warnings.warn('New array size not equal to wavefront size. It will set automaticaly to array size.')
                 self._wf.params.nx = val.shape[1]

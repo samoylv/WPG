@@ -12,8 +12,7 @@ from wpg.generators import build_gauss_wavefront
 from wpg.beamline import Beamline
 from wpg.optical_elements import Drift, Use_PP
 
-
-if __name__ == "__main__":
+def main():
     d2waist = 270.
     # beam parameters:
     qnC = 0.1  # [nC] e-bunch charge
@@ -35,8 +34,7 @@ if __name__ == "__main__":
     nz = 5
     tau = 0.12e-15
 
-    srw_wf = build_gauss_wavefront(
-        nx, ny, nz, ekev, xmin, xmax, ymin, ymax, tau, sigX, sigX, d2waist)
+    srw_wf = build_gauss_wavefront(nx, ny, nz, ekev, xmin, xmax, ymin, ymax, tau, sigX, sigX, d2waist)
     wf = wpg.Wavefront(srw_wf)
 
     if not os.path.exists('tests_data'):
@@ -47,3 +45,7 @@ if __name__ == "__main__":
 
     wf_out = wpg.Wavefront()
     wf_out.load_hdf5(wf_hdf5_out_file_path)
+    return wf
+
+if __name__ == "__main__":
+    main()    
