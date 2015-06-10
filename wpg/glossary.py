@@ -449,7 +449,7 @@ class WFRadiationMeshNvx(RadiationField):
     def __init__(self, wf):
         """params/Mesh/nvx field"""
 
-        super(WFRadiationMeshNy, self).__init__(wf)
+        super(WFRadiationMeshNvx, self).__init__(wf)
 
         self.attributes.update(
             {'units': '-',
@@ -478,7 +478,7 @@ class WFRadiationMeshNvy(RadiationField):
     def __init__(self, wf):
         """params/Mesh/nvy field"""
 
-        super(WFRadiationMeshNy, self).__init__(wf)
+        super(WFRadiationMeshNvy, self).__init__(wf)
 
         self.attributes.update(
             {'units': '-',
@@ -507,7 +507,7 @@ class WFRadiationMeshNvz(RadiationField):
     def __init__(self, wf):
         """params/Mesh/nvz field"""
 
-        super(WFRadiationMeshNy, self).__init__(wf)
+        super(WFRadiationMeshNvz, self).__init__(wf)
 
         self.attributes.update(
             {'units': '-',
@@ -536,7 +536,7 @@ class WFRadiationMeshHvx(RadiationField):
     def __init__(self, wf):
         """params/Mesh/hvx field"""
 
-        super(WFRadiationMeshNy, self).__init__(wf)
+        super(WFRadiationMeshHvx, self).__init__(wf)
 
         self.attributes.update(
             {'units': '-',
@@ -565,7 +565,7 @@ class WFRadiationMeshHvy(RadiationField):
     def __init__(self, wf):
         """params/Mesh/hvy field"""
 
-        super(WFRadiationMeshNy, self).__init__(wf)
+        super(WFRadiationMeshHvy, self).__init__(wf)
 
         self.attributes.update(
             {'units': '-',
@@ -594,7 +594,7 @@ class WFRadiationMeshHvz(RadiationField):
     def __init__(self, wf):
         """params/Mesh/hvz field"""
 
-        super(WFRadiationMeshNy, self).__init__(wf)
+        super(WFRadiationMeshHvz, self).__init__(wf)
 
         self.attributes.update(
             {'units': '-',
@@ -612,6 +612,7 @@ class WFRadiationMeshHvz(RadiationField):
     def value(self, val):
         self._wf._srwl_wf.mesh.hvz = int(val)
 
+# TODO: add wrapper for mesh._arSurf (we should know it size)
 
 class WFRadiationMeshXMin(RadiationField):
 

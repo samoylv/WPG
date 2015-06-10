@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This module contains  wrapper for SRWLOptC (optical container) and propagetion parameters. 
+This module contains  wrapper for SRWLOptC (optical container) and propagetion parameters.
 
 .. module:: wpg.beamline
    :platform: Linux, Mac OSX, Windows
@@ -28,7 +28,7 @@ class Beamline(object):
         """
         self.propagation_options = [{'optical_elements': [],
                                     'propagation_parameters':[]}]
-        if not srwl_beamline is None:
+        if srwl_beamline is not None:
             tolal_elements = max(
                 len(srwl_beamline.arProp), len(srwl_beamline.arOpt))
             for ti in range(tolal_elements):
@@ -47,7 +47,7 @@ class Beamline(object):
         """
         String representaion of beamline (used with print function).
 
-        :return: string 
+        :return: string
         """
         res = ''
         for po in self.propagation_options:
@@ -144,7 +144,7 @@ def _check_srw_pp(pp):
     :param pp: propagation parameters
     :type pp: list of floats
     """
-    return isinstance(pp, list) and len(pp) >= 12
+    return isinstance(pp, list) and len(pp) in [12, 17]
 
 
 def _get_srw_pp(propagation_parameters):
@@ -162,4 +162,4 @@ def _get_srw_pp(propagation_parameters):
             return tmp_pp
 
     raise TypeError(
-        'Propagation parameters should be a list of 12 numbers or have valid "get_srw_pp" method')
+        'Propagation parameters should be a list of 12 or 17 numbers or have valid "get_srw_pp" method')
