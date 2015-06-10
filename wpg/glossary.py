@@ -435,6 +435,166 @@ class WFRadiationMeshNSlices(RadiationField):
         self._wf._srwl_wf.mesh.ne = int(val)
         self._wf._allocate_srw_moments()
 
+class WFRadiationMeshNvx(RadiationField):
+
+    """Lab-frame coordinate of the inner normal to observation plane (/ surface in its center)"""
+
+    glossary_name = 'params/Mesh/nvx'
+
+    def __init__(self, wf):
+        """params/Mesh/nvx field"""
+
+        super(WFRadiationMeshNy, self).__init__(wf)
+
+        self.attributes.update(
+            {'units': '-',
+            'limits': '[2:LONG_MAX]',
+            'alias': ''
+            })
+
+    @property
+    def value(self):
+        """Numbers of points, vertical"""
+
+        return self._wf._srwl_wf.mesh.nvx
+
+    @value.setter
+    def value(self, val):
+        self._wf._srwl_wf.mesh.nvx = int(val)
+
+class WFRadiationMeshNvy(RadiationField):
+
+    """Lab-frame coordinate of the inner normal to observation plane (/ surface in its center)"""
+
+    glossary_name = 'params/Mesh/nvy'
+
+    def __init__(self, wf):
+        """params/Mesh/nvy field"""
+
+        super(WFRadiationMeshNy, self).__init__(wf)
+
+        self.attributes.update(
+            {'units': '-',
+            'limits': '[2:LONG_MAX]',
+            'alias': ''
+            })
+
+    @property
+    def value(self):
+        """Numbers of points, vertical"""
+
+        return self._wf._srwl_wf.mesh.nvy
+
+    @value.setter
+    def value(self, val):
+        self._wf._srwl_wf.mesh.nvy = int(val)
+
+class WFRadiationMeshNvz(RadiationField):
+
+    """Lab-frame coordinate of the inner normal to observation plane (/ surface in its center)"""
+
+    glossary_name = 'params/Mesh/nvz'
+
+    def __init__(self, wf):
+        """params/Mesh/nvz field"""
+
+        super(WFRadiationMeshNy, self).__init__(wf)
+
+        self.attributes.update(
+            {'units': '-',
+            'limits': '[2:LONG_MAX]',
+            'alias': ''
+            })
+
+    @property
+    def value(self):
+        """Numbers of points, vertical"""
+
+        return self._wf._srwl_wf.mesh.nvz
+
+    @value.setter
+    def value(self, val):
+        self._wf._srwl_wf.mesh.nvz = int(val)
+class WFRadiationMeshHvx(RadiationField):
+
+    """Lab-frame horizontal base vector of the observation plane (/ surface in its center) """
+
+    glossary_name = 'params/Mesh/hvx'
+
+    def __init__(self, wf):
+        """params/Mesh/hvx field"""
+
+        super(WFRadiationMeshNy, self).__init__(wf)
+
+        self.attributes.update(
+            {'units': '-',
+            'limits': '[2:LONG_MAX]',
+            'alias': ''
+            })
+
+    @property
+    def value(self):
+        """Numbers of points, vertical"""
+
+        return self._wf._srwl_wf.mesh.hvx
+
+    @value.setter
+    def value(self, val):
+        self._wf._srwl_wf.mesh.hvx = int(val)
+
+class WFRadiationMeshHvy(RadiationField):
+
+    """Lab-frame horizontal base vector of the observation plane (/ surface in its center) """
+
+    glossary_name = 'params/Mesh/hvy'
+
+    def __init__(self, wf):
+        """params/Mesh/hvy field"""
+
+        super(WFRadiationMeshNy, self).__init__(wf)
+
+        self.attributes.update(
+            {'units': '-',
+            'limits': '[2:LONG_MAX]',
+            'alias': ''
+            })
+
+    @property
+    def value(self):
+        """Numbers of points, vertical"""
+
+        return self._wf._srwl_wf.mesh.hvy
+
+    @value.setter
+    def value(self, val):
+        self._wf._srwl_wf.mesh.hvy = int(val)
+
+class WFRadiationMeshHvz(RadiationField):
+
+    """Lab-frame horizontal base vector of the observation plane (/ surface in its center) """
+
+    glossary_name = 'params/Mesh/hvz'
+
+    def __init__(self, wf):
+        """params/Mesh/hvz field"""
+
+        super(WFRadiationMeshNy, self).__init__(wf)
+
+        self.attributes.update(
+            {'units': '-',
+            'limits': '[2:LONG_MAX]',
+            'alias': ''
+            })
+
+    @property
+    def value(self):
+        """Numbers of points, vertical"""
+
+        return self._wf._srwl_wf.mesh.hvz
+
+    @value.setter
+    def value(self, val):
+        self._wf._srwl_wf.mesh.hvz = int(val)
 
 class WFRadiationMeshXMin(RadiationField):
 
