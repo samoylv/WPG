@@ -16,7 +16,7 @@ Several application examples, specific for XFEL, will be presented.
 Getting started
 ===============
 
-.. image:: _static/FELsource_out.eps
+.. image:: _static/FELsource_out.png
     :scale: 100 %
 
 Installation
