@@ -2130,11 +2130,16 @@ class SRWLOptCryst(SRWLOpt):
         """
         #dSi = 5.43096890 # Si lattice constant (A)
         eV2wA = 12398.4193009 # energy to wavelength conversion factor 12398.41930092394
+
+        print (self.dSp,self.angAs,_en)
         wA = eV2wA/_en
         #Tar = math.pi*Ta/180.
         #Kh = norm(Hr)/dSi # reflection vector modulus
         kh = 1./self.dSp # because self.dSp = dSi/norm(Hr)
+        print (self.angAs)
+    
         hv = [0, kh*cos(self.angAs), -kh*sin(self.angAs)]
+        print (self.dSp, _en, wA,kh)
         tBr = asin(wA*kh/2)
         tKin = tBr - self.angAs # TKin = Tbr - Tar
         tKou = tBr + self.angAs # TKou = Tbr + Tar

@@ -71,8 +71,8 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
     #wfr.presFT = 0 #Defining Initial Wavefront in Frequency Domain
 
     wfr.avgPhotEn = GsnBm.avgPhotEn
-    wfr.mesh.eStart = -3 * GsnBm.sigT  # Initial Time [s]
-    wfr.mesh.eFin = 3 * GsnBm.sigT  # Final Time [s]
+    wfr.mesh.eStart = -10 * GsnBm.sigT  # Initial Time [s], 10 ~= 7*sqrt(2)
+    wfr.mesh.eFin = 10 * GsnBm.sigT  # Final Time [s]
 
     # Longitudinal Position [m] at which Electric Field has to be calculated,
     # i.e. the position of the first optical element
