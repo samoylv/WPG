@@ -1,8 +1,5 @@
-Introduction
-============
-
 About wpg
----------
+=========
 
 The simulations based on wave optics have become indispensable for beamline design for highly coherent novel X-ray sources such as X-ray Free Electron Lasers (XFEL). 
 
@@ -16,11 +13,17 @@ The wavefronts are saved in hdf5 format for the eventual further processing and 
 
 Several application examples, specific for XFEL, will be presented.
 
+Getting started
+===============
+
+.. image:: _static/FELsource_out.eps
+    :scale: 100 %
+
 Installation
 ------------
 
-On ubuntu laptop
-++++++++++++++++
+On Ubuntu Desktop
++++++++++++++++++
 
 Install dependencies
 
@@ -31,7 +34,7 @@ Install dependencies
 	   sudo apt-get install -y build-essential python-dev unzip python-numpy python-matplotlib 
 	   sudo apt-get install -y python-pip python-scipy python-h5py ipython-notebook
 
-Select the directory where WPG will located
+Select the directory, in which WPG will be located
 
    .. code:: sh
 
@@ -92,7 +95,7 @@ For wget automatic downloading:
 
 		sudo port install wget
 
-Select the directory were you WPG will located
+Select the directory, in which WPG will be located
 
 	.. code:: sh
 
@@ -144,10 +147,10 @@ If ypu have some errors runing IPython notebook, which ends with
 	    export LC_ALL=en_US.UTF-8
 	    export LANG=en_US.UTF-8
 
-On xfel servers
-+++++++++++++++
+On xfel server
+++++++++++++++
 
-Select the directory where WPG will be located
+Select the directory, in which WPG will be located
 
 	.. code:: sh
 
@@ -203,58 +206,9 @@ On Windows you can use putty and setup ssh tunnel in the following way: `putty.p
 
 Open your local browser with the following web address: http://localhost:YOUR_UNIQUE_PORT_NUMBER
 
-On ubuntu workstation
-+++++++++++++++++++++
 
-Select the directory were you WPG will located
-
-	.. code:: sh
-
-	   cd <your_working_directory>
-
-Download and build library 
-
-	.. code:: sh
-
-		#Download WPG-package
-		wget http://github.com/samoylv/WPG/archive/master.zip
-
-Extract package
-
-	.. code:: sh
-
-		unzip master.zip
-
-Change the directory
-
-	.. code:: sh
-
-		cd WPG-master
-
-Build library. This will download and build FFTW2 and SRW
-
-	.. code:: sh
-
-		make all
-
-Run web interface.
-
-	.. code:: sh
-
-	   cd samples
-	   ipython notebook --pylab=inline
-
-f web page not pop up automatically, open your browser in http://localhost:8888
-
-If you have SRW already installed
-+++++++++++++++++++++++++++++++++
-
-Just copy all pyhon files ``SRW-master/env/work/srw_python/*.py`` and ``srwlpy.so`` in 'wpg'
-folder
-
-
-How to install WGP on MS Windows.
-+++++++++++++++++++++++++++++++++
+On MS Windows
++++++++++++++
 
 You should have installed python2.7 with modules numpy, matplotlib, h5py and ipython. If these modules have not been installed yet, you can download a free python bundle with preinstalled packages `here <http://continuum.io/downloads>`_ 
 
@@ -270,6 +224,12 @@ Copy the following files from the SRW folder to WPG folder:
 Rename srwlpy2_x64.pyd to srwlpy.pyd
 
 Run ```ipython notebook --pylab=inline``` in ```WGP/samples```
+
+If you have SRW already installed
++++++++++++++++++++++++++++++++++
+
+Just copy all pyhon files ``SRW-master/env/work/srw_python/*.py`` and ``srwlpy.so`` in 'wpg'
+folder
 
 Useful links
 ------------

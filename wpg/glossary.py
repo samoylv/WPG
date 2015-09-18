@@ -17,11 +17,12 @@ import array
 
 
 class RadiationField(object):
+
     """
     This is base class for all Wavefront fileds.
     """
 
-    glossary_name = None # used as path for mapping in wpg.Wavefront
+    glossary_name = None  # used as path for mapping in wpg.Wavefront
 
     def __init__(self, wf):
         """
@@ -41,7 +42,7 @@ class RadiationField(object):
     def find_units_label(self):
         """Search [units] in field docstring
 
-        :return: units string 
+        :return: units string
         """
 
         descr = self.__doc__
@@ -52,7 +53,7 @@ class RadiationField(object):
             start = descr.find(r'[', stop)
             stop = descr.find(r']', start)
             if start >= 0 and stop >= 0:
-                units.append(descr[start+1: stop])
+                units.append(descr[start+1 : stop])
 
         units = ' or '.join(units)
         return units
@@ -60,7 +61,7 @@ class RadiationField(object):
     def _map_to_dict(self):
         """
         Map Radiation field to dictionary
-        
+
         :return: dictionary
         """
 
@@ -114,9 +115,9 @@ class WFVersion(RadiationField):
 
         self.attributes.update(
             {'units': '-',
-            'limits': '[???]',
-            'alias': 'VERSION'
-            })
+             'limits': '[???]',
+             'alias': 'VERSION'
+             })
 
         self._value = 0.1
 
@@ -149,8 +150,8 @@ class WFRadiationPhotonEnergy(RadiationField):
 
         self.attributes.update(
             {'limits': '[1:1e6]',
-            'alias': 'avgPhotEn'
-            })
+             'alias': 'avgPhotEn'
+             })
 
     @property
     def value(self):
@@ -165,7 +166,8 @@ class WFRadiationPhotonEnergy(RadiationField):
 
 class WFRadiationMeshZCoord(RadiationField):
 
-    """Longitudinal position [m], Fast data: length of  active undulator, Gaussian source: distance to waist """
+    """Longitudinal position [m], Fast data: length of  active undulator,
+     Gaussian source: distance to waist """
 
     glossary_name = 'params/Mesh/zCoord'
 
@@ -176,8 +178,8 @@ class WFRadiationMeshZCoord(RadiationField):
 
         self.attributes.update(
             {'limits': '{???}',
-            'alias': 'mesh.zStart'
-            })
+             'alias': 'mesh.zStart'
+             })
 
     @property
     def value(self):
@@ -203,8 +205,8 @@ class WFRadiationWDomain(RadiationField):
 
         self.attributes.update(
             {'limits': '{"time", "frequency"}',
-            'alias': 'presFT'
-            })
+             'alias': 'presFT'
+             })
 
     @property
     def value(self):
@@ -240,8 +242,8 @@ class WFRadiationWSpace(RadiationField):
 
         self.attributes.update(
             {'limits': '{"R-space", "Q-space"}',
-            'alias': 'presCA'
-            })
+             'alias': 'presCA'
+             })
 
     @property
     def value(self):
@@ -277,8 +279,8 @@ class WFRadiationWFloatType(RadiationField):
 
         self.attributes.update(
             {'limits': '{"float", "double"}',
-            'alias': 'numTypeElFld'
-            })
+             'alias': 'numTypeElFld'
+             })
 
     @property
     def value(self):
@@ -314,9 +316,10 @@ class WFRadiationWEFieldUnit(RadiationField):
         super(WFRadiationWEFieldUnit, self).__init__(wf)
 
         self.attributes.update(
-            {'limits': r'{"sqrt(Phot/s/0.1%bw/mm^2)","sqrt(W/mm^2)", "sqrt(J/eV/mm^2)", "arbitrary"]',
-            'alias': 'unitElFld'
-            })
+            {'limits': r'{"sqrt(Phot/s/0.1%bw/mm^2)","sqrt(W/mm^2)",\
+             "sqrt(J/eV/mm^2)", "arbitrary"]',
+             'alias': 'unitElFld'
+             })
 
     @property
     def value(self):
@@ -328,7 +331,7 @@ class WFRadiationWEFieldUnit(RadiationField):
             return r'sqrt(Phot/s/0.1%bw/mm^2)'
         elif self._wf._srwl_wf.unitElFld == 2:
             if self._wf._srwl_wf.presFT == 0:
-                return  "sqrt(J/eV/mm^2)"
+                return "sqrt(J/eV/mm^2)"
             elif self._wf._srwl_wf.presFT == 1:
                 return "sqrt(W/mm^2)"
             else:
@@ -343,12 +346,12 @@ class WFRadiationWEFieldUnit(RadiationField):
             self._wf._srwl_wf.unitElFld = 0
         elif val == r'sqrt(Phot/s/0.1%bw/mm^2)':
             self._wf._srwl_wf.unitElFld = 1
-        elif val in [r'sqrt(J/eV/mm^2)','sqrt(W/mm^2)']:
+        elif val in [r'sqrt(J/eV/mm^2)', 'sqrt(W/mm^2)']:
             self._wf._srwl_wf.unitElFld = 2
         else:
             raise ValueError(
-                'value must be "arbitrary" or "sqrt(J/eV/mm^2)" or "sqrt(W/mm^2)"'+ 
-                'or "sqrt(Phot/s/0.1%bw/mm^2)"')
+                'value must be "arbitrary" or "sqrt(J/eV/mm^2)"' +
+                'or "sqrt(W/mm^2)" or "sqrt(Phot/s/0.1%bw/mm^2)"')
 
 
 class WFRadiationMeshNx(RadiationField):
@@ -361,12 +364,12 @@ class WFRadiationMeshNx(RadiationField):
         """params/Mesh/nx field"""
 
         super(WFRadiationMeshNx, self).__init__(wf)
-        
+
         self.attributes.update(
             {'units': '-',
-            'limits': '[2:LONG_MAX]',
-            'alias': ''
-            })
+             'limits': '[2:LONG_MAX]',
+             'alias': ''
+             })
 
     @property
     def value(self):
@@ -392,9 +395,9 @@ class WFRadiationMeshNy(RadiationField):
 
         self.attributes.update(
             {'units': '-',
-            'limits': '[2:LONG_MAX]',
-            'alias': ''
-            })
+             'limits': '[2:LONG_MAX]',
+             'alias': ''
+             })
 
     @property
     def value(self):
@@ -420,9 +423,9 @@ class WFRadiationMeshNSlices(RadiationField):
 
         self.attributes.update(
             {'units': '',
-            'limits': '[1:LONG_MAX]',
-            'alias': 'mesh.ne'
-            })
+             'limits': '[1:LONG_MAX]',
+             'alias': 'mesh.ne'
+             })
 
     @property
     def value(self):
@@ -435,6 +438,181 @@ class WFRadiationMeshNSlices(RadiationField):
         self._wf._srwl_wf.mesh.ne = int(val)
         self._wf._allocate_srw_moments()
 
+
+class WFRadiationMeshNvx(RadiationField):
+
+    """Lab-frame coordinate of the inner normal to observation plane
+    (/ surface in its center)"""
+
+    glossary_name = 'params/Mesh/nvx'
+
+    def __init__(self, wf):
+        """params/Mesh/nvx field"""
+
+        super(WFRadiationMeshNvx, self).__init__(wf)
+
+        self.attributes.update(
+            {'units': '-',
+             'limits': '[2:LONG_MAX]',
+             'alias': ''
+             })
+
+    @property
+    def value(self):
+        """Numbers of points, vertical"""
+
+        return self._wf._srwl_wf.mesh.nvx
+
+    @value.setter
+    def value(self, val):
+        self._wf._srwl_wf.mesh.nvx = int(val)
+
+
+class WFRadiationMeshNvy(RadiationField):
+
+    """Lab-frame coordinate of the inner normal to observation plane
+    (/ surface in its center)"""
+
+    glossary_name = 'params/Mesh/nvy'
+
+    def __init__(self, wf):
+        """params/Mesh/nvy field"""
+
+        super(WFRadiationMeshNvy, self).__init__(wf)
+
+        self.attributes.update(
+            {'units': '-',
+             'limits': '[2:LONG_MAX]',
+             'alias': ''
+             })
+
+    @property
+    def value(self):
+        """Numbers of points, vertical"""
+
+        return self._wf._srwl_wf.mesh.nvy
+
+    @value.setter
+    def value(self, val):
+        self._wf._srwl_wf.mesh.nvy = int(val)
+
+
+class WFRadiationMeshNvz(RadiationField):
+
+    """Lab-frame coordinate of the inner normal to observation plane
+     (/ surface in its center)"""
+
+    glossary_name = 'params/Mesh/nvz'
+
+    def __init__(self, wf):
+        """params/Mesh/nvz field"""
+
+        super(WFRadiationMeshNvz, self).__init__(wf)
+
+        self.attributes.update(
+            {'units': '-',
+             'limits': '[2:LONG_MAX]',
+             'alias': ''
+             })
+
+    @property
+    def value(self):
+        """Numbers of points, vertical"""
+
+        return self._wf._srwl_wf.mesh.nvz
+
+    @value.setter
+    def value(self, val):
+        self._wf._srwl_wf.mesh.nvz = int(val)
+
+
+class WFRadiationMeshHvx(RadiationField):
+
+    """Lab-frame horizontal base vector of the observation plane
+     (/ surface in its center) """
+
+    glossary_name = 'params/Mesh/hvx'
+
+    def __init__(self, wf):
+        """params/Mesh/hvx field"""
+
+        super(WFRadiationMeshHvx, self).__init__(wf)
+
+        self.attributes.update(
+            {'units': '-',
+             'limits': '[2:LONG_MAX]',
+             'alias': ''
+             })
+
+    @property
+    def value(self):
+        """Numbers of points, vertical"""
+
+        return self._wf._srwl_wf.mesh.hvx
+
+    @value.setter
+    def value(self, val):
+        self._wf._srwl_wf.mesh.hvx = int(val)
+
+
+class WFRadiationMeshHvy(RadiationField):
+
+    """Lab-frame horizontal base vector of the observation plane
+     (/ surface in its center) """
+
+    glossary_name = 'params/Mesh/hvy'
+
+    def __init__(self, wf):
+        """params/Mesh/hvy field"""
+
+        super(WFRadiationMeshHvy, self).__init__(wf)
+
+        self.attributes.update(
+            {'units': '-',
+             'limits': '[2:LONG_MAX]',
+             'alias': ''
+             })
+
+    @property
+    def value(self):
+        """Numbers of points, vertical"""
+
+        return self._wf._srwl_wf.mesh.hvy
+
+    @value.setter
+    def value(self, val):
+        self._wf._srwl_wf.mesh.hvy = int(val)
+
+
+class WFRadiationMeshHvz(RadiationField):
+
+    """Lab-frame horizontal base vector of the observation plane
+     (/ surface in its center) """
+
+    glossary_name = 'params/Mesh/hvz'
+
+    def __init__(self, wf):
+        """params/Mesh/hvz field"""
+
+        super(WFRadiationMeshHvz, self).__init__(wf)
+
+        self.attributes.update(
+            {'units': '-',
+             'limits': '[2:LONG_MAX]',
+             'alias': ''
+             })
+
+    @property
+    def value(self):
+        """Numbers of points, vertical"""
+
+        return self._wf._srwl_wf.mesh.hvz
+
+    @value.setter
+    def value(self, val):
+        self._wf._srwl_wf.mesh.hvz = int(val)
+
+# TODO: add wrapper for mesh._arSurf (we should know it size)
 
 class WFRadiationMeshXMin(RadiationField):
 
@@ -454,7 +632,8 @@ class WFRadiationMeshXMin(RadiationField):
         if self._wf.params.wSpace == 'R-space':
             return self._wf._srwl_wf.mesh.xStart
         else:
-            warnings.warn('params/Mesh/xMin not defined if NOT params/wSpace==R-space')
+            warnings.warn(
+                'params/Mesh/xMin not defined if NOT params/wSpace==R-space')
             return None
 
     @value.setter
@@ -462,7 +641,8 @@ class WFRadiationMeshXMin(RadiationField):
         if self._wf.params.wSpace == 'R-space':
             self._wf._srwl_wf.mesh.xStart = float(val)
         else:
-            warnings.warn('params/Mesh/xMin not defined if NOT params/wSpace==R-space')
+            warnings.warn(
+                'params/Mesh/xMin not defined if NOT params/wSpace==R-space')
             return None
 
 
@@ -484,7 +664,8 @@ class WFRadiationMeshXMax(RadiationField):
         if self._wf.params.wSpace == 'R-space':
             return self._wf._srwl_wf.mesh.xFin
         else:
-            warnings.warn('params/Mesh/xMax not defined if NOT params/wSpace==R-space')
+            warnings.warn(
+                'params/Mesh/xMax not defined if NOT params/wSpace==R-space')
             return None
 
     @value.setter
@@ -492,7 +673,8 @@ class WFRadiationMeshXMax(RadiationField):
         if self._wf.params.wSpace == 'R-space':
             self._wf._srwl_wf.mesh.xFin = float(val)
         else:
-            warnings.warn('params/Mesh/xMax not defined if NOT params/wSpace==Rspace')
+            warnings.warn(
+                'params/Mesh/xMax not defined if NOT params/wSpace==Rspace')
             return None
 
 
@@ -514,7 +696,8 @@ class WFRadiationMeshYMin(RadiationField):
         if self._wf.params.wSpace == 'R-space':
             return self._wf._srwl_wf.mesh.yStart
         else:
-            warnings.warn('params/Mesh/yMin not defined if NOT params/wSpace==Rs-pace')
+            warnings.warn(
+                'params/Mesh/yMin not defined if NOT params/wSpace==Rs-pace')
             return None
 
     @value.setter
@@ -522,7 +705,8 @@ class WFRadiationMeshYMin(RadiationField):
         if self._wf.params.wSpace == 'R-space':
             self._wf._srwl_wf.mesh.yStart = float(val)
         else:
-            warnings.warn('params/Mesh/yMin not defined if NOT params/wSpace==R-space')
+            warnings.warn(
+                'params/Mesh/yMin not defined if NOT params/wSpace==R-space')
             return None
 
 
@@ -544,7 +728,8 @@ class WFRadiationMeshYMax(RadiationField):
         if self._wf.params.wSpace == 'R-space':
             return self._wf._srwl_wf.mesh.yFin
         else:
-            warnings.warn('params/Mesh/yMax not defined if NOT params/wSpace==R-space')
+            warnings.warn(
+                'params/Mesh/yMax not defined if NOT params/wSpace==R-space')
             return None
 
     @value.setter
@@ -552,7 +737,8 @@ class WFRadiationMeshYMax(RadiationField):
         if self._wf.params.wSpace == 'R-space':
             self._wf._srwl_wf.mesh.yFin = float(val)
         else:
-            warnings.warn('params/Mesh/yMax not defined if NOT params/wSpace==R-space')
+            warnings.warn(
+                'params/Mesh/yMax not defined if NOT params/wSpace==R-space')
             return None
 
 
@@ -574,7 +760,8 @@ class WFRadiationMeshQxMin(RadiationField):
         if self._wf.params.wSpace == 'Q-space':
             return self._wf._srwl_wf.mesh.xStart
         else:
-            warnings.warn('params/Mesh/qxMin not defined if NOT params/wSpace==Q-space')
+            warnings.warn(
+                'params/Mesh/qxMin not defined if NOT params/wSpace==Q-space')
             return None
 
     @value.setter
@@ -582,7 +769,8 @@ class WFRadiationMeshQxMin(RadiationField):
         if self._wf.params.wSpace == 'Q-space':
             self._wf._srwl_wf.mesh.xStart = float(val)
         else:
-            warnings.warn('params/Mesh/qxMin not defined if NOT params/wSpace==Q-space')
+            warnings.warn(
+                'params/Mesh/qxMin not defined if NOT params/wSpace==Q-space')
             return None
 
 
@@ -604,7 +792,8 @@ class WFRadiationMeshQxMax(RadiationField):
         if self._wf.params.wSpace == 'Q-space':
             return self._wf._srwl_wf.mesh.xFin
         else:
-            warnings.warn('params/Mesh/qxMax not defined if NOT params/wSpace==Q-space')
+            warnings.warn(
+                'params/Mesh/qxMax not defined if NOT params/wSpace==Q-space')
             return None
 
     @value.setter
@@ -612,7 +801,8 @@ class WFRadiationMeshQxMax(RadiationField):
         if self._wf.params.wSpace == 'Q-space':
             self._wf._srwl_wf.mesh.xFin = float(val)
         else:
-            warnings.warn('params/Mesh/qxMax not defined if NOT params/wSpace==Q-space')
+            warnings.warn(
+                'params/Mesh/qxMax not defined if NOT params/wSpace==Q-space')
             return None
 
 
@@ -634,7 +824,8 @@ class WFRadiationMeshQyMin(RadiationField):
         if self._wf.params.wSpace == 'Q-space':
             return self._wf._srwl_wf.mesh.yStart
         else:
-            warnings.warn('params/Mesh/qyMin not defined if NOT params/wSpace==Q-space')
+            warnings.warn(
+                'params/Mesh/qyMin not defined if NOT params/wSpace==Q-space')
             return None
 
     @value.setter
@@ -642,7 +833,8 @@ class WFRadiationMeshQyMin(RadiationField):
         if self._wf.params.wSpace == 'Q-space':
             self._wf._srwl_wf.mesh.yStart = float(val)
         else:
-            warnings.warn('params/Mesh/qyMin not defined if NOT params/wSpace==Q-space')
+            warnings.warn(
+                'params/Mesh/qyMin not defined if NOT params/wSpace==Q-space')
             return None
 
 
@@ -664,7 +856,8 @@ class WFRadiationMeshQyMax(RadiationField):
         if self._wf.params.wSpace == 'Q-space':
             return self._wf._srwl_wf.mesh.yFin
         else:
-            warnings.warn('params/Mesh/qyMax not defined if NOT params/wSpace==Q-space')
+            warnings.warn(
+                'params/Mesh/qyMax not defined if NOT params/wSpace==Q-space')
             return None
 
     @value.setter
@@ -672,7 +865,8 @@ class WFRadiationMeshQyMax(RadiationField):
         if self._wf.params.wSpace == 'Q-space':
             self._wf._srwl_wf.mesh.yFin = float(val)
         else:
-            warnings.warn('params/Mesh/qyMax not defined if NOT params/wSpace==Q-space')
+            warnings.warn(
+                'params/Mesh/qyMax not defined if NOT params/wSpace==Q-space')
             return None
 
 
@@ -689,8 +883,8 @@ class WFRadiationMeshSliceMin(RadiationField):
 
         self.attributes.update(
             {'limits': '[1:LONG_MAX]',
-            'alias': 'mesh.eFin'
-            })
+             'alias': 'mesh.eFin'
+             })
 
     @property
     def value(self):
@@ -716,9 +910,8 @@ class WFRadiationMeshSliceMax(RadiationField):
 
         self.attributes.update(
             {'limits': '[1:LONG_MAX]',
-            'alias': 'mesh.eStart'
-            })
-
+             'alias': 'mesh.eStart'
+             })
 
     @property
     def value(self):
@@ -743,8 +936,8 @@ class WFRadiationRx(RadiationField):
         super(WFRadiationRx, self).__init__(wf)
         self.attributes.update(
             {'limits': '[FLOAT_MIN:FLOAT_MAX]',
-            'alias': 'Rx'
-            })
+             'alias': 'Rx'
+             })
 
     @property
     def value(self):
@@ -770,9 +963,8 @@ class WFRadiationRy(RadiationField):
 
         self.attributes.update(
             {'limits': '[FLOAT_MIN:FLOAT_MAX]',
-            'alias': 'Ry'
-            })
-
+             'alias': 'Ry'
+             })
 
     @property
     def value(self):
@@ -797,8 +989,8 @@ class WFRadiationDRx(RadiationField):
         super(WFRadiationDRx, self).__init__(wf)
         self.attributes.update(
             {'limits': '[FLOAT_MIN:FLOAT_MAX]',
-            'alias': 'dRx'
-            })
+             'alias': 'dRx'
+             })
 
     @property
     def value(self):
@@ -824,8 +1016,8 @@ class WFRadiationDRy(RadiationField):
 
         self.attributes.update(
             {'limits': '[FLOAT_MIN:FLOAT_MAX]',
-            'alias': 'dRy'
-            })
+             'alias': 'dRy'
+             })
 
     @property
     def value(self):
@@ -850,10 +1042,10 @@ class WFRadiationNval(RadiationField):
         super(WFRadiationNval, self).__init__(wf)
         self.attributes.update(
             {'units': '',
-            'limits': '{2}',
-            'alias': '-'
-            })
-        
+             'limits': '{2}',
+             'alias': '-'
+             })
+
         self._value = 2
 
     @property
@@ -926,9 +1118,9 @@ class WFDataArrEhor(RadiationField):
         super(WFDataArrEhor, self).__init__(wf)
         self.attributes.update(
             {'units': 'see params/wEFieldUnit',
-            'limits': '[FLOAT_MIN:FLOAT_MAX]',
-            'alias': 'arEx'
-            })
+             'limits': '[FLOAT_MIN:FLOAT_MAX]',
+             'alias': 'arEx'
+             })
 
     @property
     def value(self):
@@ -937,10 +1129,10 @@ class WFDataArrEhor(RadiationField):
         Horizontal polarization
         """
 
-        res = numpy.array(self._wf._srwl_wf.arEx, dtype='float32')
+        res = numpy.array(self._wf._srwl_wf.arEx, dtype='float32', copy=False)
         if res.shape:
             res.shape = (self._wf.params.Mesh.ny, self._wf.params.Mesh.nx,
-                         self._wf.params.Mesh.nSlices,self._wf.params.nval)
+                         self._wf.params.Mesh.nSlices, self._wf.params.nval)
         return res
 
     @value.setter
@@ -953,12 +1145,14 @@ class WFDataArrEhor(RadiationField):
         self._wf._allocate_srw_moments()
         if type(val) == array.array:
             if not val.count() == n_total:
-                warnings.warn('New array size not equal to wavefront size. You must set it by yourself.')
+                warnings.warn(
+                    'New array size not equal to wavefront size. You must set it by yourself.')
             self._wf._srwl_wf.arEx = array.array('f', val)
         else:
-            val = numpy.array(val)
+            val = numpy.array(val, dtype='float32')
             if not numpy.prod(val.shape) == n_total:
-                warnings.warn('New array size not equal to wavefront size. It will set automaticaly to array size.')
+                warnings.warn(
+                    'New array size not equal to wavefront size. It will set automaticaly to array size.')
                 self._wf.params.nx = val.shape[1]
                 self._wf.params.ny = val.shape[0]
                 self._wf.params.nSlices = val.shape[2]
@@ -980,9 +1174,9 @@ class WFDataArrEver(RadiationField):
         super(WFDataArrEver, self).__init__(wf)
         self.attributes.update(
             {'units': 'see params/wEFieldUnit',
-            'limits': '[FLOAT_MIN:FLOAT_MAX]',
-            'alias': 'arEy'
-            })
+             'limits': '[FLOAT_MIN:FLOAT_MAX]',
+             'alias': 'arEy'
+             })
 
     @property
     def value(self):
@@ -991,10 +1185,10 @@ class WFDataArrEver(RadiationField):
         Vertical polarization
         """
 
-        res = numpy.array(self._wf._srwl_wf.arEy, dtype='float32')
+        res = numpy.array(self._wf._srwl_wf.arEy, dtype='float32', copy=False)
         if res.shape:
             res.shape = (self._wf.params.Mesh.ny, self._wf.params.Mesh.nx,
-                         self._wf.params.Mesh.nSlices,self._wf.params.nval)
+                         self._wf.params.Mesh.nSlices, self._wf.params.nval)
         return res
 
     @value.setter
@@ -1003,12 +1197,14 @@ class WFDataArrEver(RadiationField):
         self._wf._allocate_srw_moments()
         if type(val) == array.array:
             if not val.count() == n_total:
-                warnings.warn('New array size not equal to wavefront size. You must set it by yourself.')
+                warnings.warn(
+                    'New array size not equal to wavefront size. You must set it by yourself.')
             self._wf._srwl_wf.arEy = array.array('f', val)
         else:
-            val = numpy.array(val)
+            val = numpy.array(val, dtype='float32')
             if not numpy.prod(val.shape) == n_total:
-                warnings.warn('New array size not equal to wavefront size. It will set automaticaly to array size.')
+                warnings.warn(
+                    'New array size not equal to wavefront size. It will set automaticaly to array size.')
                 self._wf.params.nx = val.shape[1]
                 self._wf.params.ny = val.shape[0]
                 self._wf.params.nSlices = val.shape[2]
@@ -1076,7 +1272,8 @@ def print_glossary():
                 units.append(descr[start+1: stop])
 
         units = ' or '.join(units)
-        print '**{name}** - {decsription} - ***{units}***'.format(name=name, decsription=descr, units=units)
+        print '**{name}** - {decsription} - ***{units}***'.format(
+            name=name, decsription=descr, units=units)
     # pprint.pprint(get_glosary_info())
 
 
@@ -1101,11 +1298,12 @@ def print_glossary_html():
         units = ' or '.join(units)
         gloss.append([name, descr, units])
     res = r'<table border="2">' + '\n'
-    res += r'<tr><th>Filed name</th><th>Description</th><th>Units</th></tr>' + '\n'
+    res += r'<tr><th>Filed name</th><th>Description</th><th>Units</th></tr>' + \
+        '\n'
     for g in sorted(gloss):
         res += r'<tr>' + '\n'
         for gg in g:
-            res += '\t'+r'<td>{}</td>'.format(gg) + '\n'
+            res += '\t' + r'<td>{}</td>'.format(gg) + '\n'
         res += r'</tr>' + '\n'
     res += r'</table>' + '\n'
     return res

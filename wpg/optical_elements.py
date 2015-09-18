@@ -17,11 +17,13 @@ import wpg.srwlib
 
 
 class WPGOpticalElement(object):
+
     """Base class for optical elements"""
 
     def __init__(self):
         pass
-      
+
+
 class Empty(WPGOpticalElement):
 
     """Optical element: Empty
@@ -49,7 +51,7 @@ class Use_PP(object):
 
     def __init__(self, auto_resize_before=None, auto_resize_after=None,
                  releative_precision=None, semi_analytical_treatment=None,
-                 fft_resizing=None,  zoom=None, zoom_h=None, zoom_v=None,
+                 fft_resizing=None, zoom=None, zoom_h=None, zoom_v=None,
                  sampling=None, sampling_h=None, sampling_v=None, srw_pp=None
                  ):
         """
@@ -59,56 +61,62 @@ class Use_PP(object):
         super(Use_PP, self).__init__()
         # default values fo propagation parameters
         # Wavefront Propagation Parameters:
-        #[0]:  Auto-Resize (1) or not (0) Before propagation
-        #[1]:  Auto-Resize (1) or not (0) After propagation
-        #[2]:  Relative Precision for propagation with Auto-Resizing (1. is nominal)
-        #[3]:  Allow (1) or not (0) for semi-analytical treatment of quadratic phase terms at propagation
-        #[4]:  Do any Resizing on Fourier side, using FFT, (1) or not (0)
-        #[5]:  Horizontal Range modification factor at Resizing (1. means no modification)
-        #[6]:  Horizontal Resolution modification factor at Resizing
-        #[7]:  Vertical Range modification factor at Resizing
-        #[8]:  Vertical Resolution modification factor at Resizing
-        #[9]:  Type of wavefront Shift before Resizing (not yet implemented)
-        #[10]: New Horizontal wavefront Center position after Shift (not yet implemented)
-        #[11]: New Vertical wavefront Center position after Shift (not yet implemented)
+        # [0]:  Auto-Resize (1) or not (0) Before propagation
+        # [1]:  Auto-Resize (1) or not (0) After propagation
+        # [2]:  Relative Precision for propagation with Auto-Resizing (1. is nominal)
+        # [3]:  Allow (1) or not (0) for semi-analytical treatment of quadratic phase terms at propagation
+        # [4]:  Do any Resizing on Fourier side, using FFT, (1) or not (0)
+        # [5]:  Horizontal Range modification factor at Resizing (1. means no modification)
+        # [6]:  Horizontal Resolution modification factor at Resizing
+        # [7]:  Vertical Range modification factor at Resizing
+        # [8]:  Vertical Resolution modification factor at Resizing
+        # [9]:  Type of wavefront Shift before Resizing (not yet implemented)
+        # [10]: New Horizontal wavefront Center position after Shift (not yet implemented)
+        # [11]: New Vertical wavefront Center position after Shift (not yet implemented)
+        # [12]: Optional: Orientation of the Output Optical Axis vector in the Incident Beam Frame: Horizontal Coordinate
+        # [13]: Optional: Orientation of the Output Optical Axis vector in the Incident Beam Frame: Vertical Coordinate
+        # [14]: Optional: Orientation of the Output Optical Axis vector in the Incident Beam Frame: Longitudinal Coordinate
+        # [15]: Optional: Orientation of the Horizontal Base vector of the Output Frame in the Incident Beam Frame: Horizontal Coordinate
+        # [16]: Optional: Orientation of the Horizontal Base vector of the Output Frame in the Incident Beam Frame: Vertical Coordinate
         #         [ 0] [1] [2]  [3] [4] [5]  [6]  [7]  [8]  [9] [10] [11]
-        self.pp = [0,  0, 1.0,  0,  0, 1.0, 1.0, 1.0, 1.0,  0,  0,   0]
 
-        if not srw_pp is None:
-            if isinstance(srw_pp, list) and len(srw_pp) == 12:
+        self.pp = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+
+        if srw_pp is not None:
+            if isinstance(srw_pp, list) and (len(srw_pp) in [12, 17]):
                 self.pp = srw_pp
 
-        if not auto_resize_before is None:
+        if auto_resize_before is not None:
             self.auto_resize_before = auto_resize_before
 
-        if not auto_resize_after is None:
+        if auto_resize_after is not None:
             self.auto_resize_after = auto_resize_after
 
-        if not releative_precision is None:
+        if releative_precision is not None:
             self.releative_precision = releative_precision
 
-        if not semi_analytical_treatment is None:
+        if semi_analytical_treatment is not None:
             self.semi_analytical_treatment = semi_analytical_treatment
 
-        if not fft_resizing is None:
+        if fft_resizing is not None:
             self.fft_resizing = fft_resizing
 
-        if not zoom is None:
+        if zoom is not None:
             self.zoom = zoom
 
-        if not zoom_h is None:
+        if zoom_h is not None:
             self.zoom_h = zoom_h
 
-        if not zoom_v is None:
+        if zoom_v is not None:
             self.zoom_v = zoom_v
 
-        if not sampling is None:
+        if sampling is not None:
             self.sampling = sampling
 
-        if not sampling_h is None:
+        if sampling_h is not None:
             self.sampling_h = sampling_h
 
-        if not sampling_v is None:
+        if sampling_v is not None:
             self.sampling_v = sampling_v
 
     @property
@@ -227,7 +235,7 @@ class Use_PP(object):
     def get_srw_pp(self):
         """
         Return SRW propagation parameters list. Useful for interoperations with SRW tools.
-        
+
         :return: list of floats (propagation parameters)
         """
         return self.pp
