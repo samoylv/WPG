@@ -258,7 +258,7 @@ try:
 except ImportError, e:
     import mock
     MOCK_MODULES = ['wpg.srwlpy','srwlpy','numpy','h5py','pylab','scipy',
-      'uti_plot', 'uti_math', 'srwl_uti_cryst', 'srwl_uti_src']
+      'uti_plot', 'uti_math', 'srwl_uti_cryst', 'srwl_uti_src', 'scipy.optimize']
     for mod_name in MOCK_MODULES:
         sys.modules[mod_name] = mock.Mock()
 else:
