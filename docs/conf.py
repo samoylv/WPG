@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'WPG'
-copyright = u'2014, Alexey Buzmakov (WPG), Liubov Samoilova (WPG), Oleg Chubar (SRWLib)'
+copyright = u'2014-2015, Alexey Buzmakov (WPG), Liubov Samoilova (WPG), Oleg Chubar (SRWLib)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -257,7 +257,7 @@ try:
     import wpg.srwlpy, numpy, h5py, pylab, scipy, uti_plot
 except ImportError, e:
     import mock
-    MOCK_MODULES = ['wpg.srwlpy','srwlpy','numpy','h5py','pylab','scipy','uti_plot']
+    MOCK_MODULES = ['wpg.srwlpy','srwlpy','numpy','h5py','pylab','scipy','uti_plot', 'uti_math']
     for mod_name in MOCK_MODULES:
         sys.modules[mod_name] = mock.Mock()
 else:
