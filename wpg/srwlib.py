@@ -89,26 +89,47 @@ class SRWLPartBeam(object):
         :param _nPart: number of electrons (in a bunch)
         :param _partStatMom1: particle type and 1st order statistical moments
         :param _arStatMom2: 2nd order statistical moments
+
             [0]: <(x-x0)^2>
+        
             [1]: <(x-x0)*(xp-xp0)>
+        
             [2]: <(xp-xp0)^2>
+        
             [3]: <(y-y0)^2>
+        
             [4]: <(y-y0)*(yp-yp0)>
+
             [5]: <(yp-yp0)^2>
+        
             [6]: <(x-x0)*(y-y0)>
+        
             [7]: <(xp-xp0)*(y-y0)>
+        
             [8]: <(x-x0)*(yp-yp0)>
+        
             [9]: <(xp-xp0)*(yp-yp0)>
+        
             [10]: <(E-E0)^2>/E0^2
+        
             [11]: <(s-s0)^2>
+        
             [12]: <(s-s0)*(E-E0)>/E0
+        
             [13]: <(x-x0)*(E-E0)>/E0
+        
             [14]: <(xp-xp0)*(E-E0)>/E0
+        
             [15]: <(y-y0)*(E-E0)>/E0
+        
             [16]: <(yp-yp0)*(E-E0)>/E0
+        
             [17]: <(x-x0)*(s-s0)>
+        
             [18]: <(xp-xp0)*(s-s0)>
+        
             [19]: <(y-y0)*(s-s0)>
+        
             [20]: <(yp-yp0)*(s-s0)>
         """
         self.Iavg = _Iavg
@@ -118,6 +139,7 @@ class SRWLPartBeam(object):
 
     def from_Twiss(self, _Iavg=0, _e=0, _sig_e=0, _emit_x=0, _beta_x=0, _alpha_x=0, _eta_x=0, _eta_x_pr=0, _emit_y=0, _beta_y=0, _alpha_y=0, _eta_y=0, _eta_y_pr=0):
         """Sets up particle (electron) beam internal data from Twiss parameters
+
         :param _Iavg: average current [A]
         :param _e: energy [GeV]
         :param _sig_e: RMS energy spread
@@ -145,6 +167,7 @@ class SRWLPartBeam(object):
 
     def from_RMS(self, _Iavg=0, _e=0, _sig_e=0, _sig_x=0, _sig_x_pr=0, _m_xx_pr=0, _sig_y=0, _sig_y_pr=0, _m_yy_pr=0):
         """Sets up particle (electron) beam internal data from Twiss parameters
+
         :param _Iavg: average current [A]
         :param _e: energy [GeV]
         :param _sig_e: RMS energy spread
@@ -168,6 +191,7 @@ class SRWLPartBeam(object):
         
     def drift(self, _dist):
         """Propagates particle beam statistical moments over a distance in free space
+
         :param _dist: distance the beam has to be propagated over [m]
         """
         self.partStatMom1.drift(_dist)
@@ -281,6 +305,7 @@ class SRWLMagFldU(SRWLMagFld):
 
     def set_sin(self, _per=0.02, _len=1, _bx=0, _by=0, _phx=0, _phy=0, _sx=1, _sy=1):
         """Setup basic undulator with sinusoidal magnetic field
+
         :param _per: period length [m]
         :param _len: undulator length [m]
         :param _bx: horizontal magnetic field amplitude [m]
@@ -311,6 +336,7 @@ class SRWLMagFldU(SRWLMagFld):
 
     def get_E1(self, _en_elec=3., _unit='eV'):
         """Estimate fundamental photon energy
+
         :param _en_elec: electron energy [GeV]
         :return: fundamental photon energy [eV]
         """
@@ -321,6 +347,7 @@ class SRWLMagFldU(SRWLMagFld):
 
     def E1_2_K(self, _e1, _en_elec=3.):
         """Estimate deflection parameter from 
+
         :param _e1: fundamental photon energy [eV]
         :param _en_elec: electron energy [GeV]
         :return: deflection parameter
@@ -331,6 +358,7 @@ class SRWLMagFldU(SRWLMagFld):
 
     def E1_2_B(self, _e1, _en_elec=3.):
         """Estimate deflection parameter from 
+
         :param _e1: fundamental photon energy [eV]
         :param _en_elec: electron energy [GeV]
         :return: magnetic field amplitude [T]
@@ -650,14 +678,19 @@ class SRWLStokes(object):
 
     def add_stokes(self, _st, _n_comp=4, _mult=1, _meth=0):
         """Add Another Stokes structure
+
         :param _st: Stokes structure to be added
         :param _n_comp: number of components to treat
         :param _mult: multiplier 
         :param _meth: method of adding the Stokes structure _st:
-        0- simple addition assuming _wfr to have same mesh as this wavefront
-        1- add using bilinear interpolation (taking into account meshes of the two wavefronts)
-        2- add using bi-quadratic interpolation (taking into account meshes of the two wavefronts)
-        3- add using bi-cubic interpolation (taking into account meshes of the two wavefronts)
+
+            0- simple addition assuming _wfr to have same mesh as this wavefront
+            
+            1- add using bilinear interpolation (taking into account meshes of the two wavefronts)
+            
+            2- add using bi-quadratic interpolation (taking into account meshes of the two wavefronts)
+            
+            3- add using bi-cubic interpolation (taking into account meshes of the two wavefronts)
         """
 
         nTot = _n_comp*self.mesh.ne*self.mesh.nx*self.mesh.ny #eventually allow for storage of less than 4 Stokes components!
@@ -691,6 +724,7 @@ class SRWLStokes(object):
 
     def avg_update_same_mesh(self, _more_stokes, _iter, _n_stokes_comp=4, _mult=1.):
         """ Update this Stokes data structure with new data, contained in the _more_stokes structure, calculated on the same mesh, so that this structure would represent estimation of average of (_iter + 1) structures
+        
         :param _more_stokes: Stokes data structure to "add" to the estimation of average
         :param _iter: number of Stokes structures already "added" previously
         :param _n_stokes_comp: number of Stokes components to treat (1 to 4)
@@ -714,6 +748,7 @@ class SRWLStokes(object):
             
     def avg_update_interp(self, _more_stokes, _iter, _ord, _n_stokes_comp=4, _mult=1.):
         """ Update this Stokes data structure with new data, contained in the _more_stokes structure, calculated on a different 2D mesh, so that it would represent estimation of average of (_iter + 1) structures
+        
         :param _more_stokes: Stokes data structure to "add" to the estimation of average
         :param _iter: number of Stokes structures already "added" previously
         :param _ord: order of 2D interpolation to use (1- bilinear, ..., 3- bi-cubic)
@@ -891,6 +926,7 @@ class SRWLStokes(object):
 
     def avg_update_interp_mutual(self, _more_stokes, _iter, _n_stokes_comp=4, _mult=1.):
         """ Update this Stokes data structure with new data, contained in the _more_stokes structure, calculated on a different 2D mesh, so that it would represent estimation of average of (_iter + 1) structures
+        
         :param _more_stokes: Stokes data structure to "add" to the estimation of average
         :param _iter: number of Stokes structures already "added" previously
         :param _n_stokes_comp: number of Stokes components to treat (1 to 4)
@@ -1135,13 +1171,21 @@ class SRWLStokes(object):
 
     def to_int(self, _pol=6):
         """Calculates / "extracts" intensity at a given polarization from the Stokes components
+        
         :param _pol: polarization component to extract: 
+            
             0- Linear Horizontal; 
+            
             1- Linear Vertical; 
+            
             2- Linear 45 degrees; 
+            
             3- Linear 135 degrees; 
+            
             4- Circular Right; 
+            
             5- Circular Left; 
+            
             6- Total
         :return: 1D array with (C-aligned) resulting intensity data
         """
@@ -1209,15 +1253,25 @@ class SRWLWfr(object):
         :param _partBeam: particle beam source; strictly speaking, it should be just SRWLParticle; however, "multi-electron" information can appear useful for those cases when "multi-electron intensity" can be deduced from the "single-electron" one by convolution
 
         Some additional parameters, that are not included in constructor arguments:
+
         Rx, Ry: instant wavefront radii
+        
         dRx, dRy: error of wavefront radii
+        
         xc, yc: transverse coordinates of wavefront instant "source center"
+        
         avgPhotEn: average photon energy for time-domain simulations
+        
         presCA: presentation/domain: 0- coordinates, 1- angles
+        
         presFT: presentation/domain: 0- frequency (photon energy), 1- time
+        
         unitElFld: electric field units: 0- arbitrary, 1- sqrt(Phot/s/0.1%bw/mm^2)
+        
         arElecPropMatr: effective 1st order "propagation matrix" for electron beam parameters
+        
         arMomX, arMomY: statistical moments (of Wigner distribution); to check the exact number of moments required
+        
         arWfrAuxData: array of auxiliary wavefront data
         """
         self.arEx = _arEx
@@ -1281,12 +1335,17 @@ class SRWLWfr(object):
 
     def addE(self, _wfr, _meth=0):
         """Add Another Electric Field Wavefront
+        
         :param _wfr: wavefront to be added
         :param _meth: method of adding the wavefront _wfr:
-        0- simple addition assuming _wfr to have same mesh as this wavefront
-        1- add using bilinear interpolation (taking into account meshes of the two wavefronts)
-        2- add using bi-quadratic interpolation (taking into account meshes of the two wavefronts)
-        3- add using bi-cubic interpolation (taking into account meshes of the two wavefronts)
+
+            0- simple addition assuming _wfr to have same mesh as this wavefront
+            
+            1- add using bilinear interpolation (taking into account meshes of the two wavefronts)
+            
+            2- add using bi-quadratic interpolation (taking into account meshes of the two wavefronts)
+            
+            3- add using bi-cubic interpolation (taking into account meshes of the two wavefronts)
         """
         if(_meth == 0):
             if((self.mesh.ne != _wfr.mesh.ne) or (self.mesh.nx != _wfr.mesh.nx) or (self.mesh.ny != _wfr.mesh.ny)):
@@ -1751,6 +1810,7 @@ class SRWLOptT(SRWLOpt):
 
     def get_data(self, _typ, _dep=3, _e=0, _x=0, _y=0):
         """Returns Transmission Data Characteristic
+
         :param _typ: type of transmission characteristic to extract: 1- amplitude transmission, 2- intensity transmission, 3- optical path difference
         :param _dep: type of dependence to extract: 0- vs photon energy, 1- vs horizontal position, 2- vs vertical position, 3- vs hor. & vert. positions
         :param _e: photon energy [eV] (to keep fixed)
@@ -1826,6 +1886,7 @@ class SRWLOptMir(SRWLOpt):
 
     def set_dim_sim_meth(self, _size_tang=1, _size_sag=1, _ap_shape='r', _sim_meth=2, _npt=500, _nps=500, _treat_in_out=1, _ext_in=0, _ext_out=0):
         """Sets Mirror Dimensions, Aperture Shape and its simulation method
+
         :param _size_tang: size in tangential direction [m]
         :param _size_sag: size in sagital direction [m]
         :param _ap_shape: shape of aperture in local frame ('r' for rectangular, 'e' for elliptical)
@@ -1833,9 +1894,12 @@ class SRWLOptMir(SRWLOpt):
         :param _npt: number of mesh points to represent mirror in tangential direction (used for "thin" approximation)
         :param _nps: number of mesh points to represent mirror in sagital direction (used for "thin" approximation)
         :param _treat_in_out: switch specifying how to treat input and output wavefront before and after the main propagation through the optical element:
-                0- assume that the input wavefront is defined in the plane before the optical element, and the output wavefront is required in a plane just after the element;
-                1- assume that the input wavefront is defined in the plane at the optical element center and the output wavefront is also required at the element center;
-                2- assume that the input wavefront is defined in the plane at the optical element center and the output wavefront is also required at the element center; however, before the propagation though the optical element, the wavefront should be propagated through a drift back to a plane just before the optical element, then a special propagator will bring the wavefront to a plane at the optical element exit, and after this the wavefront will be propagated through a drift back to the element center;
+            
+            0- assume that the input wavefront is defined in the plane before the optical element, and the output wavefront is required in a plane just after the element;
+            
+            1- assume that the input wavefront is defined in the plane at the optical element center and the output wavefront is also required at the element center;
+            
+            2- assume that the input wavefront is defined in the plane at the optical element center and the output wavefront is also required at the element center; however, before the propagation though the optical element, the wavefront should be propagated through a drift back to a plane just before the optical element, then a special propagator will bring the wavefront to a plane at the optical element exit, and after this the wavefront will be propagated through a drift back to the element center;
         :param _ext_in: optical element extent on the input side, i.e. distance between the input plane and the optical center (positive, in [m]) to be used at wavefront propagation manipulations; if 0, this extent will be calculated internally from optical element parameters
         :param _ext_out: optical element extent on the output side, i.e. distance between the optical center and the output plane (positive, in [m]) to be used at wavefront propagation manipulations; if 0, this extent will be calculated internally from optical element parameters        
         """
@@ -1855,6 +1919,7 @@ class SRWLOptMir(SRWLOpt):
 
     def set_reflect(self, _refl=1, _n_ph_en=1, _n_ang=1, _n_comp=1, _ph_en_start=0, _ph_en_fin=0, _ph_en_scale_type='lin', _ang_start=0, _ang_fin=0, _ang_scale_type='lin'):
         """Sets Mirror Reflectivity
+
         :param _refl: reflectivity coefficient to set (can be one number or C-aligned flat array complex array vs photon energy vs grazing angle vs component (sigma, pi))
         :param _n_ph_en: number of photon energy values for which the reflectivity coefficient is specified
         :param _n_ang: number of grazing angle values for which the reflectivity coefficient is specified
@@ -1896,6 +1961,7 @@ class SRWLOptMir(SRWLOpt):
 
     def set_orient(self, _nvx=0, _nvy=0, _nvz=-1, _tvx=1, _tvy=0, _x=0, _y=0):
         """Defines Mirror Orientation in the frame of the incident photon beam
+
         :param _nvx: horizontal coordinate of central normal vector
         :param _nvy: vertical coordinate of central normal vector
         :param _nvz: longitudinal coordinate of central normal vector
@@ -1928,9 +1994,12 @@ class SRWLOptMirPl(SRWLOptMir):
         :param _ap_shape: shape of aperture in local frame ('r' for rectangular, 'e' for elliptical)
         :param _sim_meth: simulation method (1 for "thin" approximation, 2 for "thick" approximation)
         :param _treat_in_out: switch specifying how to treat input and output wavefront before and after the main propagation through the optical element:
-                0- assume that the input wavefront is defined in the plane before the optical element, and the output wavefront is required in a plane just after the element;
-                1- assume that the input wavefront is defined in the plane at the optical element center and the output wavefront is also required at the element center;
-                2- assume that the input wavefront is defined in the plane at the optical element center and the output wavefront is also required at the element center; however, before the propagation though the optical element, the wavefront should be propagated through a drift back to a plane just before the optical element, then a special propagator will bring the wavefront to a plane at the optical element exit, and after that the wavefront will be propagated through a drift back to the element center;
+                
+            0- assume that the input wavefront is defined in the plane before the optical element, and the output wavefront is required in a plane just after the element;
+            
+            1- assume that the input wavefront is defined in the plane at the optical element center and the output wavefront is also required at the element center;
+            
+            2- assume that the input wavefront is defined in the plane at the optical element center and the output wavefront is also required at the element center; however, before the propagation though the optical element, the wavefront should be propagated through a drift back to a plane just before the optical element, then a special propagator will bring the wavefront to a plane at the optical element exit, and after that the wavefront will be propagated through a drift back to the element center;
         :param _ext_in: optical element extent on the input side, i.e. distance between the input plane and the optical center (positive, in [m]) to be used at wavefront propagation manipulations; if 0, this extent will be calculated internally from optical element parameters
         :param _ext_out: optical element extent on the output side, i.e. distance between the optical center and the output plane (positive, in [m]) to be used at wavefront propagation manipulations; if 0, this extent will be calculated internally from optical element parameters        
         :param _nvx: horizontal coordinate of central normal vector
@@ -1976,9 +2045,12 @@ class SRWLOptMirEl(SRWLOptMir):
         :param _npt: number of mesh points to represent mirror in tangential direction (used for "thin" approximation)
         :param _nps: number of mesh points to represent mirror in sagital direction (used for "thin" approximation)
         :param _treat_in_out: switch specifying how to treat input and output wavefront before and after the main propagation through the optical element:
-                0- assume that the input wavefront is defined in the plane before the optical element, and the output wavefront is required in a plane just after the element;
-                1- assume that the input wavefront is defined in the plane at the optical element center and the output wavefront is also required at the element center;
-                2- assume that the input wavefront is defined in the plane at the optical element center and the output wavefront is also required at the element center; however, before the propagation though the optical element, the wavefront should be propagated through a drift back to a plane just before the optical element, then a special propagator will bring the wavefront to a plane at the optical element exit, and after this the wavefront will be propagated through a drift back to the element center;
+            
+            0- assume that the input wavefront is defined in the plane before the optical element, and the output wavefront is required in a plane just after the element;
+            
+            1- assume that the input wavefront is defined in the plane at the optical element center and the output wavefront is also required at the element center;
+            
+            2- assume that the input wavefront is defined in the plane at the optical element center and the output wavefront is also required at the element center; however, before the propagation though the optical element, the wavefront should be propagated through a drift back to a plane just before the optical element, then a special propagator will bring the wavefront to a plane at the optical element exit, and after this the wavefront will be propagated through a drift back to the element center;
         :param _ext_in: optical element extent on the input side, i.e. distance between the input plane and the optical center (positive, in [m]) to be used at wavefront propagation manipulations; if 0, this extent will be calculated internally from optical element parameters
         :param _ext_out: optical element extent on the output side, i.e. distance between the optical center and the output plane (positive, in [m]) to be used at wavefront propagation manipulations; if 0, this extent will be calculated internally from optical element parameters        
         :param _nvx: horizontal coordinate of central normal vector
@@ -2074,23 +2146,7 @@ class SRWLOptCryst(SRWLOpt):
         :param _tvx: horizontal coordinate of central tangential vector (John's angles: thdg, chidg, phidg)
         :param _tvy: vertical coordinate of central tangential vector (John's angles: thdg, chidg, phidg)
         """
-        #"""
-        #The Miller Inices are removed from this input (after discussion with A. Suvorov), because _d_sp already incorporates this information:
-        #:param _h1: 1st index of diffraction vector (John's hMilND)
-        #:param _h2: 2nd index of diffraction vector (John's kMilND)
-        #:param _h3: 3rd index of diffraction vector (John's lMilND)
-        #However, a member-function may be added here to calculate _d_sp from teh Miller Indices and material constant(s)
-        
-        #Moved to Propagation Parameters
-        #:param _sx: horizontal coordinate of optical axis after crystal [m] (John's )
-        #:param _sy: vertical coordinate of optical axis after crystal [m] (John's )
-        #:param _sz: longitudinal coordinate of optical axis after crystal [m] (John's )
 
-        #to go to member functions (convenience derived parameters)
-        #:param _aChi: crystal roll angle (John's )
-        #:param _aPsi: crystal yaw angle (John's )
-        #:param _aThe: crystal theta angle (John's )
-        #"""
         self.dSp = _d_sp
         self.psi0r = _psi0r
         self.psi0i = _psi0i
@@ -2111,6 +2167,7 @@ class SRWLOptCryst(SRWLOpt):
 
     def set_orient(self, _nvx=0, _nvy=0, _nvz=-1, _tvx=1, _tvy=0):
         """Defines Crystal Orientation in the frame of the Incident Photon beam
+
         :param _nvx: horizontal coordinate of normal vector
         :param _nvy: vertical coordinate of normal vector
         :param _nvz: longitudinal coordinate of normal vector
@@ -2125,6 +2182,7 @@ class SRWLOptCryst(SRWLOpt):
 
     def find_orient(self, _en, _ang_dif_pl=0):
         """Finds optimal crystal orientation in the input beam frame (i.e. surface normal and tangential vectors) and the orientation of the output beam frame (i.e. coordinates of the longitudinal and horizontal vectors in the input beam frame)
+        
         :param _en: photon energy [eV]
         :param _ang_dif_pl: diffraction plane angle (0 corresponds to the vertical deflection; pi/2 to the horizontal deflection; any value in between is allowed)
         """
@@ -2227,24 +2285,41 @@ class SRWLOptC(SRWLOpt):
     def __init__(self, _arOpt=None, _arProp=None):
         """
         :param _arOpt: optical element structures list (or array)
-        :param _arProp: list of lists of propagation parameters to be used for each individual optical element
-            Each element _arProp[i] is a list in which elements mean:
+        :param _arProp: list of lists of propagation parameters to be used for each individual optical element.\
+        Each element _arProp[i] is a list in which elements mean:
+            
             [0]: Auto-Resize (1) or not (0) Before propagation
+
             [1]: Auto-Resize (1) or not (0) After propagation
+            
             [2]: Relative Precision for propagation with Auto-Resizing (1. is nominal)
+            
             [3]: Allow (1) or not (0) for semi-analytical treatment of the quadratic (leading) phase terms at the propagation
+            
             [4]: Do any Resizing on Fourier side, using FFT, (1) or not (0)
+            
             [5]: Horizontal Range modification factor at Resizing (1. means no modification)
+            
             [6]: Horizontal Resolution modification factor at Resizing
+            
             [7]: Vertical Range modification factor at Resizing
+            
             [8]: Vertical Resolution modification factor at Resizing
+            
             [9]: Optional: Type of wavefront Shift before Resizing (vs which coordinates; to be implemented)
+            
             [10]: Optional: New Horizontal wavefront Center position after Shift (to be implemented)
+            
             [11]: Optional: New Vertical wavefront Center position after Shift (to be implemented)
+            
             [12]: Optional: Orientation of the Output Optical Axis vector in the Incident Beam Frame: Horizontal Coordinate
+            
             [13]: Optional: Orientation of the Output Optical Axis vector in the Incident Beam Frame: Vertical Coordinate
+            
             [14]: Optional: Orientation of the Output Optical Axis vector in the Incident Beam Frame: Longitudinal Coordinate
+            
             [15]: Optional: Orientation of the Horizontal Base vector of the Output Frame in the Incident Beam Frame: Horizontal Coordinate
+            
             [16]: Optional: Orientation of the Horizontal Base vector of the Output Frame in the Incident Beam Frame: Vertical Coordinate
         """
         self.arOpt = _arOpt #optical element structures array
@@ -2266,6 +2341,7 @@ class SRWLOptC(SRWLOpt):
 def srwl_opt_setup_CRL(_foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n, _wall_thick, _xc, _yc, _void_cen_rad=None, _e_start=0, _e_fin=0, _nx=1001, _ny=1001):
     """
     Setup Transmission type Optical Element which simulates Compound Refractive Lens (CRL)
+    
     :param _foc_plane: plane of focusing: 1- horizontal, 2- vertical, 3- both
     :param _delta: refractive index decrement (can be one number of array vs photon energy)
     :param _atten_len: attenuation length [m] (can be one number of array vs photon energy)
@@ -2403,6 +2479,7 @@ def srwl_opt_setup_CRL(_foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_
 def srwl_opt_setup_cyl_fiber(_foc_plane, _delta_ext, _delta_core, _atten_len_ext, _atten_len_core, _diam_ext, _diam_core, _xc, _yc):
     """
     Setup Transmission type Optical Element which simulates Cylindrical Fiber
+    
     :param _foc_plane: plane of focusing: 1- horizontal (i.e. fiber is parallel to vertical axis), 2- vertical (i.e. fiber is parallel to horizontal axis)
     :param _delta_ext: refractive index decrement of extenal layer
     :param _delta_core: refractive index decrement of core
@@ -2483,6 +2560,7 @@ def srwl_opt_setup_cyl_fiber(_foc_plane, _delta_ext, _delta_core, _atten_len_ext
 def srwl_opt_setup_surf_height_1d(_height_prof_data, _dim, _ang, _ang_r=0, _amp_coef=1, _ar_arg_long=None, _nx=0, _ny=0, _size_x=0, _size_y=0):
     """
     Setup Transmission type optical element with 1D (mirror or grating) surface Heght Profile data
+    
     :param _height_prof_data: two- or one-column table containing, in case of two columns: longitudinal position in [m] (1st column) and the Height Profile in [m] (2nd column) data; in case of one column, it contains the Height Profile data
     :param _dim: orientation of the reflection (deflection) plane; can be 'x' or 'y'
     :param _ang: grazing angle (between input optical axis and mirror/grating plane)
@@ -2592,6 +2670,7 @@ def srwl_opt_setup_surf_height_1d(_height_prof_data, _dim, _ang, _ang_r=0, _amp_
 def srwl_opt_setup_surf_height_2d(_height_prof_data, _dim, _ang, _ang_r=0, _amp_coef=1, _ar_arg_long=None, _ar_arg_tr=None, _nx=0, _ny=0, _size_x=0, _size_y=0):
     """
     Setup Transmission type optical element with 2D (mirror or grating) surface Heght Profile data
+    
     :param _height_prof_data: a matrix (2D array) containing the Height Profile data in [m]; if _ar_height_prof_x==None and _ar_height_prof_y==None: the first column in _height_prof_data is assumed to be the "longitudinal" position [m] and first row the "transverse" position [m], and _height_prof_data[0][0] is not used; otherwise the "longitudinal" and "transverse" positions on the surface are assumed to be given by _ar_height_prof_x, _ar_height_prof_y 
     :param _dim: orientation of the reflection (deflection) plane; can be 'x' or 'y'
     :param _ang: grazing angle (between input optical axis and mirror/grating plane)
@@ -3003,6 +3082,7 @@ def srwl_opt_setup_surf_height_2d(_height_prof_data, _dim, _ang, _ang_r=0, _amp_
 #****************************************************************************
 def srwl_uti_ph_en_conv(_x, _in_u='keV', _out_u='nm'):
     """Photon Energy <-> Wavelength conversion
+   
     :param _x: value to be converted
     :param _in_u: input unit
     :param _out_u: output unit
@@ -3040,6 +3120,7 @@ def srwl_uti_num_round(_x, _ndig=8):
 def srwl_uti_rand_fill_vol(_np, _x_min, _x_max, _nx, _ar_y_vs_x_min, _ar_y_vs_x_max, _y_min, _y_max, _ny, _ar_z_vs_xy_min, _ar_z_vs_xy_max):
     """
     Generate coordinates of ponts randomly filling 3D volume limited by two arbitrary curves (defining base) and two surfaces
+    
     :param _np: number of random points in rectangular parallelepiped to try
     :param _x_min: min. x coordinate
     :param _x_max: max. x coordinate
@@ -3172,6 +3253,7 @@ def srwl_uti_save_text(_text, _file_path):
 def srwl_uti_read_data_cols(_file_path, _str_sep, _i_col_start=0, _i_col_end=-1, _n_line_skip=0):
     """
     Auxiliary function to read-in data comumns from ASCII file (2D table)
+    
     :param _file_path: full path (including file name) to the file
     :param _i_col_start: initial data column to read
     :param _i_col_end: final data column to read
@@ -3233,6 +3315,7 @@ def srwl_uti_math_seq_halton(i, base=2):
 def srwl_wfr_emit_prop_multi_e(_e_beam, _mag, _mesh, _sr_meth, _sr_rel_prec, _n_part_tot, _n_part_avg_proc=1, _n_save_per=100, _file_path=None, _sr_samp_fact=-1, _opt_bl=None, _pres_ang=0, _char=0, _x0=0, _y0=0, _e_ph_integ=0, _rand_meth=1):
     """
     Calculate Stokes Parameters of Emitted (and Propagated, if beamline is defined) Partially-Coherent SR
+    
     :param _e_beam: Finite-Emittance e-beam (SRWLPartBeam type)
     :param _mag: Magnetic Field container (magFldCnt type)
     :param _mesh: mesh vs photon energy, horizontal and vertical positions (SRWLRadMesh type) on which initial SR should be calculated
