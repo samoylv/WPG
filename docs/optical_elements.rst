@@ -21,11 +21,6 @@
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: wpg.optical_elements.Mirror_elliptical
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. autoclass:: wpg.optical_elements.WF_dist
     :members:
     :undoc-members:

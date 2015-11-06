@@ -261,17 +261,17 @@ class Use_PP(object):
         ])
 
 
-def Mirror_elliptical(orient, p, q, thetaEFM, theta0, lengthEFM):
+def Mirror_elliptical(orient, p, q, thetaE, theta0, length):
     """
-    A wrapper to a SRWL function SRWLOptMirEl() for defining a plane elliptical focusing mirror propagator
+    Defining a plane elliptical focusing mirror propagator: A wrapper to a SRWL function SRWLOptMirEl() 
 
-    :param Orient:    mirror orientation, 'x' (horizontal) or 'y' (vertical)
-    :param p:  the distance to two ellipsis centers
-    :param q:  the distance to two ellipsis centers
-    :param thetaEFM:  the design incidence angle in the center of the mirror
-    :param theta0:    the "real" incidence angle in the center of the mirror
-    :param lengthEFM: mirror length, [m]
-    :return: the struct opEFM
+    :param orient:    mirror orientation, 'x' (horizontal) or 'y' (vertical)
+    :param p:  distance to one ellipsis center (source), [m]
+    :param q:  distance to the other ellipsis center (focus), [m]
+    :param thetaE:  design incidence angle in the center of mirror, [rad]
+    :param theta0:  "real" incidence angle in the center of mirror, [rad]
+    :param length:  mirror length, [m]
+    :return: opEFM  - elliptical mirror propagator, ``struct SRWLOptMirEl`` 
     """
 
     if orient == 'x':  # horizontal plane ellipsoidal mirror
