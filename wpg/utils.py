@@ -36,18 +36,19 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
         :param group:
         """
         if not value is None:
+            if name in group:
+                del group[name]
             try:
                 group.create_dataset(name, data=value, chunks=True,
-                                    compression='gzip', compression_opts=3
+                                     compression='gzip', compression_opts=3
                                      )
-            except ValueError: #if h5py not support compression
+            except ValueError:  # if h5py not support compression
                 group.create_dataset(name, data=value, chunks=True)
             except TypeError:
                 group.create_dataset(name, data=value)
             except Exception:
                 print "Error at name='{}' value='{}' group='{}'".format(name, value, group)
                 raise
-
 
     with h5py.File(hdf5_file_name, 'w') as res_file:
         store_group(input_dict, res_file)
@@ -68,6 +69,7 @@ def load_dict_slash_hdf5(hdf5_file_name):
 
     return out_dict
 
+
 def update_dict_slash_string(input_dict, keys_string, value):
     """
     Update dictionary from slash separated keys_string by value
@@ -75,13 +77,14 @@ def update_dict_slash_string(input_dict, keys_string, value):
     :param keys_string: slash separated keys_string
     :param value: value 
     """
-    keys=keys_string.split('/')
-    tdict=input_dict
+    keys = keys_string.split('/')
+    tdict = input_dict
     for k in keys[:-1]:
         if not k in tdict:
-            tdict[k]={}
-        tdict=tdict[k]
-    tdict[keys[-1]]=value
+            tdict[k] = {}
+        tdict = tdict[k]
+    tdict[keys[-1]] = value
+
 
 def tree():
     """
@@ -145,6 +148,7 @@ def set_value_attr(obj, keys_chain, value):
     """
 
     class glossary_folder(object):
+
         """Glossary folder"""
         pass
 
@@ -181,28 +185,34 @@ def print_hdf5(hdf5_file_name):
     from pprint import PrettyPrinter
 
     class MyPrettyPrinter(PrettyPrinter):
+
         def format(self, *args, **kwargs):
-            repr, readable, recursive = PrettyPrinter.format(self, *args, **kwargs)
+            repr, readable, recursive = PrettyPrinter.format(
+                self, *args, **kwargs)
             if repr:
                 if repr[0] in ('"', "'"):
                     repr = repr.decode('string_escape')
                 elif repr[0:2] in ("u'", 'u"'):
-                    repr = repr.decode('unicode_escape').encode(sys.stdout.encoding)
+                    repr = repr.decode('unicode_escape').encode(
+                        sys.stdout.encoding)
             return repr, readable, recursive
 
     def pprint(obj, stream=None, indent=1, width=80, depth=None):
-        printer = MyPrettyPrinter(stream=stream, indent=indent, width=width, depth=depth)
+        printer = MyPrettyPrinter(
+            stream=stream, indent=indent, width=width, depth=depth)
         printer.pprint(obj)
 
     def pformat(obj, stream=None, indent=1, width=80, depth=None):
-        printer = MyPrettyPrinter(stream=stream, indent=indent, width=width, depth=depth)
+        printer = MyPrettyPrinter(
+            stream=stream, indent=indent, width=width, depth=depth)
         return printer.pformat(obj)
 
     pprint(load_hdf5_tree(hdf5_file_name))
 
 
 def srw_obj2str(obj, start_str=''):
-    fields = [field for field in dir(obj) if not field.startswith('__') if not callable(getattr(obj, field))]
+    fields = [field for field in dir(obj) if not field.startswith(
+        '__') if not callable(getattr(obj, field))]
     res = ''
     for f in fields:
         val = getattr(obj, f)
