@@ -275,13 +275,13 @@ def Mirror_elliptical(orient, p, q, thetaE, theta0, length):
     """
 
     if orient == 'x':  # horizontal plane ellipsoidal mirror
-        opEFM = SRWLOptMirEl(_p=p, _q=q, _ang_graz=thetaEFM,
-                             _r_sag=1.e+40, _size_tang=lengthEFM,
+        opEFM = SRWLOptMirEl(_p=p, _q=q, _ang_graz=thetaE,
+                             _r_sag=1.e+40, _size_tang=length,
                              _nvx=np.cos(theta0), _nvy=0, _nvz=-np.sin(theta0),
                              _tvx=-np.sin(theta0), _tvy=0, _x=0, _y=0, _treat_in_out=1)
     elif orient == 'y':  # vertical plane ellipsoidal mirror
-        opEFM = SRWLOptMirEl(_p=p, _q=q, _ang_graz=thetaEFM,
-                             _r_sag=1.e+40, _size_tang=lengthEFM,
+        opEFM = SRWLOptMirEl(_p=p, _q=q, _ang_graz=thetaE,
+                             _r_sag=1.e+40, _size_tang=length,
                              _nvx=0, _nvy=np.cos(theta0), _nvz=-np.sin(theta0),
                              _tvx=0, _tvy=-np.sin(theta0), _x=0, _y=0, _treat_in_out=1)
     else:
