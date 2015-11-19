@@ -9,7 +9,7 @@ This module contains definitions custom optical elements. Described mapping (or 
 
 from wpg.srwlib import SRWLOptD as Drift
 from wpg.srwlib import SRWLOptL as Lens
-from wpg.srwlib import SRWLOptA as Aperture
+#from wpg.srwlib import SRWLOptA as Aperture
 # from wpg.srwlib import SRWLOptMirEl as Mirror_elliptical
 from wpg.srwlib import SRWLOptMirEl
 from wpg.srwlib import SRWLOptT as WF_dist
@@ -261,6 +261,19 @@ class Use_PP(object):
         ])
 
 
+def Aperture(shape, ap_or_ob, Dx, Dy=Dx, x=0, y=0):
+    """
+    Defining an aperture/obstacle propagator: A wrapper to a SRWL function SRWLOptA() 
+
+    :param shape:    'r' for rectangular, 'c' for circular 
+    :param ap_or_ob:  'a' for aperture, 'o' for obstacle
+    :param Dx, Dy:   transverse dimensions [m]; in case of circular aperture, only Dx is used for diameter
+    :param x, y:     transverse coordinates of center [m] 
+    :return: opAp  - aperture propagator, ``struct SRWLOptA`` 
+    """
+    opAp = SRWLOptA(shape, ap_or_ob, Dx, Dy, x, y)
+    return opAp
+   
 def Mirror_elliptical(orient, p, q, thetaE, theta0, length):
     """
     Defining a plane elliptical focusing mirror propagator: A wrapper to a SRWL function SRWLOptMirEl() 
