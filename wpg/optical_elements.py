@@ -9,10 +9,6 @@ This module contains definitions custom optical elements. Described mapping (or 
 
 from wpg.srwlib import SRWLOptD as Drift
 from wpg.srwlib import SRWLOptL as Lens
-#from wpg.srwlib import SRWLOptA as Aperture
-# from wpg.srwlib import SRWLOptMirEl as Mirror_elliptical
-from wpg.srwlib import SRWLOptMirEl
-from wpg.srwlib import SRWLOptT as WF_dist
 from wpg.srwlib import srwl
 import wpg.srwlib
 import numpy as np
@@ -261,7 +257,7 @@ class Use_PP(object):
         ])
 
 
-def Aperture(shape, ap_or_ob, Dx, Dy=Dx, x=0, y=0):
+def Aperture(shape, ap_or_ob, Dx, Dy=1e23, x=0, y=0):
     """
     Defining an aperture/obstacle propagator: A wrapper to a SRWL function SRWLOptA() 
 
@@ -271,6 +267,8 @@ def Aperture(shape, ap_or_ob, Dx, Dy=Dx, x=0, y=0):
     :param x, y:     transverse coordinates of center [m] 
     :return: opAp  - aperture propagator, ``struct SRWLOptA`` 
     """
+    from wpg.srwlib import SRWLOptA 
+
     opAp = SRWLOptA(shape, ap_or_ob, Dx, Dy, x, y)
     return opAp
    
@@ -286,6 +284,7 @@ def Mirror_elliptical(orient, p, q, thetaE, theta0, length):
     :param length:  mirror length, [m]
     :return: opEFM  - elliptical mirror propagator, ``struct SRWLOptMirEl`` 
     """
+    from wpg.srwlib import SRWLOptMirEl
 
     if orient == 'x':  # horizontal plane ellipsoidal mirror
         opEFM = SRWLOptMirEl(_p=p, _q=q, _ang_graz=thetaE,
@@ -300,3 +299,39 @@ def Mirror_elliptical(orient, p, q, thetaE, theta0, length):
     else:
         raise TypeError('orient should be "x" or "y"')
     return opEFM
+
+def WF_dist(nx,ny,Dx,Dy):
+    """
+    Create a 'phase screen' propagator for wavefront distortions:   A wrapper to SRWL struct SRWLOptT 
+
+    :params nx: number of points in horizontal direction
+    :params ny: number of points in vertical   direction
+    :params Dx: size in m
+    :params Dy: size in m
+    """
+    from wpg.srwlib import SRWLOptT
+    return SRWLOptT(nx,ny,Dx,Dy)
+
+
+def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale):
+    """
+    Calculates optical path difference (OPD) from mirror profile and 
+    fills the struct wf_dist (``struct SRWLOptT``) for wavefront distortions
+
+
+    :params wf_dist
+    :params mdatafile: an ascii file with mirror profile data
+    :params ncol: number of columns in the file
+    :params delim: delimiter between numbers in an row, can be space (' '), tab '\t', etc
+    :params orient: mirror orientation, 'x' (horizontal) or 'y' (vertical)
+    :params theta: incidence angle
+    :params scale: scaling factor for the mirror profile 
+    :return filled    
+    """
+    from numpy import loadtxt
+    #import SRW helpers functions
+    from wpg.useful_code.srwutils import AuxTransmAddSurfHeightProfileScaled
+
+    heightProfData = loadtxt(mdatafile).T
+    AuxTransmAddSurfHeightProfileScaled(wf_dist, heightProfData, Orient, theta, scale)
+    
