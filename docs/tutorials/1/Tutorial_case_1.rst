@@ -5,7 +5,7 @@ Wavefront propagation simulation tutorial - Case 1
 L.Samoylova liubov.samoylova@xfel.eu, A.Buzmakov buzmakov@gmail.com
 
 Tutorial course on Wavefront Propagation Simulations, 28/11/2013,
-European XFEL, Hamburg.
+European XFEL, Hamburg. Updated for using new syntax 28/11/2015
 
 Wave optics software is based on SRW core library
 https://github.com/ochubar/SRW, available through WPG interactive
@@ -21,6 +21,7 @@ Import modules
 
     %pylab inline
 
+
 .. parsed-literal::
 
     Populating the interactive namespace from numpy and matplotlib
@@ -31,6 +32,8 @@ Import modules
     #Importing necessary modules:
     import os
     import sys
+    import copy
+    
     sys.path.insert(0,os.path.join('..','..'))
     #sys.path.insert('../..')
     
@@ -49,16 +52,32 @@ Import modules
     
     #import some helpers functions
     from wpg.useful_code.wfrutils import calculate_fwhm_x, plot_wfront, calculate_fwhm_y, print_beamline, get_mesh, plot_1d, plot_2d
-    from wpg.useful_code.wfrutils import propagate_wavefront
+    
+    from wpg.wpg_uti_wf import propagate_wavefront
+    from wpg.wpg_uti_oe import show_transmission
+    
+    #from wpg.useful_code.wfrutils import propagate_wavefront
     
     #Import base wavefront class
     from wpg import Wavefront
     
+    #Import base beamline class and OE wrappers
     from wpg.beamline import Beamline
+    from wpg.optical_elements import Empty, Use_PP
+    from wpg.optical_elements import         Drift,Aperture,    Lens,Mirror_elliptical,WF_dist,calculateOPD
+    
     #Gaussian beam generator
     from wpg.generators import build_gauss_wavefront_xy
     
     pylab.ion()
+
+Use or not new syntax
+~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    NEW_SYNTAX = True
+
 Define auxiliary functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -103,6 +122,21 @@ Define auxiliary functions
         AuxTransmAddSurfHeightProfileScaled(opTrErMirr, heightProfData, Orient, theta, scale)
         pylab.figure()
         plot_1d(heightProfData,'profile from ' + mdatafile,'x (m)', 'h (m)')
+
+.. code:: python
+
+    def calc_sampling(zoom,mf):
+        """
+        This function calculates sampling.
+        :param zoom: range zoom
+        :param mf: modification factor for step, i.e. dx1=mf*dx0
+        
+        :return: sampling.
+        """
+        sampling = zoom/mf; 
+        print 'zoom:{:.1f}; mod_factor:{:.1f}; sampling:{:.1f}'.format(zoom, mf, sampling)
+        return sampling
+
 .. code:: python
 
     def _save_object(obj, file_name):
@@ -143,7 +177,7 @@ Define auxiliary functions
                 
     def create_CRL(directory=None, voids_params=None, *args, **keywrds):
         """
-        This function build CLR or load it from file if it was created befor.
+        This function build CLR or load it from file if it was created beforehand.
         Out/input filename builded as sequence of function parameters.
         
         Adiitinal parameters (*args) passed to srwlib.srwl_opt_setup_CRL function
@@ -196,6 +230,7 @@ Define auxiliary functions
             mkdir_p(os.path.dirname(full_path))
             _save_object(res, full_path)
             return res 
+
 
 Defining initial wavefront and writing electric field data to h5-file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -258,6 +293,7 @@ Defining initial wavefront and writing electric field data to h5-file
     fwhm_x = calculate_fwhm_x(mwf);fwhm_y = calculate_fwhm_y(mwf)
     print 'FWHMx [mm], theta_fwhm=fwhm_x/z1 [urad], distance to waist:',fwhm_x*1e3,fwhm_x/z1*1e6, 
 
+
 .. parsed-literal::
 
     *****defining initial wavefront and writing electric field data to h5-file...
@@ -276,7 +312,7 @@ Defining initial wavefront and writing electric field data to h5-file
 
 
 
-.. image:: output_10_1.png
+.. image:: output_13_1.png
 
 
 .. code:: python
@@ -284,6 +320,7 @@ Defining initial wavefront and writing electric field data to h5-file
     print pow_x[:,1].max()
     print 'I_o %g [GW/mm^2]'    %(pow_x[:,1].max()*1e-9) 
     print 'peak power %g [GW]'  %(pow_x[:,1].max()*1e-9*1e6*2*pi*(fwhm_x/2.35)**2)
+
 
 .. parsed-literal::
 
@@ -298,6 +335,33 @@ Defining optical beamline(s)
 .. code:: python
 
     print('*****Defining optical beamline(s) ...')
+    #***********CRLs
+    nCRL1 = 1 #number of lenses, collimating
+    nCRL2 = 8
+    delta = 7.511e-06
+    attenLen = 3.88E-3
+    diamCRL = 3.58e-03 #CRL diameter
+    #rMinCRL = 3.3e-03  #CRL radius at the tip of parabola [m]
+    rMinCRL = 2*delta*z1/nCRL1
+    wallThickCRL = 30e-06 #CRL wall thickness [m]
+    
+    #Generating a perfect 2D parabolic CRL:
+    #opCRL1 = srwlib.srwl_opt_setup_CRL(3, delta, attenLen, 1, 
+    #                                  diamCRL, diamCRL, rMinCRL, nCRL, wallThickCRL, 0, 0)
+    opCRL1 = create_CRL1(strDataFolderName,
+                         'opd_CRL1_'+str(nCRL1)+'_R'+str(int(rMinCRL*1e6))+'_'+ename,
+                         3,delta,attenLen,1,diamCRL,diamCRL,rMinCRL,nCRL1,wallThickCRL,0,0,None)
+    #opCRL1 = srwl_opt_setup_CRL(3, delta, attenLen, 1, 
+    #                                  diamCRL, diamCRL, rMinCRL, nCRL1, wallThickCRL, 0, 0)
+    #Saving transmission data to file
+    #AuxSaveOpTransmData(opCRL1, 3, os.path.join(os.getcwd(), strDataFolderName, "opt_path_dif_CRL1.dat"))
+    opCRL2 = create_CRL1(strDataFolderName,
+                         'opd_CRL2_'+str(nCRL2)+'_R'+str(int(rMinCRL*1e6))+'_'+ename,
+                         3,delta,attenLen,1,diamCRL,diamCRL,rMinCRL,nCRL2,wallThickCRL,0,0,None)
+    
+    scale = 1     #5 mirror profile scaling factor 
+    horApM1 = 0.8*thetaOM
+    
     #d2crl2_sase1 = 904.0
     d2crl2_sase2 = 931.0
     
@@ -309,36 +373,14 @@ Defining optical beamline(s)
     z2 = d2m1 - d2crl1
     z3 = d2crl2 - d2m1
     #z3 = d2exp - d2m1
-    
-    opApCRL1 = SRWLOptA('c','a',range_xy,range_xy)  # circular collimating CRL(s) aperture  
-    horApM1 = 0.8*thetaOM
-    opApM1 = SRWLOptA('r', 'a', horApM1, range_xy)  # clear aperture of the Offset Mirror(s)
-    DriftCRL1_M1 = SRWLOptD(z2) #Drift from CRL1 to the first offset mirror (M1) 
-    #***********CRLs
-    nCRL1 = 1 #number of lenses, collimating
-    nCRL2 = 8
-    delta = 7.511e-06
-    attenLen = 3.88E-3
-    diamCRL = 3.58e-03 #CRL diameter
-    #rMinCRL = 3.3e-03  #CRL radius at the tip of parabola [m]
-    rMinCRL = 2*delta*z1/nCRL1
-    wallThickCRL = 30e-06 #CRL wall thickness [m]
-    #Generating a perfect 2D parabolic CRL:
-    #opCRL1 = srwlib.srwl_opt_setup_CRL(3, delta, attenLen, 1, 
-    #                                  diamCRL, diamCRL, rMinCRL, nCRL, wallThickCRL, 0, 0)
-    opCRL1 = create_CRL1(strDataFolderName,
-                         'opd_CRL1_'+str(nCRL1)+'_R'+str(int(rMinCRL*1e6))+'_'+ename,
-                         3,delta,attenLen,1,diamCRL,diamCRL,rMinCRL,nCRL1,wallThickCRL,0,0,None)
-    #opCRL1 = srwl_opt_setup_CRL(3, delta, attenLen, 1, 
-    #                                  diamCRL, diamCRL, rMinCRL, nCRL1, wallThickCRL, 0, 0)
-    #Saving transmission data to file
-    #AuxSaveOpTransmData(opCRL1, 3, os.path.join(os.getcwd(), strDataFolderName, "opt_path_dif_CRL1.dat"))
-    DriftM1_Exp  = SRWLOptD(z3) #Drift from M1 to exp hall 
-    opCRL2 = create_CRL1(strDataFolderName,
-                         'opd_CRL2_'+str(nCRL2)+'_R'+str(int(rMinCRL*1e6))+'_'+ename,
-                         3,delta,attenLen,1,diamCRL,diamCRL,rMinCRL,nCRL2,wallThickCRL,0,0,None)
     z4 = rMinCRL/(2*delta*nCRL2)
-    Drift_Sample  = SRWLOptD(z4) #Drift from focusing CRL2 to focal plane 
+    
+    if not NEW_SYNTAX: 
+        opApCRL1 = SRWLOptA('c','a',range_xy,range_xy)  # circular collimating CRL(s) aperture  
+        opApM1 = SRWLOptA('r', 'a', horApM1, range_xy)  # clear aperture of the Offset Mirror(s)
+        DriftCRL1_M1 = SRWLOptD(z2) #Drift from CRL1 to the first offset mirror (M1) 
+        DriftM1_Exp  = SRWLOptD(z3) #Drift from M1 to exp hall 
+        Drift_Sample  = SRWLOptD(z4) #Drift from focusing CRL2 to focal plane 
     
     #Wavefront Propagation Parameters:
     #[0]:  Auto-Resize (1) or not (0) Before propagation
@@ -353,49 +395,87 @@ Defining optical beamline(s)
     #[9]:  Type of wavefront Shift before Resizing (not yet implemented)
     #[10]: New Horizontal wavefront Center position after Shift (not yet implemented)
     #[11]: New Vertical wavefront Center position after Shift (not yet implemented)
-    #                 [ 0] [1] [2]  [3] [4] [5]  [6]  [7]  [8]  [9] [10] [11] 
-    ppCRL1 =          [ 0,  0, 1.0,  0,  0, 1.0, 1.0, 1.0, 1.0,  0,  0,   0]
-    ppDriftCRL1_M1 =  [ 0,  0, 1.0,  1,  0, 1.0, 1.0, 1.0, 1.0,  0,  0,   0]
-    ppM1 =            [ 0,  0, 1.0,  0,  0, 1.0, 1.0, 1.0, 1.0,  0,  0,   0]
-    ppDriftM1_Exp  =  [ 0,  0, 1.0,  1,  0, 2.4, 1.8, 2.4, 1.8,  0,  0,   0]
-    ppTrErM1 =        [ 0,  0, 1.0,  0,  0, 1.0, 1.0, 1.0, 1.0,  0,  0,   0]
-    ppCRL2 =          [ 0,  0, 1.0,  0,  0, 1.0, 1.0, 1.0, 1.0,  0,  0,   0]
-    ppDrift_Sample  = [ 0,  0, 1.0,  1,  0, 1.8, 1.5, 1.8, 1.5,  0,  0,   0]
-    ppFin  =          [ 0,  0, 1.0,  0,  0, 0.01, 5.0, 0.01, 5.0,  0,  0,   0]
+    #                     [ 0] [1] [2]  [3] [4] [5]  [6]  [7]  [8]  [9] [10] [11] 
+        ppCRL1 =          [ 0,  0, 1.0,  0,  0, 1.0, 1.0, 1.0, 1.0,  0,  0,   0]
+        ppDriftCRL1_M1 =  [ 0,  0, 1.0,  1,  0, 1.0, 1.0, 1.0, 1.0,  0,  0,   0]
+        ppM1 =            [ 0,  0, 1.0,  0,  0, 1.0, 1.0, 1.0, 1.0,  0,  0,   0]
+        ppDriftM1_Exp  =  [ 0,  0, 1.0,  1,  0, 2.4, 1.8, 2.4, 1.8,  0,  0,   0]
+        ppTrErM1 =        [ 0,  0, 1.0,  0,  0, 1.0, 1.0, 1.0, 1.0,  0,  0,   0]
+        ppCRL2 =          [ 0,  0, 1.0,  0,  0, 1.0, 1.0, 1.0, 1.0,  0,  0,   0]
+        ppDrift_Sample  = [ 0,  0, 1.0,  1,  0, 1.8, 1.5, 1.8, 1.5,  0,  0,   0]
+        ppFin  =          [ 0,  0, 1.0,  0,  0, 0.01, 5.0, 0.01, 5.0,  0,  0,   0]
     
-    optBL0 = SRWLOptC([opCRL1,  DriftCRL1_M1,opApM1,  DriftM1_Exp], 
+        optBL0 = SRWLOptC([opCRL1,  DriftCRL1_M1,opApM1,  DriftM1_Exp], 
                       [ppCRL1,ppDriftCRL1_M1,  ppM1,ppDriftM1_Exp]) 
     
-    scale = 1     #5 mirror profile scaling factor 
-    print('*****HOM1 data for BL1 beamline ')
-    opTrErM1 = SRWLOptT(1500, 100, horApM1, range_xy)
-    #defineOPD(opTrErM1, os.path.join(strInputDataFolder,'mirror1.dat'), 2, '\t', 'x',  thetaOM, scale)
-    defineOPD(opTrErM1, os.path.join(strInputDataFolder,'mirror2.dat'), 2, ' ', 'x',  thetaOM, scale)
-    opdTmp=numpy.array(opTrErM1.arTr)[1::2].reshape(opTrErM1.mesh.ny,opTrErM1.mesh.nx)
-    pylab.figure()
-    plot_2d(opdTmp, opTrErM1.mesh.xStart*1e3,opTrErM1.mesh.xFin*1e3,opTrErM1.mesh.yStart*1e3,opTrErM1.mesh.yFin*1e3,
-            'OPD [m]', 'x (mm)', 'y (mm)')  
+        print('*****HOM1 data for BL1 beamline ')
+        opTrErM1 = SRWLOptT(1500, 100, horApM1, range_xy)
+        #defineOPD(opTrErM1, os.path.join(strInputDataFolder,'mirror1.dat'), 2, '\t', 'x',  thetaOM, scale)
+        defineOPD(opTrErM1, os.path.join(strInputDataFolder,'mirror2.dat'), 2, ' ', 'x',  thetaOM, scale)
+        opdTmp=numpy.array(opTrErM1.arTr)[1::2].reshape(opTrErM1.mesh.ny,opTrErM1.mesh.nx)
+        pylab.figure()
+        plot_2d(opdTmp, opTrErM1.mesh.xStart*1e3,opTrErM1.mesh.xFin*1e3,
+                opTrErM1.mesh.yStart*1e3,opTrErM1.mesh.yFin*1e3,'OPD [m]', 'x (mm)', 'y (mm)')  
     
-    optBL1 = SRWLOptC([opCRL1,  DriftCRL1_M1,opApM1,opTrErM1,  DriftM1_Exp], 
-                      [ppCRL1,ppDriftCRL1_M1,  ppM1,ppTrErM1,ppDriftM1_Exp]) 
+        optBL1 = SRWLOptC([opCRL1,  DriftCRL1_M1,opApM1,opTrErM1,  DriftM1_Exp], 
+                          [ppCRL1,ppDriftCRL1_M1,  ppM1,ppTrErM1,ppDriftM1_Exp]) 
     
-    optBL2 = SRWLOptC([opCRL1,  DriftCRL1_M1,opApM1,opTrErM1,  DriftM1_Exp, opCRL2,Drift_Sample], 
-                      [ppCRL1,ppDriftCRL1_M1,  ppM1,ppTrErM1,ppDriftM1_Exp, ppCRL2, ppDrift_Sample,ppFin]) 
+        optBL2 = SRWLOptC([opCRL1,  DriftCRL1_M1,opApM1,opTrErM1,  DriftM1_Exp, opCRL2,Drift_Sample], 
+                          [ppCRL1,ppDriftCRL1_M1,  ppM1,ppTrErM1,ppDriftM1_Exp, ppCRL2, ppDrift_Sample,ppFin]) 
+    else:
+        optBL0 = Beamline()
+        #optBL0.append(Aperture(shape='c',ap_or_ob='a',Dx=range_xy), Use_PP())# circular CRL aperture
+        optBL0.append(opCRL1,    Use_PP())
+        optBL0.append(Drift(z2), Use_PP(semi_analytical_treatment=1))
+        optBL0.append(Aperture(shape='r',ap_or_ob='a',Dx=horApM1,Dy=range_xy), 
+                                 Use_PP())
+        optBL0.append(Drift(z3), Use_PP(semi_analytical_treatment=1, zoom=2.4, sampling=1.8))
+        
+        show_transmission(opCRL1)
+        opOPD_M1 = calculateOPD(WF_dist(nx=1500,ny=100,Dx=horApM1,Dy=range_xy),
+                                os.path.join(strInputDataFolder,'mirror2.dat'),
+                                2, ' ', 'x',  thetaOM, scale)
+        show_transmission(opOPD_M1)
+        optBL1 = Beamline()
+        #optBL1.append(Aperture(shape='c',ap_or_ob='a',Dx=range_xy), Use_PP())# circular CRL aperture
+        optBL1.append(opCRL1,    Use_PP())
+        optBL1.append(Drift(z2), Use_PP(semi_analytical_treatment=1))
+        optBL1.append(Aperture(shape='r',ap_or_ob='a',Dx=horApM1,Dy=range_xy), 
+                                 Use_PP())
+        optBL1.append(Aperture(shape='r',ap_or_ob='a',Dx=horApM1,Dy=range_xy),
+                      Use_PP())
+        optBL1.append(opOPD_M1,Use_PP())
+        optBL1.append(Drift(z3),
+                      Use_PP(semi_analytical_treatment=1, zoom=2.4, sampling=1.8))
+        
+    
+        show_transmission(opCRL2)
+        optBL2 = copy.deepcopy(optBL1)
+        optBL2.append(opCRL2,     Use_PP())
+        optBL2.append(Drift(z4),  Use_PP(semi_analytical_treatment=1, zoom=1.5, sampling=1.8))
+        zoom=0.02; optBL2.append(Empty(),
+                                  Use_PP(fft_resizing=1,zoom=zoom, sampling=calc_sampling(zoom=zoom,mf=0.01)))
+        
+
 
 .. parsed-literal::
 
     *****Defining optical beamline(s) ...
     Found file Tutorial_case_1/opd_CRL1_1_R3530_6_742kev.pkl. CLR will be loaded from file
     Found file Tutorial_case_1/opd_CRL2_8_R3530_6_742kev.pkl. CLR will be loaded from file
-    *****HOM1 data for BL1 beamline 
+    zoom:0.0; mod_factor:0.0; sampling:2.0
 
 
 
-.. image:: output_13_1.png
+.. image:: output_16_1.png
 
 
 
-.. image:: output_13_2.png
+.. image:: output_16_2.png
+
+
+
+.. image:: output_16_3.png
 
 
 Propagating through BL0 beamline. Collimating CRL and ideal mirror
@@ -413,7 +493,10 @@ Propagating through BL0 beamline. Collimating CRL and ideal mirror
     pos_title = 'at exp hall wall'
     print '*****setting-up optical elements, beamline:', strBL
     
-    bl = Beamline(optBL)
+    if not NEW_SYNTAX: 
+        bl = Beamline(optBL)
+    else:
+        bl = optBL
     print bl
     
     if bSaved:
@@ -425,6 +508,7 @@ Propagating through BL0 beamline. Collimating CRL and ideal mirror
     startTime = time.time()
     mwf = propagate_wavefront(ifname, bl,out_file_name)
     print 'propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min'
+
 
 .. parsed-literal::
 
@@ -477,12 +561,59 @@ Propagating through BL0 beamline. Collimating CRL and ideal mirror
     	
     
     save hdf5: Tutorial_case_1/g6_742kev_bl0.h5
+    Optical Element: Transmission (generic)
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 235.0
+    	Fy = 235.0
+    	arTr = array of size 2004002
+    	extTr = 1
+    	mesh = Radiation Mesh (Sampling)
+    		arSurf = None
+    		eFin = 0
+    		eStart = 0
+    		hvx = 1
+    		hvy = 0
+    		hvz = 0
+    		ne = 1
+    		nvx = 0
+    		nvy = 0
+    		nvz = 1
+    		nx = 1001
+    		ny = 1001
+    		xFin = 0.001969
+    		xStart = -0.001969
+    		yFin = 0.001969
+    		yStart = -0.001969
+    		zStart = 0
+    	
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	L = 55.0
+    	treat = 0
+    	
+    Optical Element: Aperture / Obstacle
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Dx = 0.002
+    	Dy = 0.0020936261413
+    	ap_or_ob = a
+    	shape = r
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 2.4, 1.8, 2.4, 1.8, 0, 0, 0]
+    	L = 641.0
+    	treat = 0
+    	
+    
     *****reading wavefront from h5 file...
+    nx   180  range_x [-1.0e-03, 1.0e-03]
+    ny   180  range_y [-1.0e-03, 1.0e-03]
     *****propagating wavefront (with resizing)...
-    [nx, ny, xmin, xmax, ymin, ymax] [780, 780, -0.0025201055404577523, 0.002513643731379655, -0.0025201055404577523, 0.002513643731379655]
     save hdf5: Tutorial_case_1/g6_742kev_bl0.h5
     done
-    propagation lasted: 0.0 min
+    propagation lasted: 0.1 min
 
 
 .. code:: python
@@ -493,6 +624,7 @@ Propagating through BL0 beamline. Collimating CRL and ideal mirror
     pylab.axis('tight')    
     print 'FWHMx [mm], theta_fwhm [urad]:',calculate_fwhm_x(mwf)*1e3,calculate_fwhm_x(mwf)/(z1+z2)*1e6
     print 'FWHMy [mm], theta_fwhm [urad]:',calculate_fwhm_y(mwf)*1e3,calculate_fwhm_y(mwf)/(z1+z2)*1e6
+
 
 .. parsed-literal::
 
@@ -510,7 +642,7 @@ Propagating through BL0 beamline. Collimating CRL and ideal mirror
 
 
 
-.. image:: output_16_1.png
+.. image:: output_19_1.png
 
 
 Propagating through BL1 beamline. Collimating CRL and imperfect mirror
@@ -528,7 +660,10 @@ Propagating through BL1 beamline. Collimating CRL and imperfect mirror
     pos_title = 'at exp hall wall'
     print '*****setting-up optical elements, beamline:', strBL
     
-    bl = Beamline(optBL)
+    if not NEW_SYNTAX: 
+        bl = Beamline(optBL)
+    else:
+        bl = optBL
     print bl
     
     if bSaved:
@@ -540,6 +675,7 @@ Propagating through BL1 beamline. Collimating CRL and imperfect mirror
     startTime = time.time()
     mwf = propagate_wavefront(ifname, bl,out_file_name)
     print 'propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min'
+
 
 .. parsed-literal::
 
@@ -585,6 +721,96 @@ Propagating through BL1 beamline. Collimating CRL and imperfect mirror
     	x = 0
     	y = 0
     	
+    Optical Element: Aperture / Obstacle
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Dx = 0.002
+    	Dy = 0.0020936261413
+    	ap_or_ob = a
+    	shape = r
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Transmission (generic)
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 1e+23
+    	Fy = 1e+23
+    	arTr = array of size 300000
+    	extTr = 0
+    	mesh = Radiation Mesh (Sampling)
+    		arSurf = None
+    		eFin = 0
+    		eStart = 0
+    		hvx = 1
+    		hvy = 0
+    		hvz = 0
+    		ne = 1
+    		nvx = 0
+    		nvy = 0
+    		nvz = 1
+    		nx = 1500
+    		ny = 100
+    		xFin = 0.001
+    		xStart = -0.001
+    		yFin = 0.00104681307065
+    		yStart = -0.00104681307065
+    		zStart = 0
+    	
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 2.4, 1.8, 2.4, 1.8, 0, 0, 0]
+    	L = 641.0
+    	treat = 0
+    	
+    
+    Optical Element: Transmission (generic)
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 235.0
+    	Fy = 235.0
+    	arTr = array of size 2004002
+    	extTr = 1
+    	mesh = Radiation Mesh (Sampling)
+    		arSurf = None
+    		eFin = 0
+    		eStart = 0
+    		hvx = 1
+    		hvy = 0
+    		hvz = 0
+    		ne = 1
+    		nvx = 0
+    		nvy = 0
+    		nvz = 1
+    		nx = 1001
+    		ny = 1001
+    		xFin = 0.001969
+    		xStart = -0.001969
+    		yFin = 0.001969
+    		yStart = -0.001969
+    		zStart = 0
+    	
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	L = 55.0
+    	treat = 0
+    	
+    Optical Element: Aperture / Obstacle
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Dx = 0.002
+    	Dy = 0.0020936261413
+    	ap_or_ob = a
+    	shape = r
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Aperture / Obstacle
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Dx = 0.002
+    	Dy = 0.0020936261413
+    	ap_or_ob = a
+    	shape = r
+    	x = 0
+    	y = 0
+    	
     Optical Element: Transmission (generic)
     Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
     	Fx = 1e+23
@@ -618,10 +844,11 @@ Propagating through BL1 beamline. Collimating CRL and imperfect mirror
     	
     
     *****reading wavefront from h5 file...
+    nx   180  range_x [-1.0e-03, 1.0e-03]
+    ny   180  range_y [-1.0e-03, 1.0e-03]
     *****propagating wavefront (with resizing)...
-    [nx, ny, xmin, xmax, ymin, ymax] [780, 780, -0.0025201055404577523, 0.002513643731379655, -0.0025201055404577523, 0.002513643731379655]
     done
-    propagation lasted: 0.0 min
+    propagation lasted: 0.1 min
 
 
 .. code:: python
@@ -633,6 +860,7 @@ Propagating through BL1 beamline. Collimating CRL and imperfect mirror
     print 'FWHMx [mm], theta_fwhm [urad]:',calculate_fwhm_x(mwf)*1e3,calculate_fwhm_x(mwf)/(z1+z2)*1e6
     print 'FWHMy [mm], theta_fwhm [urad]:',calculate_fwhm_y(mwf)*1e3,calculate_fwhm_y(mwf)/(z1+z2)*1e6
 
+
 .. parsed-literal::
 
     *****Collimating CRL and imperfect mirror
@@ -641,7 +869,7 @@ Propagating through BL1 beamline. Collimating CRL and imperfect mirror
     Coordinates of center, [mm]: -0.187392463265 0.0387708544686
     stepX, stepY [um]: 6.4618090781 6.4618090781 
     
-    Total power (integrated over full range): 53.3002 [GW]
+    Total power (integrated over full range): 53.3003 [GW]
     Peak power calculated using FWHM:         52.7227 [GW]
     Max irradiance: 97.8661 [GW/mm^2]
     FWHMx [mm], theta_fwhm [urad]: 0.6784899532 2.33962052828
@@ -649,7 +877,7 @@ Propagating through BL1 beamline. Collimating CRL and imperfect mirror
 
 
 
-.. image:: output_19_1.png
+.. image:: output_22_1.png
 
 
 Propagating through BL2 beamline. Collimating CRL1, imperfect mirror, focusing CRL2
@@ -666,7 +894,10 @@ Propagating through BL2 beamline. Collimating CRL1, imperfect mirror, focusing C
     strBL = 'bl2'
     pos_title = 'at sample'
     print '*****setting-up optical elements, beamline:', strBL
-    bl = Beamline(optBL)
+    if not NEW_SYNTAX: 
+        bl = Beamline(optBL)
+    else:
+        bl = optBL
     print bl
     
     if bSaved:
@@ -678,6 +909,7 @@ Propagating through BL2 beamline. Collimating CRL1, imperfect mirror, focusing C
     startTime = time.time()
     mwf = propagate_wavefront(ifname, bl,out_file_name)
     print 'propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min'
+
 
 .. parsed-literal::
 
@@ -713,6 +945,15 @@ Propagating through BL2 beamline. Collimating CRL1, imperfect mirror, focusing C
     Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
     	L = 55.0
     	treat = 0
+    	
+    Optical Element: Aperture / Obstacle
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Dx = 0.002
+    	Dy = 0.0020936261413
+    	ap_or_ob = a
+    	shape = r
+    	x = 0
+    	y = 0
     	
     Optical Element: Aperture / Obstacle
     Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
@@ -781,21 +1022,139 @@ Propagating through BL2 beamline. Collimating CRL1, imperfect mirror, focusing C
     	
     	
     Optical Element: Drift Space
-    Prop. parameters = [0, 0, 1.0, 1, 0, 1.8, 1.5, 1.8, 1.5, 0, 0, 0]
+    Prop. parameters = [0, 0, 1.0, 1, 0, 1.5, 1.8, 1.5, 1.8, 0, 0, 0]
     	L = 29.375
     	treat = 0
     	
     Optical element: Empty
         This is empty propagator used for sampling and zooming wavefront
         
-    Prop. parameters = [0, 0, 1.0, 0, 0, 0.01, 5.0, 0.01, 5.0, 0, 0, 0]
+    Prop. parameters = [0, 0, 1.0, 0, 1, 0.02, 2.0, 0.02, 2.0, 0, 0, 0]
+    	
+    
+    Optical Element: Transmission (generic)
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 235.0
+    	Fy = 235.0
+    	arTr = array of size 2004002
+    	extTr = 1
+    	mesh = Radiation Mesh (Sampling)
+    		arSurf = None
+    		eFin = 0
+    		eStart = 0
+    		hvx = 1
+    		hvy = 0
+    		hvz = 0
+    		ne = 1
+    		nvx = 0
+    		nvy = 0
+    		nvz = 1
+    		nx = 1001
+    		ny = 1001
+    		xFin = 0.001969
+    		xStart = -0.001969
+    		yFin = 0.001969
+    		yStart = -0.001969
+    		zStart = 0
+    	
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	L = 55.0
+    	treat = 0
+    	
+    Optical Element: Aperture / Obstacle
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Dx = 0.002
+    	Dy = 0.0020936261413
+    	ap_or_ob = a
+    	shape = r
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Aperture / Obstacle
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Dx = 0.002
+    	Dy = 0.0020936261413
+    	ap_or_ob = a
+    	shape = r
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Transmission (generic)
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 1e+23
+    	Fy = 1e+23
+    	arTr = array of size 300000
+    	extTr = 0
+    	mesh = Radiation Mesh (Sampling)
+    		arSurf = None
+    		eFin = 0
+    		eStart = 0
+    		hvx = 1
+    		hvy = 0
+    		hvz = 0
+    		ne = 1
+    		nvx = 0
+    		nvy = 0
+    		nvz = 1
+    		nx = 1500
+    		ny = 100
+    		xFin = 0.001
+    		xStart = -0.001
+    		yFin = 0.00104681307065
+    		yStart = -0.00104681307065
+    		zStart = 0
+    	
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 2.4, 1.8, 2.4, 1.8, 0, 0, 0]
+    	L = 641.0
+    	treat = 0
+    	
+    Optical Element: Transmission (generic)
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 29.375
+    	Fy = 29.375
+    	arTr = array of size 2004002
+    	extTr = 1
+    	mesh = Radiation Mesh (Sampling)
+    		arSurf = None
+    		eFin = 0
+    		eStart = 0
+    		hvx = 1
+    		hvy = 0
+    		hvz = 0
+    		ne = 1
+    		nvx = 0
+    		nvy = 0
+    		nvz = 1
+    		nx = 1001
+    		ny = 1001
+    		xFin = 0.001969
+    		xStart = -0.001969
+    		yFin = 0.001969
+    		yStart = -0.001969
+    		zStart = 0
+    	
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 1.5, 1.8, 1.5, 1.8, 0, 0, 0]
+    	L = 29.375
+    	treat = 0
+    	
+    Optical element: Empty
+        This is empty propagator used for sampling and zooming wavefront
+        
+    Prop. parameters = [0, 0, 1.0, 0, 1, 0.02, 2.0, 0.02, 2.0, 0, 0, 0]
     	
     
     *****reading wavefront from h5 file...
+    nx   180  range_x [-1.0e-03, 1.0e-03]
+    ny   180  range_y [-1.0e-03, 1.0e-03]
     *****propagating wavefront (with resizing)...
-    [nx, ny, xmin, xmax, ymin, ymax] [108, 108, -1.2627907460942796e-05, 1.094724874422274e-05, -1.2627907460942796e-05, 1.094724874422274e-05]
     done
-    propagation lasted: 0.1 min
+    propagation lasted: 0.2 min
 
 
 .. code:: python
@@ -806,21 +1165,22 @@ Propagating through BL2 beamline. Collimating CRL1, imperfect mirror, focusing C
     pylab.axis('tight')    
     print 'FWHMx [um], FWHMy [um]:',calculate_fwhm_y(mwf)*1e6,calculate_fwhm_y(mwf)*1e6 
 
+
 .. parsed-literal::
 
     *****Collimating CRL1, imperfect mirror, focusing CRL2
-    FWHMx[um]: 3.52525700264
-    FWHMy [um]: 3.52525700264
-    Coordinates of center, [mm]: -6.91793890322e-05 -6.91793890322e-05
-    stepX, stepY [um]: 0.220328562665 0.220328562665 
+    FWHMx[um]: 3.18983483347
+    FWHMy [um]: 3.64552552396
+    Coordinates of center, [mm]: 0.0 0.0
+    stepX, stepY [um]: 0.455690690496 0.455690690496 
     
-    Total power (integrated over full range): 45.3167 [GW]
-    Peak power calculated using FWHM:         41.1755 [GW]
-    Max irradiance: 2.91214e+06 [GW/mm^2]
-    FWHMx [um], FWHMy [um]: 3.52525700264 3.52525700264
+    Total power (integrated over full range): 44.8729 [GW]
+    Peak power calculated using FWHM:         38.874 [GW]
+    Max irradiance: 2.93824e+06 [GW/mm^2]
+    FWHMx [um], FWHMy [um]: 3.64552552396 3.64552552396
 
 
 
-.. image:: output_22_1.png
+.. image:: output_25_1.png
 
 
