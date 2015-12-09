@@ -1156,7 +1156,10 @@ class WFDataArrEhor(RadiationField):
                 self._wf.params.nx = val.shape[1]
                 self._wf.params.ny = val.shape[0]
                 self._wf.params.nSlices = val.shape[2]
-            self._wf._srwl_wf.arEx = array.array('f', val.flat)
+            # self._wf._srwl_wf.arEx = array.array('f', val.flat)
+            self._wf._srwl_wf.arEx = array.array('f')
+            val_s = val.tostring()
+            self._wf._srwl_wf.arEx.fromstring(val_s)
 
 
 class WFDataArrEver(RadiationField):
@@ -1208,7 +1211,11 @@ class WFDataArrEver(RadiationField):
                 self._wf.params.nx = val.shape[1]
                 self._wf.params.ny = val.shape[0]
                 self._wf.params.nSlices = val.shape[2]
-            self._wf._srwl_wf.arEy = array.array('f', val.flat)
+#             self._wf._srwl_wf.arEy = array.array('f', val.flat)
+            self._wf._srwl_wf.arEy = array.array('f')
+            val_s = val.tostring()
+            self._wf._srwl_wf.arEy.fromstring(val_s)
+
 
 
 # TODO: fix allocation in N(x,y,z)
