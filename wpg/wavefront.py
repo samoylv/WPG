@@ -325,13 +325,26 @@ class Wavefront(object):
 
         :return: list of integers
         """
-        sr = self.params.Mesh
-        if axis == 'z':
-            return sr.xMin, sr.xMax, sr.yMax, sr.yMin
-        elif axis == 'x':
-            return sr.sliceMin, sr.sliceMax, sr.yMax, sr.yMin
-        elif axis == 'y':
-            return sr.sliceMin, sr.sliceMax, sr.xMax, sr.xMin
+        sr =  self.params.Mesh
+        rep = self.params.wSpace
+        if rep == 'R-space':
+            print rep
+            if axis == 'z':
+                  return sr.xMin, sr.xMax, sr.yMax, sr.yMin
+            elif axis == 'x':
+                  return sr.sliceMin, sr.sliceMax, sr.yMax, sr.yMin
+            elif axis == 'y':
+                  return sr.sliceMin, sr.sliceMax, sr.xMax, sr.xMin
+        elif rep == 'Q-space':
+            print rep
+            wl = 12.39*1e-10/(self.params.photonEnergy*1e-3)      #WaveLength
+            wv = 2.*np.pi/wl                                       #WaveVector
+            if axis == 'z':
+                  return sr.qxMin/wv, sr.qxMax/wv, sr.qyMax/wv, sr.qyMin/wv
+            elif axis == 'x':
+                  return sr.sliceMin, sr.sliceMax, sr.qyMax/wv, sr.qyMin/wv
+            elif axis == 'y':
+                  return sr.sliceMin, sr.sliceMax, sr.qxMax/wv, sr.qxMin/wv
 
     def __str__(self):
         """
