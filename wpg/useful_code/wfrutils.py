@@ -12,6 +12,7 @@ import sys
 sys.path.insert(0, os.path.join('..','..'))
 
 from wpg import Wavefront, Beamline
+from wpg.wpg_uti_wf import propagate_wavefront
 # from srwlib import *
 import wpg.srwlib
 from wpg.srwlib import srwl
@@ -312,36 +313,3 @@ def propagate_run(ifname, ofname, optBL, bSaved=False):
     print 'propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min'
     return wfr
 
-def propagate_wavefront(wavefront, beamline, output_file = None):
-    """
-    Propagate wavefront and store it in output file.
-    
-    :param wavefront: Wavefront object or path to HDF5 file
-    :param beamline: SRWLOptC container of beamline
-    :param output_file: if parameter present - store propagaed wavefront to file
-    :return: propagated wavefront object:
-    """
-    
-    if not isinstance(beamline, Beamline):
-        bl = Beamline(beamline)
-    else:
-        bl = beamline
-    
-    if isinstance(wavefront, Wavefront):
-        wfr = Wavefront(srwl_wavefront=wavefront._srw_wf)
-    else:
-        print '*****reading wavefront from h5 file...'
-        wfr = Wavefront()
-        wfr.load_hdf5(wavefront)
-        
-    
-    print '*****propagating wavefront (with resizing)...'
-    bl.propagate(wfr)
-
-    print '[nx, ny, xmin, xmax, ymin, ymax]', get_mesh(wfr)
-    
-    if not output_file is None:
-        print 'save hdf5:', output_file
-        wfr.store_hdf5(output_file)
-    print 'done'
-    return wfr
