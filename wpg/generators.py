@@ -32,7 +32,7 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
     # TODO: fix comment
 
 
-    GsnBm = SRWLGsnBm()  # Gaussian Beam structure (just parameters)
+    GsnBm = srwlib.SRWLGsnBm()  # Gaussian Beam structure (just parameters)
     GsnBm.x = 0  # Transverse Coordinates of Gaussian Beam Center at Waist [m]
     GsnBm.y = 0
     GsnBm.z = 0  # Longitudinal Coordinate of Waist [m]
@@ -66,7 +66,7 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
     else:
         GsnBm.my = 0
 
-    wfr = SRWLWfr()  # Initial Electric Field Wavefront
+    wfr = srwlib.SRWLWfr()  # Initial Electric Field Wavefront
     wfr.allocate(nz, nx, ny)
     # Numbers of points vs Photon Energy (1), Horizontal and
     # Vertical Positions (dummy)
