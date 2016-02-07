@@ -6,7 +6,8 @@ import srwlib
 import srwlpy
 
 
-def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, sigY, d2waist, pulseEn=None,_mx=None,_my=None):
+def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, sigY, d2waist, 
+                          pulseEn=None, pulseRange=None, _mx=None, _my=None):
     """
     Build 3D Gaussian beam.
 
@@ -23,13 +24,15 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
     :param sigY:  Vert. RMS size at Waist [m]
     :param d2waist: Distance to Gaussian waist
     :param pulseEn: Energy per Pulse [J]
+    :param pulseRange: pulse duration range in sigT's
     :param _mx: transverse Gauss-Hermite mode order in horizontal direction
     :param _my: transverse Gauss-Hermite mode order in vertical direction
     :return: wpg.Wavefront structure
     """
     # TODO: fix comment
 
-    GsnBm = srwlib.SRWLGsnBm()  # Gaussian Beam structure (just parameters)
+
+    GsnBm = SRWLGsnBm()  # Gaussian Beam structure (just parameters)
     GsnBm.x = 0  # Transverse Coordinates of Gaussian Beam Center at Waist [m]
     GsnBm.y = 0
     GsnBm.z = 0  # Longitudinal Coordinate of Waist [m]
@@ -63,16 +66,22 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
     else:
         GsnBm.my = 0
 
-    wfr = srwlib.SRWLWfr()  # Initial Electric Field Wavefront
+    wfr = SRWLWfr()  # Initial Electric Field Wavefront
     wfr.allocate(nz, nx, ny)
-     # Numbers of points vs Photon Energy (1), Horizontal and
-     # Vertical Positions (dummy)
+    # Numbers of points vs Photon Energy (1), Horizontal and
+    # Vertical Positions (dummy)
     wfr.presFT = 1  # Defining Initial Wavefront in Time Domain
     #wfr.presFT = 0 #Defining Initial Wavefront in Frequency Domain
 
     wfr.avgPhotEn = GsnBm.avgPhotEn
-    wfr.mesh.eStart = -10 * GsnBm.sigT  # Initial Time [s], 10 ~= 7*sqrt(2)
-    wfr.mesh.eFin = 10 * GsnBm.sigT  # Final Time [s]
+    if pulseRange is not None:
+        wfr.mesh.eStart = -pulseRange/2. * GsnBm.sigT  # Initial Time [s]
+        wfr.mesh.eFin   =  pulseRange/2. * GsnBm.sigT  # Final Time [s]
+    else:
+        #wfr.mesh.eStart = -100 * GsnBm.sigT  # Initial Time [s]
+        #wfr.mesh.eFin = 100 * GsnBm.sigT  # Final Time [s]
+        wfr.mesh.eStart = -4. * GsnBm.sigT  # Initial Time [s]
+        wfr.mesh.eFin = 4. * GsnBm.sigT  # Final Time [s]
 
     # Longitudinal Position [m] at which Electric Field has to be calculated,
     # i.e. the position of the first optical element
@@ -91,8 +100,7 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
     wfr.partBeam.partStatMom1.xp = GsnBm.xp
     wfr.partBeam.partStatMom1.yp = GsnBm.yp
 
-    sampFactNxNyForProp = - \
-        1  # 5 #sampling factor for adjusting nx, ny (effective if > 0)
+    sampFactNxNyForProp = -1  # 5 #sampling factor for adjusting nx, ny (effective if > 0)
     arPrecPar = [sampFactNxNyForProp]
     #**********************Calculating Initial Wavefront
     srwlpy.CalcElecFieldGaussian(wfr, GsnBm, arPrecPar)
