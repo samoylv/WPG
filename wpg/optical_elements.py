@@ -17,6 +17,7 @@ import numpy as np
 
 
 class WPGOpticalElement(object):
+
     """Base class for optical elements."""
 
     def __init__(self):
@@ -24,6 +25,7 @@ class WPGOpticalElement(object):
 
 
 class Empty(WPGOpticalElement):
+
     """Optical element: Empty.
     This is empty propagator used for sampling and zooming wavefront
     """
@@ -313,6 +315,53 @@ def WF_dist(nx, ny, Dx, Dy):
     """
     from wpg.srwlib import SRWLOptT
     return SRWLOptT(nx, ny, Dx, Dy)
+
+
+def VLS_grating(_mirSub, _m=1, _grDen=100, _grDen1=0, _grDen2=0, _grDen3=0, _grDen4=0, _grAng=0):
+    """
+    Optical Element: Grating.
+
+    param _mirSub: SRWLOptMir (or derived) type object defining substrate of the grating
+    :param _m: output (diffraction) order
+    :param _grDen: groove density [lines/mm] (coefficient a0 in the polynomial groove density: a0 + a1*y + a2*y^2 + a3*y^3 + a4*y^4)
+    :param _grDen1: groove density polynomial coefficient a1 [lines/mm^2]
+    :param _grDen2: groove density polynomial coefficient a2 [lines/mm^3]
+    :param _grDen3: groove density polynomial coefficient a3 [lines/mm^4]
+    :param _grDen4: groove density polynomial coefficient a4 [lines/mm^5]
+    :param _grAng: angle between the grove direction and the saggital direction of the substrate [rad] (by default, groves are made along saggital direction (_grAng=0))
+    """
+
+    from srwlib import SRWLOptG
+    return SRWLOptG(_mirSub, _m, _grDen, _grDen1, _grDen2, _grDen3, _grDen4, _grAng)
+
+
+def CRL(_foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n,
+        _wall_thick, _xc, _yc, _void_cen_rad=None,
+        _e_start=0, _e_fin=0, _nx=1001, _ny=1001):
+    """
+    Setup Transmission type Optical Element which simulates Compound Refractive Lens (CRL).
+
+    :param _foc_plane: plane of focusing: 1- horizontal, 2- vertical, 3- both
+    :param _delta: refractive index decrement (can be one number of array vs photon energy)
+    :param _atten_len: attenuation length [m] (can be one number of array vs photon energy)
+    :param _shape: 1- parabolic, 2- circular (spherical)
+    :param _apert_h: horizontal aperture size [m]
+    :param _apert_v: vertical aperture size [m]
+    :param _r_min: radius (on tip of parabola for parabolic shape) [m]
+    :param _n: number of lenses (/"holes")
+    :param _wall_thick: min. wall thickness between "holes" [m]
+    :param _xc: horizontal coordinate of center [m]
+    :param _yc: vertical coordinate of center [m]
+    :param _void_cen_rad: flat array/list of void center coordinates and radii: [x1, y1, r1, x2, y2, r2,...] 
+    :param _e_start: initial photon energy
+    :param _e_fin: final photon energy
+    :return: transmission (SRWLOptT) type optical element which simulates CRL
+    """
+
+    from srwlib import srwl_opt_setup_CRL
+    return srwl_opt_setup_CRL(_foc_plane, _delta, _atten_len, _shape,
+                              _apert_h, _apert_v, _r_min, _n, _wall_thick,
+                              _xc, _yc, _void_cen_rad, _e_start, _e_fin, _nx, _ny)
 
 
 def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., stretching=1.):
