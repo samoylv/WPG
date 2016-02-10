@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 __author__ = 'A. Buzmakov'
 
 import warnings
-import srwlib
-import srwlpy
+from . import srwlib
+from . import srwlpy
 
 
 def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, sigY, d2waist, 

@@ -8,6 +8,10 @@ Described mapping (or aliases) of some of SRW optical elements (SRWLOpt* <-> wpg
 
 .. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 from wpg.srwlib import SRWLOptD as Drift
 from wpg.srwlib import SRWLOptL as Lens
@@ -331,7 +335,7 @@ def VLS_grating(_mirSub, _m=1, _grDen=100, _grDen1=0, _grDen2=0, _grDen3=0, _grD
     :param _grAng: angle between the grove direction and the saggital direction of the substrate [rad] (by default, groves are made along saggital direction (_grAng=0))
     """
 
-    from srwlib import SRWLOptG
+    from .srwlib import SRWLOptG
     return SRWLOptG(_mirSub, _m, _grDen, _grDen1, _grDen2, _grDen3, _grDen4, _grAng)
 
 
@@ -358,7 +362,7 @@ def CRL(_foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n,
     :return: transmission (SRWLOptT) type optical element which simulates CRL
     """
 
-    from srwlib import srwl_opt_setup_CRL
+    from .srwlib import srwl_opt_setup_CRL
     return srwl_opt_setup_CRL(_foc_plane, _delta, _atten_len, _shape,
                               _apert_h, _apert_v, _r_min, _n, _wall_thick,
                               _xc, _yc, _void_cen_rad, _e_start, _e_fin, _nx, _ny)

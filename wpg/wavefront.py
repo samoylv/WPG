@@ -112,7 +112,7 @@ class Wavefront(object):
         keys_chain = wf_field.keys_chain
 
         for key in keys_chain[:-1]:
-            if not key in node.__dict__:
+            if key not in node.__dict__:
                 node.__dict__[key] = glossary_folder()
             node = node.__dict__[key]
 
@@ -126,7 +126,7 @@ class Wavefront(object):
         :return: dictionary view of wavefront
         """
         res = {}
-        for (key, value) in self._wf_fields.iteritems():
+        for (key, value) in self._wf_fields.items():
             res[key] = value.value
         
         res.update(self.custom_fields)
@@ -139,7 +139,10 @@ class Wavefront(object):
         :param in_dict: input dictionary
         :type in_dict: dict
         """
-        for (key, value) in in_dict.iteritems():
+        for (key, value) in in_dict.items():
+            # python3 hack
+            if isinstance(key, bytes):
+                key = key.decode('utf-8')
             if key in self._wf_fields:
                 self._wf_fields[key].value = value
             else:
@@ -147,7 +150,7 @@ class Wavefront(object):
 
     def _store_attributes(self, file_name):
         """
-        Store wavefront attributes to HDF5 file. 
+        Store wavefront attributes to HDF5 file.
 
         Attribute of each field is values of field.attributes
 
@@ -156,10 +159,10 @@ class Wavefront(object):
         """
 
         with h5py.File(file_name) as h5f:
-            for (key, wff) in self._wf_fields.iteritems():
+            for (key, wff) in self._wf_fields.items():
                 try:
                     if wff.glossary_name in h5f:
-                        for (k, v) in wff.attributes.items():
+                        for (k, v) in list(wff.attributes.items()):
                             h5f[wff.glossary_name].attrs[k] = v
                 except KeyError:
                     pass
@@ -328,7 +331,7 @@ class Wavefront(object):
         sr =  self.params.Mesh
         rep = self.params.wSpace
         if rep == 'R-space':
-            print rep
+            print(rep)
             if axis == 'z':
                   return sr.xMin, sr.xMax, sr.yMax, sr.yMin
             elif axis == 'x':
@@ -336,7 +339,7 @@ class Wavefront(object):
             elif axis == 'y':
                   return sr.sliceMin, sr.sliceMax, sr.xMax, sr.xMin
         elif rep == 'Q-space':
-            print rep
+            print(rep)
             wl = 12.39*1e-10/(self.params.photonEnergy*1e-3)      #WaveLength
             wv = 2.*np.pi/wl                                       #WaveVector
             if axis == 'z':

@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 __author__ = 'A. Buzmakov'
 
 import pylab as plt
 import numpy as np
-import wavefront
+from . import wavefront
 
 
 def get_limits2d(wf, axis):

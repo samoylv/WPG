@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 __author__ = 'A. Buzmakov, L. Samoylova'
 
 import time
@@ -23,8 +29,8 @@ def print_mesh(wfr):
     """    
  
     wf_mesh = wfr.params.Mesh
-    print 'nx {:5d}  range_x [{:.1e}, {:.1e}]'.format(wf_mesh.nx,wf_mesh.xMin,wf_mesh.xMax)
-    print 'ny {:5d}  range_y [{:.1e}, {:.1e}]'.format(wf_mesh.ny,wf_mesh.yMin,wf_mesh.yMax)   
+    print('nx {:5d}  range_x [{:.1e}, {:.1e}]'.format(wf_mesh.nx,wf_mesh.xMin,wf_mesh.xMax))
+    print('ny {:5d}  range_y [{:.1e}, {:.1e}]'.format(wf_mesh.ny,wf_mesh.yMin,wf_mesh.yMax))   
 
 
 def propagate_wavefront(wavefront, beamline, output_file = None):
@@ -41,23 +47,23 @@ def propagate_wavefront(wavefront, beamline, output_file = None):
         bl = Beamline(beamline)
     else:
         bl = beamline
-    print bl
+    print(bl)
     if isinstance(wavefront, Wavefront):
         wfr = Wavefront(srwl_wavefront=wavefront._srw_wf)
     else:
-        print '*****reading wavefront from h5 file...'
+        print('*****reading wavefront from h5 file...')
         wfr = Wavefront()
         wfr.load_hdf5(wavefront)
         
     
     print_mesh(wfr)
-    print '*****propagating wavefront (with resizing)...'
+    print('*****propagating wavefront (with resizing)...')
     bl.propagate(wfr)
 
     if not output_file is None:
-        print 'save hdf5:', output_file
+        print('save hdf5:', output_file)
         wfr.store_hdf5(output_file)
-    print 'done'
+    print('done')
     return wfr
 
 def calculate_fwhm(wfr):
