@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 __author__ = 'A. Buzmakov'
+
 
 import os
 import sys
-sys.path.insert(0,os.path.join('..','..'))
+sys.path.insert(0, os.path.join('..', '..'))
 
 import numpy as np
 
@@ -11,6 +18,8 @@ import wpg
 from wpg.generators import build_gauss_wavefront
 from wpg.beamline import Beamline
 from wpg.optical_elements import Drift, Use_PP
+from wpg.srwlib import srwl
+
 
 def main():
     d2waist = 270.
@@ -34,8 +43,13 @@ def main():
     nz = 5
     tau = 0.12e-15
 
-    srw_wf = build_gauss_wavefront(nx, ny, nz, ekev, xmin, xmax, ymin, ymax, tau, sigX, sigX, d2waist)
-    wf = wpg.Wavefront(srw_wf)
+    srw_wf = build_gauss_wavefront(
+        nx, ny, nz, ekev, xmin, xmax, ymin, ymax, tau, sigX, sigX, d2waist)
+    wf = wpg.Wavefront(srw_wf)  
+    b = Beamline()
+    b.append(Drift(5), Use_PP())
+    b.propagate(wf)
+    # srwl.ResizeElecField(srw_wf, 'c', [0, 0.25, 1, 0.25, 1])
 
     if not os.path.exists('tests_data'):
         os.mkdir('tests_data')
@@ -48,4 +62,4 @@ def main():
     return wf
 
 if __name__ == "__main__":
-    main()    
+    main()

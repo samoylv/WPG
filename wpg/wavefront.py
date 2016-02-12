@@ -143,6 +143,7 @@ class Wavefront(object):
             # python3 hack
             if isinstance(key, bytes):
                 key = key.decode('utf-8')
+
             if key in self._wf_fields:
                 self._wf_fields[key].value = value
             else:
