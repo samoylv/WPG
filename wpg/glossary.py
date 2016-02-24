@@ -8,6 +8,11 @@ This module contains definitions (glossary) of Wavefront fields. Described mappi
 .. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
 """
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import inspect
 import sys
 import wpg.utils as utils
@@ -53,7 +58,7 @@ class RadiationField(object):
             start = descr.find(r'[', stop)
             stop = descr.find(r']', start)
             if start >= 0 and stop >= 0:
-                units.append(descr[start+1 : stop])
+                units.append(descr[start+1: stop])
 
         units = ' or '.join(units)
         return units
@@ -285,10 +290,9 @@ class WFRadiationWFloatType(RadiationField):
     @property
     def value(self):
         """Electric field numerical type"""
-
-        if self._wf._srwl_wf.numTypeElFld == 'f':
+        if self._wf._srwl_wf.numTypeElFld in ['f',b'f']:
             return 'float'
-        elif self._wf._srwl_wf.numTypeElFld == 'd':
+        elif self._wf._srwl_wf.numTypeElFld in ['d', b'd']:
             return 'double'
         else:
             raise ValueError('internal error, wrong wavefront field value')
@@ -613,6 +617,7 @@ class WFRadiationMeshHvz(RadiationField):
         self._wf._srwl_wf.mesh.hvz = int(val)
 
 # TODO: add wrapper for mesh._arSurf (we should know it size)
+
 
 class WFRadiationMeshXMin(RadiationField):
 
@@ -1217,7 +1222,6 @@ class WFDataArrEver(RadiationField):
             self._wf._srwl_wf.arEy.fromstring(val_s)
 
 
-
 # TODO: fix allocation in N(x,y,z)
 
 # TODO: add history section
@@ -1279,8 +1283,8 @@ def print_glossary():
                 units.append(descr[start+1: stop])
 
         units = ' or '.join(units)
-        print '**{name}** - {decsription} - ***{units}***'.format(
-            name=name, decsription=descr, units=units)
+        print('**{name}** - {decsription} - ***{units}***'.format(
+            name=name, decsription=descr, units=units))
     # pprint.pprint(get_glosary_info())
 
 

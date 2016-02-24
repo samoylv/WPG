@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import os
 import errno
 import gc
@@ -189,10 +194,10 @@ def show_slices(wfr, slice_numbers=None):
     #     print wf_intensity.shape
     pulse_energy=wfr.get_intensity().sum(axis=0).sum(axis=0).sum(axis=0)
     J2eV = 6.24150934e18
-    print 'Number of photons per pulse: %e' %(pulse_energy*dx*dx*1e6*dt*J2eV/wfr.params.photonEnergy)
+    print('Number of photons per pulse: %e' %(pulse_energy*dx*dx*1e6*dt*J2eV/wfr.params.photonEnergy))
     
     if slice_numbers is None:
-        slice_numbers = range(wf_intensity.shape[-1])
+        slice_numbers = list(range(wf_intensity.shape[-1]))
     
     if isinstance(slice_numbers, int):
         slice_numbers = [slice_numbers, ]
@@ -201,10 +206,10 @@ def show_slices(wfr, slice_numbers=None):
     intense = np.squeeze(intense)
     intense = intense*dx*dy*1e6*1e-9 # [GW],  dx,dy [mm] 
     #     print intense.shape
-    print 'Z coord: {0:.4f} m.'.format(wfr.params.Mesh.zCoord)
+    print('Z coord: {0:.4f} m.'.format(wfr.params.Mesh.zCoord))
     
     plt.figure()
-    plt.plot(range(wf_intensity.shape[-1]), intense)
+    plt.plot(list(range(wf_intensity.shape[-1])), intense)
     plt.plot(slice_numbers, intense[slice_numbers],color='g',linestyle='None',
              markersize=5, marker='o',markerfacecolor='w',markeredgecolor='g')
     plt.title('Instanteneous power')
@@ -222,13 +227,13 @@ def show_slices(wfr, slice_numbers=None):
     fit_data = fit(*np.indices(data.shape))
     #$center_x = int(wfr.params.Mesh.nSlices/2); center_y = center_x
              
-    print 'Total pulse intinsity [mJ]',wf_intensity.sum(axis=0).sum(axis=0).sum(axis=0)*dx*dy*1e6*dt*1e3 
-    print '''Gaussian approximation parameters:
+    print('Total pulse intinsity [mJ]',wf_intensity.sum(axis=0).sum(axis=0).sum(axis=0)*dx*dy*1e6*dt*1e3) 
+    print('''Gaussian approximation parameters:
         center_x : {0:.2f}um.\t center_y : {1:.2f}um.
         width_x  : {2:.2f}um\t width_y : {3:.2f}um.
         rsquared : {4:0.4f}.'''.format((center_x-np.floor(wfr.params.Mesh.nx/2))*dx*1e6, 
                                       (center_y-np.floor(wfr.params.Mesh.ny/2))*dy*1e6, 
-                                      width_x*dx*1e6, width_y*dy*1e6, rsquared)
+                                      width_x*dx*1e6, width_y*dy*1e6, rsquared))
              
     x_axis = np.linspace(wfr.params.Mesh.xMin,wfr.params.Mesh.xMax,wfr.params.Mesh.nx)
     y_axis = x_axis
@@ -276,13 +281,13 @@ def show_slices(wfr, slice_numbers=None):
         fit_data = fit(*np.indices(data.shape))
         #$center_x = int(wfr.params.Mesh.nSlices/2); center_y = center_x
                  
-        print 'Slice number: {}'.format(sn)
-        print '''Gaussian approximation parameters:
+        print('Slice number: {}'.format(sn))
+        print('''Gaussian approximation parameters:
             center_x : {0:.2f}um.\t center_y : {1:.2f}um.
             width_x  : {2:.2f}um\t width_y : {3:.2f}um.
             rsquared : {4:0.4f}.'''.format((center_x-np.floor(wfr.params.Mesh.nx/2))*dx*1e6, 
                                            (center_y-np.floor(wfr.params.Mesh.ny/2))*dy*1e6, 
-                                           width_x*dx*1e6, width_y*dy*1e6, rsquared)
+                                           width_x*dx*1e6, width_y*dy*1e6, rsquared))
                  
         plt.figure(figsize=(20, 7))
         plt.subplot(141)
@@ -336,7 +341,7 @@ def forward_propagate(root_dir, distance, propagation_parameters):
     out_path = os.path.join(out_dir, out_file_name)
 
     if os.path.exists(out_path):
-        print 'File exists: {}. Skiping.'.format(out_path)
+        print('File exists: {}. Skiping.'.format(out_path))
         return out_path
 
     ppDrift0 = propagation_parameters
@@ -362,7 +367,7 @@ def forward_propagate(root_dir, distance, propagation_parameters):
     fit_gaussian_pulse(wf_L0)
     wf_L0.store_hdf5(out_path)
 
-    print 'Save file : {}'.format(out_path)
+    print('Save file : {}'.format(out_path))
 
     del wf_L0
     return out_path

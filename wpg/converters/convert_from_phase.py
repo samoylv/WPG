@@ -14,7 +14,7 @@ def convert_from_phase(in_file_name,out_file_name):
                 elif node_name=='data/arrEver':
                     node_name='data/arrEy'
                 else:
-                    raise ValueError,'wrong node name: '+ node_name
+                    raise ValueError('wrong node name: '+ node_name)
 
                 s=obj.shape
                 h5out.create_dataset(node_name, shape=(s[1],2*s[2],s[3]), chunks=True,
