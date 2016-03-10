@@ -41,8 +41,27 @@ def print_mesh(wfr):
         print('ny {:5d}  range_y [{:.1e}, {:.1e}] mrad'.format(wf_mesh.ny,wf_mesh.qyMin*1e3,wf_mesh.qyMax*1e3))   
     return
 
+def calc_pulse_energy(wfr): 
+    """
+    calculate energy of  in time domain
+    params: wfr: wavefront structure
+    return: pulse energy value in [J] 
+    """    
+    J2eV = 6.24150934e18
+    if wfr.params.wDomain!='time':
+        print('Pulse energy cannot be calculated for {:s} domain'.format(
+            wfr.params.wDomain))
+        return;
+    else:
+        dx = (wfr.params.Mesh.xMax - wfr.params.Mesh.xMin)/(wfr.params.Mesh.nx - 1)
+        dy = (wfr.params.Mesh.yMax - wfr.params.Mesh.yMin)/(wfr.params.Mesh.ny - 1)
+        dt = (wfr.params.Mesh.sliceMax - wfr.params.Mesh.sliceMin)/(wfr.params.Mesh.nSlices - 1)
+        pulse_energy=wfr.get_intensity().sum(axis=0).sum(axis=0).sum(axis=0)
+        pulse_energy_J =  pulse_energy*dx*dx*1e6*dt
+        print( 'Number of photons per pulse: {:e}'.format(pulse_energy_J*J2eV/wfr.params.photonEnergy))
+        return pulse_energy_J
+
 def averaged_intensity(wf,bPlot=True):
-    import pylab as plt
     """
     calculate the slice-to-slice integral intensity averaged over a meaningful range, mainly needed for processing spiky FEL source 
 
@@ -67,15 +86,14 @@ def averaged_intensity(wf,bPlot=True):
     #total0 = total0*J2eV/wf.params.photonEnergy*dx*dy*dt*1e-15*1e4/(dx*dy*1e12)# units: [ph/um^2], intrinsic wf: cm^2
     if bPlot: 
         Nph2W=wf.params.photonEnergy/(J2eV*dt*1e-15) # transfer Nphotons per px to Watts
-        plt.figure();
-        plt.plot(int0*Nph2W);
-        plt.plot(numpy.arange(min(aw), max(aw)),int0_mean*Nph2W,'ro');plt.show()
+        pylab.figure();
+        pylab.plot(int0*Nph2W);
+        pylab.plot(numpy.arange(min(aw), max(aw)),int0_mean*Nph2W,'ro');pylab.show()
     averaged = int0_mean.sum()/len(int0_mean)
     print('number of meaningful slices:',len(int0_mean))
     return averaged
 
 def plot_t_wf(wf):
-    import pylab as plt
     """
     plot wavefront in time domain (obligatory?) and R-space
 
@@ -86,13 +104,15 @@ def plot_t_wf(wf):
     nslices = wf.params.Mesh.nSlices
     dt = (wf.params.Mesh.sliceMax-wf.params.Mesh.sliceMin)/(nslices-1)
     t0 = dt*nslices/2 + wf.params.Mesh.sliceMin
-    plt.figure(figsize=(5,5),dpi=200)
+    pylab.figure(figsize=(5,5),dpi=200)
     xmin,xmax,ymax,ymin = wf.get_limits()
-    plt.imshow(wf_intensity, extent=[xmin*1e3,xmax*1e3,ymax*1e3,ymin*1e3])
-    plt.xlabel('$mm$',fontsize=20); plt.ylabel('$mm$',fontsize=20);
-    plt.axis('tight')
-    plt.title('relative intensity={:03.3g}, t0={:03.2f} fs'.format(wf_intensity.sum()/average, t0*1.e15))
-    plt.show()
+    pylab.imshow(wf_intensity, extent=[xmin*1e3,xmax*1e3,ymax*1e3,ymin*1e3])
+    pylab.xlabel('$mm$',fontsize=20); pylab.ylabel('$mm$',fontsize=20);
+    pylab.axis('tight');pylab.set_cmap('inferno')
+    pylab.title('relative intensity={:03.3g}, t0={:03.2f} fs'.format(
+        wf_intensity.sum()/average, t0*1.e15))
+
+    pylab.show()
 
 def plot_t_wf_a(wf):
     import pylab
@@ -107,7 +127,7 @@ def plot_t_wf_a(wf):
     xmin,xmax,ymax,ymin = wf.get_limits()
     pylab.imshow(wf_intensity, extent=[xmin*1e6,xmax*1e6,ymax*1e6,ymin*1e6])
     pylab.xlabel('$\mu rad$',fontsize=20); pylab.ylabel('$\mu rad$',fontsize=20);
-    pylab.axis('tight')
+    pylab.axis('tight');pylab.set_cmap('inferno')
     #pylab.title('intensity={:03.3g} photons t={:03.2f} fs'.format(wf_intensity.sum(), dt*nslices/2))
     pylab.show()
     return
@@ -142,6 +162,172 @@ def look_at_q_space(wf, output_file = None):
     plot_t_wf_a(wf_a)
     return
 
+
+def show_slices_hsv(wfr,slice_numbers=None,pretitle=''):
+    """
+        Show slices: intensity, phase, gaussian approximation parameters and cuts.
+        @TBD:All gaussian parameters in pixels now. Should be fixed.
+        @TBD: Add normalization to averaged slice intensity
+        
+        :params wfr: wpg.Wavefront
+        :params slice_numbers: slices to be shown, may by list, int, or None (for all slices)
+        :params pretitle: string to be add in the beginning of the title line
+        """
+    
+    from matplotlib.colors import hsv_to_rgb
+    from wpg.useful_code.backpropagation import fit_gaussian,gaussian
+
+    wf_intensity = wfr.get_intensity(polarization='horizontal')
+    wf_phase = wfr.get_phase(polarization='horizontal')
+    dx = (wfr.params.Mesh.xMax - wfr.params.Mesh.xMin)/(wfr.params.Mesh.nx - 1)
+    dy = (wfr.params.Mesh.yMax - wfr.params.Mesh.yMin)/(wfr.params.Mesh.ny - 1)
+    dt = (wfr.params.Mesh.sliceMax - wfr.params.Mesh.sliceMin)/(wfr.params.Mesh.nSlices - 1)
+    print( 'dt',dt)
+
+    pulse_energy=wfr.get_intensity().sum(axis=0).sum(axis=0).sum(axis=0)
+    J2eV = 6.24150934e18
+    energyJ = calc_pulse_energy(wfr)   
+    if slice_numbers is None:
+        slice_numbers = range(wf_intensity.shape[-1])
+    
+    if isinstance(slice_numbers, int):
+        slice_numbers = [slice_numbers, ]
+    
+    intense = wf_intensity.sum(0).sum(0)
+    intense = numpy.squeeze(intense)
+    intense = intense*dx*dy*1e6*1e-9 # [GW],  dx,dy [mm] 
+    print( 'Z coord: {0:.4f} m.'.format(wfr.params.Mesh.zCoord))
+    
+    pylab.figure()
+    if wfr.params.wDomain=='time':
+        pylab.plot(numpy.linspace(wfr.params.Mesh.sliceMin, wfr.params.Mesh.sliceMax, 
+            wfr.params.Mesh.nSlices)*1e15, intense)        
+        pylab.plot(slice_numbers, intense[slice_numbers],color='g',linestyle='None',
+             markersize=5, marker='o',markerfacecolor='w',markeredgecolor='g')
+        pylab.title(pretitle+' Instanteneous power')
+        pylab.xlim(wfr.params.Mesh.sliceMin*1e15, wfr.params.Mesh.sliceMax*1e15);pylab.xlabel('fs');pylab.ylabel('[GW]')
+    else: #if wDomain=='frequency'
+        pylab.plot(numpy.linspace(-wfr.params.Mesh.nSlices*dt/2, wfr.params.Mesh.nSlices*dt/2, 
+            wfr.params.Mesh.nSlices)/wfr.params.photonEnergy*1e3, intense)
+        pylab.plot((slice_numbers*dt-wfr.params.Mesh.nSlices*dt/2)/wfr.params.photonEnergy*1e3, intense[slice_numbers],color='g',linestyle='None',
+             markersize=5, marker='o',markerfacecolor='w',markeredgecolor='g')
+        pylab.title(pretitle+' Spectrum')
+        pylab.xlabel('$\Delta \omega / \omega _0 10^{3}$')
+        pylab.ylabel('[a.u.]')
+    pylab.show()
+             
+    total_intensity = wf_intensity.sum(axis=-1)
+    data = total_intensity*dt
+
+    fit_result = fit_gaussian(data)
+    fit_result = fit_gaussian(data)
+    (height, center_x, center_y, width_x, width_y) = fit_result['params']
+    rsquared = fit_result['rsquared']
+    fit = gaussian(height, center_x, center_y, width_x, width_y)
+    fit_data = fit(*numpy.indices(data.shape))
+             
+    if wfr.params.wDomain=='time':
+        print( 'Total pulse intinsity {:.2f} [mJ]'.format(
+                energyJ*1e3))
+    print( '''Gaussian approximation parameters:
+        center_x : {0:.2f}um.\t center_y : {1:.2f}um.
+        width_x  : {2:.2f}um\t width_y : {3:.2f}um.
+        rsquared : {4:0.4f}.'''.format((center_x-numpy.floor(wfr.params.Mesh.nx/2))*dx*1e6, 
+                                      (center_y-numpy.floor(wfr.params.Mesh.ny/2))*dy*1e6, 
+                                      width_x*dx*1e6, width_y*dy*1e6, rsquared))
+             
+    x_axis = numpy.linspace(wfr.params.Mesh.xMin,wfr.params.Mesh.xMax,wfr.params.Mesh.nx)
+    y_axis = x_axis
+             
+             
+    pylab.figure(figsize=(15, 7))
+    pylab.subplot(121)
+    pylab.imshow(data*dx*dy*1e6*J2eV/wfr.params.photonEnergy, extent=wfr.get_limits())
+    pylab.colorbar(orientation='horizontal')
+    pylab.title('Nphotons per '+ str(numpy.floor(dx*1e6))+'x'+str(numpy.floor(dx*1e6))+' $\mu m ^2$ pixel')
+             
+    pylab.subplot(122)
+    pylab.plot(y_axis*1e6,     data[:, int(center_x)]*1e3, 'b', label='Y-cut')
+    pylab.hold(True)
+    pylab.plot(y_axis*1e6, fit_data[:, int(center_x)]*1e3, 'b:',label='Gaussian fit')
+    pylab.hold(True)
+    pylab.plot(x_axis*1e6,     data[int(center_y), :]*1e3,  'g', label='X-cut')
+    pylab.hold(True)
+    pylab.plot(x_axis*1e6, fit_data[int(center_y), :]*1e3,  'g--', label='Gaussian fit')
+    pylab.xlabel('[$\mu$m]')
+    pylab.ylabel('mJ/mm$^2$')
+    pylab.grid(True)
+    pylab.legend()
+             
+             
+    pylab.show()
+             
+    for sn in slice_numbers:
+        data = wf_intensity[:, :, sn]
+        data = data*dt
+        phase = wf_phase[:, :, sn]
+        fit_result = fit_gaussian(data)
+        fit_result = fit_gaussian(data)
+        (height, center_x, center_y, width_x, width_y) = fit_result['params']
+        rsquared = fit_result['rsquared']
+        fit = gaussian(height, center_x, center_y, width_x, width_y)
+        fit_data = fit(*numpy.indices(data.shape))
+        #$center_x = int(wfr.params.Mesh.nSlices/2); center_y = center_x
+                 
+        print( 'Slice number: {}'.format(sn))
+        print( '''Gaussian approximation parameters:
+            center_x : {0:.2f}um.\t center_y : {1:.2f}um.
+            width_x  : {2:.2f}um\t width_y : {3:.2f}um.
+            rsquared : {4:0.4f}.'''.format((center_x-numpy.floor(wfr.params.Mesh.nx/2))*dx*1e6, 
+                                           (center_y-numpy.floor(wfr.params.Mesh.ny/2))*dy*1e6, 
+                                           width_x*dx*1e6, width_y*dy*1e6, rsquared))
+                 
+        pylab.figure(figsize=(15,7))
+        
+        pylab.subplot(121)
+        intensity = data*dx*dy*1e6*J2eV/wfr.params.photonEnergy*1e-6 #number of photons in a slice of thickness dt
+        phase = wf_phase[:, :, sn]
+        
+        H = intensity
+        V = phase
+        S = numpy.ones_like(V)
+        #V=(V-V.min())/(V.max()-V.min())
+
+        h=(H-H.min())/(H.max()-H.min())
+        v = V/(2*numpy.pi)+0.5
+
+        HSV = numpy.dstack((v,S,h))
+        RGB = hsv_to_rgb(HSV)
+        pylab.imshow(RGB)
+        pylab.title('Nphotons x10$^6$ per '+ str(numpy.floor(dx*1e6))+'x'+str(numpy.floor(dx*1e6))+' $\mu m ^2$ pixel')
+#         pylab.contour(fit_data, cmap=pylab.cm.copper)
+
+#         pylab.subplot(142)
+#         pylab.imshow(wf_phase[:, :, sn])
+                 
+#         pylab.colorbar(orientation='horizontal')
+                 
+        pylab.subplot(143)
+        pylab.plot(y_axis*1e6,     data[:, int(center_x)]*1e3,  'b', label='Y-cut')
+        pylab.hold(True)
+        pylab.plot(y_axis*1e6, fit_data[:, int(center_x)]*1e3,  'b:',label='Gaussian fit')
+        pylab.hold(True)
+        pylab.plot(x_axis*1e6,     data[int(center_y), :]*1e3,  'g', label='X-cut')
+        pylab.hold(True)
+        pylab.plot(x_axis*1e6, fit_data[int(center_y), :]*1e3,  'g--',label='Gaussian fit')
+        pylab.xlabel('[$\mu$m]')
+        pylab.ylabel('mJ/mm$^2$')
+        pylab.grid(True)
+        pylab.legend()
+                 
+                 
+        pylab.subplot(144)
+        pylab.plot(y_axis*1e6, phase[:, int(center_x)], label='Y-cut', marker='d', markersize=4)
+        pylab.plot(x_axis*1e6, phase[int(center_y), :], label='X-cut', marker='o', markersize=4)
+        pylab.xlabel('[$\mu$m]')
+        pylab.legend()
+                 
+        pylab.show()
 
 def propagate_wavefront(wavefront, beamline, output_file = None):
     """
