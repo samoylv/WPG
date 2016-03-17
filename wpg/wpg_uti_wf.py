@@ -132,8 +132,10 @@ def plot_t_wf(wf, save='', range_x=None, range_y=None):
     profile.set_aspect('equal', 'datalim')
 
     # Get x and y ranges.
-    x = numpy.linspace(xmin*1.e3,xmax*1.e3,wf_intensity.shape[0])
-    y = numpy.linspace(ymin*1.e3,ymax*1.e3,wf_intensity.shape[1])
+    #x = numpy.linspace(xmin*1.e3,xmax*1.e3,wf_intensity.shape[0])
+    #y = numpy.linspace(ymin*1.e3,ymax*1.e3,wf_intensity.shape[1])
+    x = numpy.linspace(xmin*1.e3,xmax*1.e3,wf_intensity.shape[1])
+    y = numpy.linspace(ymin*1.e3,ymax*1.e3,wf_intensity.shape[0])
 
     # Labels.
     profile.set_xlabel('$mm$',fontsize=12)
@@ -142,6 +144,8 @@ def plot_t_wf(wf, save='', range_x=None, range_y=None):
 
     # x-projection plots above main plot.
     x_projection = plt.subplot2grid((3,3), (0,0), sharex=profile, colspan=2)
+    print(x.shape,wf_intensity.sum(axis=0).shape)
+
     x_projection.plot(x, wf_intensity.sum(axis=0), label='x projection')
 
     # Set range according to input.
@@ -209,12 +213,15 @@ def plot_t_wf_a(wf, save='', range_x=None, range_y=None):
     profile.imshow(wf_intensity, extent=[xmin*1.e6,xmax*1.e6,ymax*1.e6,ymin*1.e6])
     profile.set_aspect('equal', 'datalim')
 
-    x = numpy.linspace(xmin*1.e6,xmax*1.e6,wf_intensity.shape[0])
-    y = numpy.linspace(ymin*1.e6,ymax*1.e6,wf_intensity.shape[1])
+    #x = numpy.linspace(xmin*1.e6,xmax*1.e6,wf_intensity.shape[0])
+    #y = numpy.linspace(ymin*1.e6,ymax*1.e6,wf_intensity.shape[1])
+    x = numpy.linspace(xmin*1.e6,xmax*1.e6,wf_intensity.shape[1])
+    y = numpy.linspace(ymin*1.e6,ymax*1.e6,wf_intensity.shape[0])
     profile.set_xlabel(r'$\mu$rad',fontsize=12)
     profile.set_ylabel(r'$\mu$rad',fontsize=12);
 
     x_projection = plt.subplot2grid((3,3), (0,0), sharex=profile, colspan=2)
+    print(x.shape,wf_intensity.sum(axis=0).shape)
     x_projection.plot(x, wf_intensity.sum(axis=0), label='x projection')
     if range_x is None:
         profile.set_xlim([xmin*1.e6, xmax*1.e6])
