@@ -80,8 +80,8 @@ def calculate_peak_pos(mwf):
     x_axis = numpy.linspace(xmin, xmax, nx)
     y_axis = numpy.linspace(ymin, ymax, ny)
     nc = numpy.where(irr == irr_max)
-    irr_x = irr[ny / 2, :]
-    irr_y = irr[:, nx / 2]
+    irr_x = irr[ny // 2, :]
+    irr_y = irr[:, nx // 2]
     x0 = numpy.max(x_axis[numpy.where(irr_x == numpy.max(irr_x))])
     y0 = numpy.max(y_axis[numpy.where(irr_y == numpy.max(irr_y))])
     return [x0, y0]

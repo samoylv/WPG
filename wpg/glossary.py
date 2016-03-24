@@ -1152,7 +1152,7 @@ class WFDataArrEhor(RadiationField):
             if not val.count() == n_total:
                 warnings.warn(
                     'New array size not equal to wavefront size. You must set it by yourself.')
-            self._wf._srwl_wf.arEx = array.array('f', val)
+            self._wf._srwl_wf.arEx = array.array(str(u'f'), val)
         else:
             val = numpy.array(val, dtype='float32')
             if not numpy.prod(val.shape) == n_total:
@@ -1161,8 +1161,8 @@ class WFDataArrEhor(RadiationField):
                 self._wf.params.nx = val.shape[1]
                 self._wf.params.ny = val.shape[0]
                 self._wf.params.nSlices = val.shape[2]
-            # self._wf._srwl_wf.arEx = array.array('f', val.flat)
-            self._wf._srwl_wf.arEx = array.array('f')
+            # self._wf._srwl_wf.arEx = array.array(str(u'f'), val.flat)
+            self._wf._srwl_wf.arEx = array.array(str(u'f'))
             val_s = val.tostring()
             self._wf._srwl_wf.arEx.fromstring(val_s)
 
@@ -1207,7 +1207,7 @@ class WFDataArrEver(RadiationField):
             if not val.count() == n_total:
                 warnings.warn(
                     'New array size not equal to wavefront size. You must set it by yourself.')
-            self._wf._srwl_wf.arEy = array.array('f', val)
+            self._wf._srwl_wf.arEy = array.array(str(u'f'), val)
         else:
             val = numpy.array(val, dtype='float32')
             if not numpy.prod(val.shape) == n_total:
@@ -1216,7 +1216,7 @@ class WFDataArrEver(RadiationField):
                 self._wf.params.nx = val.shape[1]
                 self._wf.params.ny = val.shape[0]
                 self._wf.params.nSlices = val.shape[2]
-#             self._wf._srwl_wf.arEy = array.array('f', val.flat)
+#             self._wf._srwl_wf.arEy = array.array(str(u'f'), val.flat)
             self._wf._srwl_wf.arEy = array.array('f')
             val_s = val.tostring()
             self._wf._srwl_wf.arEy.fromstring(val_s)

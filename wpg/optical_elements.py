@@ -321,7 +321,7 @@ def WF_dist(nx, ny, Dx, Dy):
     return SRWLOptT(nx, ny, Dx, Dy)
 
 
-def Mirror_plane(orient, theta, length, range_xy,filename, scale=1, delim='\t'):
+def Mirror_plane(orient, theta, length, range_xy, filename, scale=1, delim='\t'):
     """
     Defining a plane mirror propagator with taking into account surface height errors 
 
@@ -335,13 +335,14 @@ def Mirror_plane(orient, theta, length, range_xy,filename, scale=1, delim='\t'):
     :return: opIPM  - imperfect plane mirror propagator 
     """
     if orient == 'x':  # horizontal plane mirror
-        opIPM = WF_dist(1500,100,range_xy,length*theta)
+        opIPM = WF_dist(1500, 100, range_xy, length*theta)
     elif orient == 'y':  # vertical plane mirror
-        opIPM = WF_dist(100,1500,length*theta,range_xy)
+        opIPM = WF_dist(100, 1500, length*theta, range_xy)
     else:
         raise TypeError('orient should be "x" or "y"')
-    calculateOPD(opIPM, filename,2,delim,orient,theta, scale)
+    calculateOPD(opIPM, filename, 2, delim, orient, theta, scale)
     return opIPM
+
 
 def VLS_grating(_mirSub, _m=1, _grDen=100, _grDen1=0, _grDen2=0, _grDen3=0, _grDen4=0, _grAng=0):
     """
@@ -360,12 +361,13 @@ def VLS_grating(_mirSub, _m=1, _grDen=100, _grDen1=0, _grDen2=0, _grDen3=0, _grD
     from .srwlib import SRWLOptG
     return SRWLOptG(_mirSub, _m, _grDen, _grDen1, _grDen2, _grDen3, _grDen4, _grAng)
 
-def Xtal(_d_sp=5.4309,_psi0r=-0.1446E-4,_psi0i=0.3202E-6,_psi_hr=0.88004E-5,_psi_hi=0.30808E-06,
-    _psi_hbr=0.88004E-5, _psi_hbi=0.30808E-06,_tc=100e-6,_ang_as=0):
+
+def Xtal(_d_sp=5.4309, _psi0r=-0.1446E-4, _psi0i=0.3202E-6, _psi_hr=0.88004E-5, _psi_hi=0.30808E-06,
+         _psi_hbr=0.88004E-5, _psi_hbi=0.30808E-06, _tc=100e-6, _ang_as=0):
     """
     Optical Element: Crystal.
 
-        
+
     :param _d_sp: (_d_space) crystal reflecting planes d-spacing (John's dA) [A]
     :param _psi0r: real part of 0-th Fourier component of crystal polarizability (John's psi0c.real) (units?)
     :param _psi0i: imaginary part of 0-th Fourier component of crystal polarizability (John's psi0c.imag) (units?)
@@ -380,14 +382,14 @@ def Xtal(_d_sp=5.4309,_psi0r=-0.1446E-4,_psi0i=0.3202E-6,_psi_hr=0.88004E-5,_psi
     :param _nvz: longitudinal coordinate of outward normal to crystal surface (John's angles: thdg, chidg, phidg)
     :param _tvx: horizontal coordinate of central tangential vector (John's angles: thdg, chidg, phidg)
     :param _tvy: vertical coordinate of central tangential vector (John's angles: thdg, chidg, phidg)
-        
+
     """
 
     from .srwlib import SRWLOptC
-    return SRWLOptC(_d_sp,_psi0r,_psi0i,_psi_hr,_psi_h,_psi_hbr,_psi_hbi,_tc,_ang_as)
+    return SRWLOptC(_d_sp, _psi0r, _psi0i, _psi_hr, _psi_h, _psi_hbr, _psi_hbi, _tc, _ang_as)
 
 
-def define_Xtal(xtal='C',h=4,k=0,l=0,tc=100.e-6,idx=0,_dE=0.,doPrint=False):
+def define_Xtal(xtal='C', h=4, k=0, l=0, tc=100.e-6, idx=0, _dE=0., doPrint=False):
     """
     :param xtal: crystal type (now only 'Si' and 'C' are suppoted)
     :param h,k,l: Miller indices
@@ -397,89 +399,112 @@ def define_Xtal(xtal='C',h=4,k=0,l=0,tc=100.e-6,idx=0,_dE=0.,doPrint=False):
     :param doPrint: if True additional printouts for crystal orientation matrixes
     :return
     """
-    #double dSp; /* crystal reflecting planes d-spacing (Angstroems) */
-    #double psi0r, psi0i; /* real and imaginary parts of 0-th Fourier component of crystal polarizability (units?) */
-    #double psiHr, psiHi; /* real and imaginary parts of H-th Fourier component of crystal polarizability (units?) */
-    #double psiHbr, psiHbi; /* real and imaginary parts of -H-th Fourier component of crystal polarizability (units?) */
-    #double tc; /* crystal thickness [m] */
-    #double angAs; /* asymmetry angle [rad] */
-    #double nvx, nvy, nvz; /* horizontal, vertical and longitudinal coordinates of outward normal 
+    # double dSp; /* crystal reflecting planes d-spacing (Angstroems) */
+    # double psi0r, psi0i; /* real and imaginary parts of 0-th Fourier component of crystal polarizability (units?) */
+    # double psiHr, psiHi; /* real and imaginary parts of H-th Fourier component of crystal polarizability (units?) */
+    # double psiHbr, psiHbi; /* real and imaginary parts of -H-th Fourier component of crystal polarizability (units?) */
+    # double tc; /* crystal thickness [m] */
+    # double angAs; /* asymmetry angle [rad] */
+    # double nvx, nvy, nvz; /* horizontal, vertical and longitudinal coordinates of outward normal
     #                         to crystal surface in the frame of incident beam */
-    #double tvx, tvy; /* horizontal and vertical coordinates of central tangential vector [m] in the frame of incident beam */
-    #C(400) 
-    a_Si = 5.4309e-10; a_C  = 3.5590e-10
-    if   (xtal=='Si'): 
+    # double tvx, tvy; /* horizontal and vertical coordinates of central tangential vector [m] in the frame of incident beam */
+    # C(400)
+    a_Si = 5.4309e-10
+    a_C = 3.5590e-10
+    if (xtal == 'Si'):
         a = a_Si
-    elif (xtal=='C'):  
+    elif (xtal == 'C'):
         a = a_C
     else:
-        print('Unknown Xtal type ',xtal)
+        print('Unknown Xtal type ', xtal)
         return
-    aa=numpy.loadtxt(data_dir+'/%s_xih_%1d%1d%1d.dat' %(xtal,h,k,l))
-    ekev0=aa[:,0];xhr=aa[:,1];xhi=aa[:,2];Lex=aa[:,3];
-    d = a/numpy.sqrt(h**2 +k**2 +l**2); dSp=d*1e10   #0.88975#e-10
-    idx = 4 #8.23 keV; 
-    print( 'ekev0[%d] {.4f}'.format(idx,ekev0[idx]))
-    if (ekev0[idx]<>wf.params.photonEnergy*1e-3): 
-        print( 'Warning: Central photon energy of the beam {:.4f} keV differs from  ekev0[{:d}] {:.4f}'.format(
-                wf.params.photonEnergy*1e-3, idx,ekev0[idx]))
-    aa=numpy.loadtxt(data_dir+'/%s_xi0.dat' %(xtal));ekev0=aa[:,0];x0r=aa[:,1];x0i=aa[:,2]
-    if (ekev0[idx]<>wf.params.photonEnergy*1e-3): 
+    aa = np.loadtxt(data_dir+'/%s_xih_%1d%1d%1d.dat' % (xtal, h, k, l))
+    ekev0 = aa[:, 0]
+    xhr = aa[:, 1]
+    xhi = aa[:, 2]
+    Lex = aa[:, 3]
+    d = a/np.sqrt(h**2 + k**2 + l**2)
+    dSp = d*1e10  # 0.88975#e-10
+    idx = 4  # 8.23 keV;
+    print('ekev0[%d] {.4f}'.format(idx, ekev0[idx]))
+    if (ekev0[idx] != wf.params.photonEnergy*1e-3):
+        print('Warning: Central photon energy of the beam {:.4f} keV differs from  ekev0[{:d}] {:.4f}'.format(
+            wf.params.photonEnergy*1e-3, idx, ekev0[idx]))
+    aa = np.loadtxt(data_dir+'/%s_xi0.dat' % (xtal))
+    ekev0 = aa[:, 0]
+    x0r = aa[:, 1]
+    x0i = aa[:, 2]
+    if (ekev0[idx] != wf.params.photonEnergy*1e-3):
         print('Warning:Central photon energy of the beam {:.4f}keV differs from xi0.dat ekev0[{:d}] {:.4f}'.format(
-                wf.params.photonEnergy*1e-3, idx,ekev0[idx]))
-    psi0r=x0r[idx]; psi0i= x0i[idx]; psiHr=-xhr[idx]; psiHi=xhi[idx]
-    thetaB = numpy.arcsin(12.39e-10/ekev0[idx]/(2*d))
-    angAs = 0.;b = -1
-    DeltaTheta = - psi0r *(1.-1./b)/(2*numpy.sin(2*thetaB))
-    DeltaE=-DeltaTheta/numpy.tan(thetaB)*ekev0[idx]
-    print( 'dTheta_0 {:.1f} urad, dE_0 {:.2f} eV'.format(DeltaTheta*1e6,DeltaE))
-    print( '{}({:1d}{:1d}{:1d}) Lex {:.2f} um, thetaB {:.2f} deg'.format(
-            xtal,h,k,l, Lex[idx],thetaB*180/numpy.pi))
-    Xtal = SRWLOptCryst(_d_sp=dSp,_psi0r=psi0r,_psi0i=psi0i, 
-                    _psi_hr=psiHr, _psi_hi=psiHi,_psi_hbr=psiHr, _psi_hbi=psiHi,
-                    _tc=tc,_ang_as=angAs)     
+            wf.params.photonEnergy*1e-3, idx, ekev0[idx]))
+    psi0r = x0r[idx]
+    psi0i = x0i[idx]
+    psiHr = -xhr[idx]
+    psiHi = xhi[idx]
+    thetaB = np.arcsin(12.39e-10/ekev0[idx]/(2*d))
+    angAs = 0.
+    b = -1
+    DeltaTheta = - psi0r * (1.-1./b)/(2*np.sin(2*thetaB))
+    DeltaE = -DeltaTheta/np.tan(thetaB)*ekev0[idx]
+    print('dTheta_0 {:.1f} urad, dE_0 {:.2f} eV'.format(
+        DeltaTheta*1e6, DeltaE))
+    print('{}({:1d}{:1d}{:1d}) Lex {:.2f} um, thetaB {:.2f} deg'.format(
+        xtal, h, k, l, Lex[idx], thetaB*180/np.pi))
+    Xtal = SRWLOptCryst(_d_sp=dSp, _psi0r=psi0r, _psi0i=psi0i,
+                        _psi_hr=psiHr, _psi_hi=psiHi, _psi_hbr=psiHr, _psi_hbi=psiHi,
+                        _tc=tc, _ang_as=angAs)
     #Xtal.set_orient(_tc=tc,_ang_as=angAs, _nvx=nvx, _nvy=nvy, _nvz=nvz,_tvx=tvx, _tvy=tvy)
-    #Find appropriate orientation of the Crystal and the corresponding output beam frame:
+    # Find appropriate orientation of the Crystal and the corresponding output beam frame:
     #    """Finds optimal crystal orientation in the input beam frame (i.e. surface normal and tangential vectors) and the orientation of the output beam frame (i.e. coordinates of the longitudinal and horizontal vectors in the input beam frame)
     #        :param _en: photon energy [eV]
     #        :param _ang_dif_pl: diffraction plane angle (0 corresponds to the vertical deflection; pi/2 to the horizontal deflection; any value in between is allowed)
-    orientDataXtal = Xtal.find_orient(wf.params.photonEnergy+_dE,_ang_dif_pl=pi/2)
-    orientXtal = orientDataXtal[0] #Crystal orientation found
-    tXtal = orientXtal[0]; nXtal = orientXtal[2] # Tangential and Normal vectors to crystal surface
+    orientDataXtal = Xtal.find_orient(
+        wf.params.photonEnergy+_dE, _ang_dif_pl=pi/2)
+    orientXtal = orientDataXtal[0]  # Crystal orientation found
+    tXtal = orientXtal[0]
+    nXtal = orientXtal[2]  # Tangential and Normal vectors to crystal surface
     if doPrint:
         print('sin(thetaB) {:.4f} \ncos(thetaB) {:.4f}'.format(
-                numpy.sin(thetaB),numpy.cos(thetaB)))
+            np.sin(thetaB), np.cos(thetaB)))
         print('sin(2thetaB) {:.4f} \ncos(2thetaB) {:.4f}'.format(
-                numpy.sin(2*thetaB),numpy.cos(2*thetaB)))
-        print('Xtal orientation:' )
+            np.sin(2*thetaB), np.cos(2*thetaB)))
+        print('Xtal orientation:')
         print('tangential vector:\t({:.4f} {:.4f} {:.4f})'.format(
-                tXtal[0], tXtal[1], tXtal[2]))
+            tXtal[0], tXtal[1], tXtal[2]))
         print('normal vector:\t\t({:.4f} {:.4f} {:.4f})'.format(
-                nXtal[0], nXtal[1], nXtal[2]))
-        print('s-vector:\t\t({:.4f} {:.4f} {:.4f})'.format(orientXtal[0][0],orientXtal[0][1],orientXtal[0][2]))
-    #Set orientation of the Crystal:
+            nXtal[0], nXtal[1], nXtal[2]))
+        print(
+            's-vector:\t\t({:.4f} {:.4f} {:.4f})'.format(orientXtal[0][0], orientXtal[0][1], orientXtal[0][2]))
+    # Set orientation of the Crystal:
     Xtal.set_orient(nXtal[0], nXtal[1], nXtal[2], tXtal[0], tXtal[1])
-    orientOutFrXtal = orientDataXtal[1] #Orientation of the Outgoing beam frame being found
-    #Horizontal, Vertical and Longitudinal base vectors of the Output beam frame
-    rxXtal = orientOutFrXtal[0]; ryXtal = orientOutFrXtal[1]; rzXtal = orientOutFrXtal[2] 
+    # Orientation of the Outgoing beam frame being found
+    orientOutFrXtal = orientDataXtal[1]
+    # Horizontal, Vertical and Longitudinal base vectors of the Output beam
+    # frame
+    rxXtal = orientOutFrXtal[0]
+    ryXtal = orientOutFrXtal[1]
+    rzXtal = orientOutFrXtal[2]
     if doPrint:
         print('Orientation of the Outgoing beam frame:')
         print('Horizontal base vector:\t\t({:.4f} {:.4f} {:.4f})'.format(
-                orientOutFrXtal[0][0], orientOutFrXtal[0][1], orientOutFrXtal[0][2]))
+            orientOutFrXtal[0][0], orientOutFrXtal[0][1], orientOutFrXtal[0][2]))
         print('Vertical base vector:\t\t({:.4f}  {:.4f} {:.4f})'.format(
-                orientOutFrXtal[1][0], orientOutFrXtal[1][1], orientOutFrXtal[1][2]))
+            orientOutFrXtal[1][0], orientOutFrXtal[1][1], orientOutFrXtal[1][2]))
         print('Longitudinal base vector:\t({:.4f} {:.4f} {:.4f})'.format(
-                orientOutFrXtal[2][0],orientOutFrXtal[2][1],orientOutFrXtal[2][2]))
-        
+            orientOutFrXtal[2][0], orientOutFrXtal[2][1], orientOutFrXtal[2][2]))
+
     return Xtal, rxXtal, ryXtal, rzXtal
 
-def append_Xtal(bl,xtal='C',h=1,k=1,l=1,tc=100e-6,_dE=0.,doPrint=False):
+
+def append_Xtal(bl, xtal='C', h=1, k=1, l=1, tc=100e-6, _dE=0., doPrint=False):
     """
     Append to a beamline Xtal propagator
 
     :param bl:    Beamline() structure 
     """
-    Xtal, rxXtal, ryXtal, rzXtal =  defineXtal(xtal,h=_h,k=_k,l=_l,tc=tc,_dE=_dE,doPrint=False)
+    Xtal, rxXtal, ryXtal, rzXtal = defineXtal(
+        xtal, h=_h, k=_k, l=_l, tc=tc, _dE=_dE, doPrint=False)
+
 
 def CRL(_foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n,
         _wall_thick, _xc, _yc, _void_cen_rad=None,

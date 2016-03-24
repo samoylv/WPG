@@ -5,8 +5,8 @@ core:
 
 modules: core
 	cp build/lib/srwlpy*.so wpg/
-	cp build/tmp/SRW/env/work/srw_python/*.py wpg/
-	cp -r build/tmp/SRW/env/work/srw_python/data_example_* wpg/
+	# cp build/tmp/SRW/env/work/srw_python/*.py wpg/
+	# cp -r build/tmp/SRW/env/work/srw_python/data_example_* wpg/
 	cp build/tmp/SRW/cpp/src/lib/srwlib.h docs/
 
 clean:
