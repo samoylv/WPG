@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-__author__ = 'A. Buzmakov, L. Samoylova'
+__author__ = 'A. Buzmakov, L. Samoylova, C. Fortmann-Grote'
 
 import copy
 import numpy
@@ -132,6 +132,9 @@ def plot_t_wf(wf, save='', range_x=None, range_y=None):
     profile.set_aspect('equal', 'datalim')
 
     # Get x and y ranges.
+    # [LS:2016-03-17] 
+    # change shape dimension, otherwise, in case nx!=ny ,
+    # 'x, y should have the same dimension' error from py plot
     #x = numpy.linspace(xmin*1.e3,xmax*1.e3,wf_intensity.shape[0])
     #y = numpy.linspace(ymin*1.e3,ymax*1.e3,wf_intensity.shape[1])
     x = numpy.linspace(xmin*1.e3,xmax*1.e3,wf_intensity.shape[1])
@@ -213,6 +216,9 @@ def plot_t_wf_a(wf, save='', range_x=None, range_y=None):
     profile.imshow(wf_intensity, extent=[xmin*1.e6,xmax*1.e6,ymax*1.e6,ymin*1.e6])
     profile.set_aspect('equal', 'datalim')
 
+    # [LS:2016-03-17] 
+    # change shape dimension, otherwise, in case nx!=ny ,
+    # 'x, y should have the same dimension' error from py plot
     #x = numpy.linspace(xmin*1.e6,xmax*1.e6,wf_intensity.shape[0])
     #y = numpy.linspace(ymin*1.e6,ymax*1.e6,wf_intensity.shape[1])
     x = numpy.linspace(xmin*1.e6,xmax*1.e6,wf_intensity.shape[1])
