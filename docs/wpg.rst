@@ -150,49 +150,15 @@ If ypu have some errors runing IPython notebook, which ends with
 On xfel server
 ++++++++++++++
 
-Select the directory, in which WPG will be located
+You can directly run web interface using YOUR\_UNIQUE\_PORT\_NUMBER, and specifiy the path to the WPG installation on the XFEL server.
+
+YOUR\_UNIQUE\_PORT\_NUMBER should be greater than 1024. 
+
+Please visit `Simulation <https://docs.xfel.eu/share/page/site/simulation/dashboard>`_ web-site to register your port number in the `table  <https://docs.xfel.eu/share/page/site/simulation/wiki-page?title=List_of_port_numbers_in_use>`_ and get further information.
 
 	.. code:: sh
 
-	   cd  /diskmnt/a/<username>/<your_work_directory> or similar
-
-Download and build the library 
-
-	.. code:: sh
-
-		#Export path to karabo environment
-		export PATH=/afs/desy.de/group/exfel/software/karabo-trunk/extern/bin:$PATH
-
-Download WPG-package
-
-	.. code:: sh
-
-		wget http://github.com/samoylv/WPG/archive/master.zip -O master.zip
-
-Extract package
-
-	.. code:: sh
-
-		unzip master.zip
-
-Change the directory
-
-	.. code:: sh
-
-		cd WPG-master
-
-Build the library. This will download and build FFTW2 and SRW
-
-	.. code:: sh
-
-		make all
-
-Run web interface (ON YOUR\_UNIQUE\_PORT\_NUMBER). YOUR\_UNIQUE\_PORT\_NUMBER should be >1024. And this is fixed number during all installation process.
-
-	.. code:: sh
-
-	   cd samples
-	   ipython notebook --pylab=inline --no-browser --port=YOUR_UNIQUE_PORT_NUMBER
+	   ipython notebook --pylab=inline --no-browser --port=YOUR_UNIQUE_PORT_NUMBER --notebook-dir=<your_working_directory> &
 
 Setup ssh tunnel to the server. **Please use another LOCAL terminal window!**
 
