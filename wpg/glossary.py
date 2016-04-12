@@ -1217,7 +1217,7 @@ class WFDataArrEver(RadiationField):
                 self._wf.params.ny = val.shape[0]
                 self._wf.params.nSlices = val.shape[2]
 #             self._wf._srwl_wf.arEy = array.array(str(u'f'), val.flat)
-            self._wf._srwl_wf.arEy = array.array('f')
+            self._wf._srwl_wf.arEy = array.array(str(u'f'))
             val_s = val.tostring()
             self._wf._srwl_wf.arEy.fromstring(val_s)
 
