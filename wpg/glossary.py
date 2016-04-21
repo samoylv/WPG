@@ -226,9 +226,9 @@ class WFRadiationWDomain(RadiationField):
 
     @value.setter
     def value(self, val):
-        if val == 'frequency':
+        if val in ['frequency', b'frequency']:
             self._wf._srwl_wf.presFT = 0
-        elif val == 'time':
+        elif val in ['time', b'time']:
             self._wf._srwl_wf.presFT = 1
         else:
             raise ValueError('value must be "frequency" or "time"')
@@ -263,9 +263,9 @@ class WFRadiationWSpace(RadiationField):
 
     @value.setter
     def value(self, val):
-        if val == 'R-space':
+        if val in ['R-space', b'R-space']:
             self._wf._srwl_wf.presCA = 0
-        elif val == 'Q-space':
+        elif val in ['Q-space', b'Q-space']:
             self._wf._srwl_wf.presCA = 1
         else:
             raise ValueError('value must be "R-space" or "Q-space"')
@@ -290,7 +290,7 @@ class WFRadiationWFloatType(RadiationField):
     @property
     def value(self):
         """Electric field numerical type"""
-        if self._wf._srwl_wf.numTypeElFld in ['f',b'f']:
+        if self._wf._srwl_wf.numTypeElFld in ['f', b'f']:
             return 'float'
         elif self._wf._srwl_wf.numTypeElFld in ['d', b'd']:
             return 'double'
@@ -299,9 +299,9 @@ class WFRadiationWFloatType(RadiationField):
 
     @value.setter
     def value(self, val):
-        if val == 'float':
+        if val in ['float', b'float']:
             self._wf._srwl_wf.numTypeElFld = 'f'
-        elif val == 'double':
+        elif val in ['double', b'double']:
             raise ValueError('"double" type not supprted yet')
         #            self._wf._srwl_wf.numTypeElFld = 'd'
         else:
@@ -348,9 +348,9 @@ class WFRadiationWEFieldUnit(RadiationField):
     def value(self, val):
         if val == 'arbitrary':
             self._wf._srwl_wf.unitElFld = 0
-        elif val == r'sqrt(Phot/s/0.1%bw/mm^2)':
+        elif val in ['sqrt(Phot/s/0.1%bw/mm^2)', b'sqrt(Phot/s/0.1%bw/mm^2)']:
             self._wf._srwl_wf.unitElFld = 1
-        elif val in [r'sqrt(J/eV/mm^2)', 'sqrt(W/mm^2)']:
+        elif val in ['sqrt(J/eV/mm^2)', 'sqrt(W/mm^2)', b'sqrt(J/eV/mm^2)', b'sqrt(W/mm^2)']:
             self._wf._srwl_wf.unitElFld = 2
         else:
             raise ValueError(

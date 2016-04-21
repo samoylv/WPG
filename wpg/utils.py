@@ -84,7 +84,11 @@ def update_dict_slash_string(input_dict, keys_string, value):
     :param keys_string: slash separated keys_string
     :param value: value
     """
-    keys_string = keys_string.decode('utf-8')
+    try:
+        keys_string = keys_string.decode('utf-8')
+    except AttributeError:
+        pass
+
     keys = keys_string.split('/')
     tdict = input_dict
     for k in keys[:-1]:
