@@ -68,9 +68,9 @@ class Wavefront(object):
     def _allocate_srw_moments(self):
         """Allocate memory for SRW structures."""
         self._srwl_wf.arMomX = array.array(
-            'd', [0] * self.params.Mesh.nSlices * 11)
+            str(u'd'), [0] * self.params.Mesh.nSlices * 11)
         self._srwl_wf.arMomY = array.array(
-            'd', [0] * self.params.Mesh.nSlices * 11)
+            str(u'd'), [0] * self.params.Mesh.nSlices * 11)
 
     def _add_field(self, wf_field):
         """
@@ -204,7 +204,7 @@ class Wavefront(object):
             raise ValueError(
                 'unknown polarization value, should be "total" or "horizontal" or "vertical"')
 
-        res = array.array('f', [0] * self._get_total_elements())
+        res = array.array(str(u'f'), [0] * self._get_total_elements())
         res = srwlib.srwl.CalcIntFromElecField(
             res, self._srwl_wf, pol, 0, 6, self.params.photonEnergy, 0, 0)
         res = np.array(res, dtype='float32', copy=False)
@@ -273,7 +273,7 @@ class Wavefront(object):
             raise ValueError(
                 'unknown polarization value, should be "total" or "horizontal" or "vertical"')
 
-        res = array.array('f', [0] * self._get_total_elements())
+        res = array.array(str(u'f'), [0] * self._get_total_elements())
         res = srwlib.srwl.CalcIntFromElecField(
             res, self._srwl_wf, pol, 5, 6, self.params.photonEnergy, 0, 0)
         res = np.array(res, dtype='float32')
@@ -303,7 +303,7 @@ class Wavefront(object):
             raise ValueError(
                 'unknown polarization value, should be "total" or "horizontal" or "vertical"')
 
-        res = array.array('f', [0] * self._get_total_elements())
+        res = array.array(str(u'f'), [0] * self._get_total_elements())
         res = srwlib.srwl.CalcIntFromElecField(
             res, self._srwl_wf, pol, 6, 6, self.params.photonEnergy, 0, 0)
         res = np.array(res, dtype='float32')
