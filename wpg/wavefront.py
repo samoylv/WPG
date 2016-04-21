@@ -34,6 +34,7 @@ class Wavefront(object):
 
     One of most important field is _srwl_wf (instance of srwlib.SRWLWfr). SEtting and getting this field allows to call all SRWLpy functions.
     """
+
     def __init__(self, srwl_wavefront=None):
         """
         Create wavefront instance.
@@ -58,16 +59,14 @@ class Wavefront(object):
 
     def _get_total_elements(self):
         """
-        Get total amount of points in wavefront
+        Get total amount of points in wavefront.
 
-        :return: total amount of points in wavefront 
+        :return: total amount of points in wavefront
         """
         return self.params.Mesh.nx * self.params.Mesh.ny * self.params.Mesh.nSlices
 
     def _allocate_srw_moments(self):
-        """
-        Allocate memory for SRW structures
-        """
+        """Allocate memory for SRW structures."""
         self._srwl_wf.arMomX = array.array(
             'd', [0] * self.params.Mesh.nSlices * 11)
         self._srwl_wf.arMomY = array.array(
@@ -75,36 +74,30 @@ class Wavefront(object):
 
     def _add_field(self, wf_field):
         """
-        Add field to wavefront structure and create field
+        Add field to wavefront structure and create field.
 
         :param wf_field: field instance
         :type wf_field: wpg.glossary.RadiationField
         """
 
         class glossary_folder(object):
-
-            """Glossary folder. Empty class to build dictionary tree"""
-
+            """Glossary folder. Empty class to build dictionary tree."""
             pass
 
         def get_value(self):
-            """
-            Get value stored in field
-            """
+            """Get value stored in field."""
             return wf_field.value
 
         def set_value(self, value):
             """
-            Get value stored in field
-            
+            Get value stored in field.
+
             :param value: value to be stored
             """
             wf_field.value = value
 
         def get_doc():
-            """
-            Get field documentation string 
-            """
+            """Get field documentation string."""
             return wf_field.value.__doc__
 
         if not isinstance(wf_field, glossary.RadiationField):
@@ -132,7 +125,7 @@ class Wavefront(object):
         res = {}
         for (key, value) in self._wf_fields.items():
             res[key] = value.value
-        
+
         res.update(self.custom_fields)
         return res
 
@@ -162,7 +155,6 @@ class Wavefront(object):
         :param file_name: output HDF5 file name
         :type  file_name: string
         """
-
         with h5py.File(file_name) as h5f:
             for (key, wff) in self._wf_fields.items():
                 try:
@@ -174,7 +166,7 @@ class Wavefront(object):
 
     def store_hdf5(self, file_name):
         """
-        Store wavefront to HDF5 file (attributes and values). 
+        Store wavefront to HDF5 file (attributes and values).
 
         :param file_name: output HDF5 file name
         :type  file_name: string
@@ -184,7 +176,7 @@ class Wavefront(object):
 
     def load_hdf5(self, file_name):
         """
-        Load wavefront from HDF5 file. 
+        Load wavefront from HDF5 file.
 
         :param file_name: output HDF5 file name
         :type  file_name: string
@@ -218,13 +210,13 @@ class Wavefront(object):
         res = np.array(res, dtype='float32', copy=False)
         res.shape = (
             self.params.Mesh.ny, self.params.Mesh.nx, self.params.Mesh.nSlices)
-        if not slice_number is None:
+        if slice_number is not None:
             res = res[:, :, slice_number]
         return res
 
     def get_phase(self, slice_number=None, polarization=None):
         """
-        Return phase of wavefront
+        Return phase of wavefront.
 
         :param polarization: 'total' or 'horizontal' or 'vertical'
         :type polarization: string
@@ -232,7 +224,6 @@ class Wavefront(object):
         :type slice_number: int or range
         :return: array of phases
         """
-
         # TODO: bug with freeze
 
         if polarization == 'total' or (polarization is None):
@@ -249,9 +240,9 @@ class Wavefront(object):
                 'unknown polarization value, should be "total" or "horizontal" or "vertical"')
 
         res = np.arctan2(self.get_imag_part(slice_number=slice_number,
-                                               polarization=polarization),
-                            self.get_real_part(slice_number=slice_number,
-                                               polarization=polarization))
+                                            polarization=polarization),
+                         self.get_real_part(slice_number=slice_number,
+                                            polarization=polarization))
 
         # res = array.array('f',[0]*self.get_total_elements())
         # res = srwlib.srwl.CalcIntFromElecField(res, self._srwl_wf, pol, 0, 6, self.params.photonEnergy, 0, 0.)
@@ -264,7 +255,7 @@ class Wavefront(object):
 
     def get_real_part(self, slice_number=None, polarization=None):
         """
-        Return real part of wavefront
+        Return real part of wavefront.
 
         :param polarization: 'total' or 'horizontal' or 'vertical'
         :type polarization: string
@@ -272,7 +263,6 @@ class Wavefront(object):
         :type slice_number: int or range
         :return: array of real parts
         """
-
         if polarization == 'total' or (polarization is None):
             pol = 6
         elif polarization == 'horizontal':
@@ -289,13 +279,13 @@ class Wavefront(object):
         res = np.array(res, dtype='float32')
         res.shape = (
             self.params.Mesh.ny, self.params.Mesh.nx, self.params.Mesh.nSlices)
-        if not slice_number is None:
+        if slice_number is not None:
             res = res[:, :, slice_number]
         return res
 
     def get_imag_part(self, slice_number=None, polarization=None):
         """
-        Return imaginary part of wavefront
+        Return imaginary part of wavefront.
 
         :param polarization: 'total' or 'horizontal' or 'vertical'
         :type polarization: string
@@ -303,7 +293,6 @@ class Wavefront(object):
         :type slice_number: int or range
         :return: array of imaginary parts
         """
-
         if polarization == 'total' or (polarization is None):
             pol = 6
         elif polarization == 'horizontal':
@@ -320,39 +309,42 @@ class Wavefront(object):
         res = np.array(res, dtype='float32')
         res.shape = (
             self.params.Mesh.ny, self.params.Mesh.nx, self.params.Mesh.nSlices)
-        if not slice_number is None:
+        if slice_number is not None:
             res = res[:, :, slice_number]
         return res
 
     def get_limits(self, axis='z'):
         """
-        Get wavefront mesh limits [xmin, xmax, ....]. Used in 2D visualization tools (as pylab.imshow(wfr_data, extends=wrf.get_limits()))
+        Get wavefront mesh limits [xmin, xmax, ....].
+
+        Used in 2D visualization tools (as pylab.imshow(wfr_data, extends=wrf.get_limits()))
 
         :params axis: 'x','y' or 'z'
         :type axis: string
 
         :return: list of integers
         """
-        sr =  self.params.Mesh
+        sr = self.params.Mesh
         rep = self.params.wSpace
         if rep == 'R-space':
             print(rep)
             if axis == 'z':
-                  return sr.xMin, sr.xMax, sr.yMax, sr.yMin
+                return sr.xMin, sr.xMax, sr.yMax, sr.yMin
             elif axis == 'x':
-                  return sr.sliceMin, sr.sliceMax, sr.yMax, sr.yMin
+                return sr.sliceMin, sr.sliceMax, sr.yMax, sr.yMin
             elif axis == 'y':
-                  return sr.sliceMin, sr.sliceMax, sr.xMax, sr.xMin
+                return sr.sliceMin, sr.sliceMax, sr.xMax, sr.xMin
         elif rep == 'Q-space':
             print(rep)
-            wl = 12.39*1e-10/(self.params.photonEnergy*1e-3)      #WaveLength
-            #wv = 2.*np.pi/wl                                       #WaveVector
+            wl = 12.39 * 1e-10 / (self.params.photonEnergy * 1e-3)  # WaveLength
+            # wv = 2.*np.pi/wl
+            # #WaveVector
             if axis == 'z':
-                  return sr.qxMin*wl, sr.qxMax*wl, sr.qyMax*wl, sr.qyMin*wl
+                return sr.qxMin * wl, sr.qxMax * wl, sr.qyMax * wl, sr.qyMin * wl
             elif axis == 'x':
-                  return sr.sliceMin, sr.sliceMax, sr.qyMax*wl, sr.qyMin*wl
+                return sr.sliceMin, sr.sliceMax, sr.qyMax * wl, sr.qyMin * wl
             elif axis == 'y':
-                  return sr.sliceMin, sr.sliceMax, sr.qxMax*wl, sr.qxMin*wl
+                return sr.sliceMin, sr.sliceMax, sr.qxMax * wl, sr.qxMin * wl
 
     def __str__(self):
         """
