@@ -305,8 +305,15 @@ def show_slices_hsv(wfr,slice_numbers=None,pretitle=''):
 
     wf_intensity = wfr.get_intensity(polarization='horizontal')
     wf_phase = wfr.get_phase(polarization='horizontal')
-    dx = (wfr.params.Mesh.xMax - wfr.params.Mesh.xMin)/(wfr.params.Mesh.nx - 1)
-    dy = (wfr.params.Mesh.yMax - wfr.params.Mesh.yMin)/(wfr.params.Mesh.ny - 1)
+    if wf.params.wSpace=='R-space':
+        dx = (wfr.params.Mesh.xMax - wfr.params.Mesh.xMin)/(wfr.params.Mesh.nx - 1)
+        dy = (wfr.params.Mesh.yMax - wfr.params.Mesh.yMin)/(wfr.params.Mesh.ny - 1)
+    elif wf.params.wSpace=='Q-space':
+        dx = (wfr.params.Mesh.qxMax - wfr.params.Mesh.qxMin)/(wfr.params.Mesh.nx - 1)
+        dy = (wfr.params.Mesh.qyMax - wfr.params.Mesh.qyMin)/(wfr.params.Mesh.ny - 1)
+    else:
+        raise TypeError('wSpace should be "R-space" or "Q-space"') 
+    
     dt = (wfr.params.Mesh.sliceMax - wfr.params.Mesh.sliceMin)/(wfr.params.Mesh.nSlices - 1)
     print( 'dt',dt)
 
