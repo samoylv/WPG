@@ -303,9 +303,12 @@ def show_slices_hsv(wf,slice_numbers=None,pretitle=''):
     from matplotlib.colors import hsv_to_rgb
     from wpg.useful_code.backpropagation import fit_gaussian,gaussian
 
+    J2eV = 6.24150934e18
     wf_intensity = wf.get_intensity(polarization='horizontal')
     wf_phase = wf.get_phase(polarization='horizontal')
     if wf.params.wSpace=='R-space':
+        pulse_energy=wf.get_intensity().sum(axis=0).sum(axis=0).sum(axis=0)
+        energyJ = calc_pulse_energy(wf)
         dx = (wf.params.Mesh.xMax - wf.params.Mesh.xMin)/(wf.params.Mesh.nx - 1)
         dy = (wf.params.Mesh.yMax - wf.params.Mesh.yMin)/(wf.params.Mesh.ny - 1)
     elif wf.params.wSpace=='Q-space':
@@ -317,9 +320,6 @@ def show_slices_hsv(wf,slice_numbers=None,pretitle=''):
     dt = (wf.params.Mesh.sliceMax - wf.params.Mesh.sliceMin)/(wf.params.Mesh.nSlices - 1)
     print( 'dt',dt)
 
-    pulse_energy=wf.get_intensity().sum(axis=0).sum(axis=0).sum(axis=0)
-    J2eV = 6.24150934e18
-    energyJ = calc_pulse_energy(wf)
     if slice_numbers is None:
         slice_numbers = range(wf_intensity.shape[-1])
 
@@ -359,7 +359,7 @@ def show_slices_hsv(wf,slice_numbers=None,pretitle=''):
     fit = gaussian(height, center_x, center_y, width_x, width_y)
     fit_data = fit(*numpy.indices(data.shape))
 
-    if wf.params.wDomain=='time':
+    if wf.params.wDomain=='time' and wf.params.wSpace=='R-space':
         print( 'Total pulse intinsity {:.2f} [mJ]'.format(
                 energyJ*1e3))
     print( '''Gaussian approximation parameters:
@@ -377,7 +377,8 @@ def show_slices_hsv(wf,slice_numbers=None,pretitle=''):
     pylab.subplot(121)
     pylab.imshow(data*dx*dy*1e6*J2eV/wf.params.photonEnergy, extent=wf.get_limits())
     pylab.colorbar(orientation='horizontal')
-    pylab.title('Nphotons per '+ str(numpy.floor(dx*1e6))+'x'+str(numpy.floor(dx*1e6))+' $\mu m ^2$ pixel')
+    if wf.params.wSpace=='R-space':
+        pylab.title('Nphotons per '+ str(numpy.floor(dx*1e6))+'x'+str(numpy.floor(dx*1e6))+' $\mu m ^2$ pixel')
 
     pylab.subplot(122)
     pylab.plot(y_axis*1e6,     data[:, int(center_x)]*1e3, 'b', label='Y-cut')
