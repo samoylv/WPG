@@ -21,8 +21,8 @@ def print_mesh(wfr):
     Print out wfr wavefront mesh.
     """
 
-    wf_mesh = wfr.params.Mesh;
-    w_space=wfr.params.wSpace
+    wf_mesh = wf.params.Mesh;
+    w_space=wf.params.wSpace
     print(w_space)
     if (w_space=='R-space'):
         print( 'nx {:5d}  range_x [{:.1e}, {:.1e}] mm'.format(wf_mesh.nx,wf_mesh.xMin*1e3,wf_mesh.xMax*1e3))
@@ -32,24 +32,24 @@ def print_mesh(wfr):
         print('ny {:5d}  range_y [{:.1e}, {:.1e}] mrad'.format(wf_mesh.ny,wf_mesh.qyMin*1e3,wf_mesh.qyMax*1e3))
     return
 
-def calc_pulse_energy(wfr):
+def calc_pulse_energy(wf):
     """
     calculate energy of  in time domain
-    params: wfr: wavefront structure
+    params: wf: wavefront structure
     return: pulse energy value in [J]
     """
     J2eV = 6.24150934e18
-    if wfr.params.wDomain!='time':
+    if wf.params.wDomain!='time':
         print('Pulse energy cannot be calculated for {:s} domain'.format(
-            wfr.params.wDomain))
+            wf.params.wDomain))
         return;
     else:
-        dx = (wfr.params.Mesh.xMax - wfr.params.Mesh.xMin)/(wfr.params.Mesh.nx - 1)
-        dy = (wfr.params.Mesh.yMax - wfr.params.Mesh.yMin)/(wfr.params.Mesh.ny - 1)
-        dt = (wfr.params.Mesh.sliceMax - wfr.params.Mesh.sliceMin)/(wfr.params.Mesh.nSlices - 1)
-        pulse_energy=wfr.get_intensity().sum(axis=0).sum(axis=0).sum(axis=0)
+        dx = (wf.params.Mesh.xMax - wf.params.Mesh.xMin)/(wf.params.Mesh.nx - 1)
+        dy = (wf.params.Mesh.yMax - wf.params.Mesh.yMin)/(wf.params.Mesh.ny - 1)
+        dt = (wf.params.Mesh.sliceMax - wf.params.Mesh.sliceMin)/(wf.params.Mesh.nSlices - 1)
+        pulse_energy=wf.get_intensity().sum(axis=0).sum(axis=0).sum(axis=0)
         pulse_energy_J =  pulse_energy*dx*dx*1e6*dt
-        print( 'Number of photons per pulse: {:e}'.format(pulse_energy_J*J2eV/wfr.params.photonEnergy))
+        print( 'Number of photons per pulse: {:e}'.format(pulse_energy_J*J2eV/wf.params.photonEnergy))
         return pulse_energy_J
 
 def averaged_intensity(wf,bPlot=True):
@@ -289,13 +289,13 @@ def look_at_q_space(wf, output_file = None, save='', range_x=None, range_y=None)
     return
 
 
-def show_slices_hsv(wfr,slice_numbers=None,pretitle=''):
+def show_slices_hsv(wf,slice_numbers=None,pretitle=''):
     """
         Show slices: intensity, phase, gaussian approximation parameters and cuts.
         @TBD:All gaussian parameters in pixels now. Should be fixed.
         @TBD: Add normalization to averaged slice intensity
 
-        :params wfr: wpg.Wavefront
+        :params wf: wpg.Wavefront
         :params slice_numbers: slices to be shown, may by list, int, or None (for all slices)
         :params pretitle: string to be add in the beginning of the title line
         """
@@ -303,23 +303,23 @@ def show_slices_hsv(wfr,slice_numbers=None,pretitle=''):
     from matplotlib.colors import hsv_to_rgb
     from wpg.useful_code.backpropagation import fit_gaussian,gaussian
 
-    wf_intensity = wfr.get_intensity(polarization='horizontal')
-    wf_phase = wfr.get_phase(polarization='horizontal')
+    wf_intensity = wf.get_intensity(polarization='horizontal')
+    wf_phase = wf.get_phase(polarization='horizontal')
     if wf.params.wSpace=='R-space':
-        dx = (wfr.params.Mesh.xMax - wfr.params.Mesh.xMin)/(wfr.params.Mesh.nx - 1)
-        dy = (wfr.params.Mesh.yMax - wfr.params.Mesh.yMin)/(wfr.params.Mesh.ny - 1)
+        dx = (wf.params.Mesh.xMax - wf.params.Mesh.xMin)/(wf.params.Mesh.nx - 1)
+        dy = (wf.params.Mesh.yMax - wf.params.Mesh.yMin)/(wf.params.Mesh.ny - 1)
     elif wf.params.wSpace=='Q-space':
-        dx = (wfr.params.Mesh.qxMax - wfr.params.Mesh.qxMin)/(wfr.params.Mesh.nx - 1)
-        dy = (wfr.params.Mesh.qyMax - wfr.params.Mesh.qyMin)/(wfr.params.Mesh.ny - 1)
+        dx = (wf.params.Mesh.qxMax - wf.params.Mesh.qxMin)/(wf.params.Mesh.nx - 1)
+        dy = (wf.params.Mesh.qyMax - wf.params.Mesh.qyMin)/(wf.params.Mesh.ny - 1)
     else:
         raise TypeError('wSpace should be "R-space" or "Q-space"') 
     
-    dt = (wfr.params.Mesh.sliceMax - wfr.params.Mesh.sliceMin)/(wfr.params.Mesh.nSlices - 1)
+    dt = (wf.params.Mesh.sliceMax - wf.params.Mesh.sliceMin)/(wf.params.Mesh.nSlices - 1)
     print( 'dt',dt)
 
-    pulse_energy=wfr.get_intensity().sum(axis=0).sum(axis=0).sum(axis=0)
+    pulse_energy=wf.get_intensity().sum(axis=0).sum(axis=0).sum(axis=0)
     J2eV = 6.24150934e18
-    energyJ = calc_pulse_energy(wfr)
+    energyJ = calc_pulse_energy(wf)
     if slice_numbers is None:
         slice_numbers = range(wf_intensity.shape[-1])
 
@@ -329,20 +329,20 @@ def show_slices_hsv(wfr,slice_numbers=None,pretitle=''):
     intense = wf_intensity.sum(0).sum(0)
     intense = numpy.squeeze(intense)
     intense = intense*dx*dy*1e6*1e-9 # [GW],  dx,dy [mm]
-    print( 'Z coord: {0:.4f} m.'.format(wfr.params.Mesh.zCoord))
+    print( 'Z coord: {0:.4f} m.'.format(wf.params.Mesh.zCoord))
 
     pylab.figure()
-    if wfr.params.wDomain=='time':
-        pylab.plot(numpy.linspace(wfr.params.Mesh.sliceMin, wfr.params.Mesh.sliceMax,
-            wfr.params.Mesh.nSlices)*1e15, intense)
+    if wf.params.wDomain=='time':
+        pylab.plot(numpy.linspace(wf.params.Mesh.sliceMin, wf.params.Mesh.sliceMax,
+            wf.params.Mesh.nSlices)*1e15, intense)
         pylab.plot(slice_numbers, intense[slice_numbers],color='g',linestyle='None',
              markersize=5, marker='o',markerfacecolor='w',markeredgecolor='g')
         pylab.title(pretitle+' Instanteneous power')
-        pylab.xlim(wfr.params.Mesh.sliceMin*1e15, wfr.params.Mesh.sliceMax*1e15);pylab.xlabel('fs');pylab.ylabel('[GW]')
+        pylab.xlim(wf.params.Mesh.sliceMin*1e15, wf.params.Mesh.sliceMax*1e15);pylab.xlabel('fs');pylab.ylabel('[GW]')
     else: #if wDomain=='frequency'
-        pylab.plot(numpy.linspace(-wfr.params.Mesh.nSlices*dt/2, wfr.params.Mesh.nSlices*dt/2,
-            wfr.params.Mesh.nSlices)/wfr.params.photonEnergy*1e3, intense)
-        pylab.plot((slice_numbers*dt-wfr.params.Mesh.nSlices*dt/2)/wfr.params.photonEnergy*1e3, intense[slice_numbers],color='g',linestyle='None',
+        pylab.plot(numpy.linspace(-wf.params.Mesh.nSlices*dt/2, wf.params.Mesh.nSlices*dt/2,
+            wf.params.Mesh.nSlices)/wf.params.photonEnergy*1e3, intense)
+        pylab.plot((slice_numbers*dt-wf.params.Mesh.nSlices*dt/2)/wf.params.photonEnergy*1e3, intense[slice_numbers],color='g',linestyle='None',
              markersize=5, marker='o',markerfacecolor='w',markeredgecolor='g')
         pylab.title(pretitle+' Spectrum')
         pylab.xlabel('$\Delta \omega / \omega _0 10^{3}$')
@@ -359,23 +359,23 @@ def show_slices_hsv(wfr,slice_numbers=None,pretitle=''):
     fit = gaussian(height, center_x, center_y, width_x, width_y)
     fit_data = fit(*numpy.indices(data.shape))
 
-    if wfr.params.wDomain=='time':
+    if wf.params.wDomain=='time':
         print( 'Total pulse intinsity {:.2f} [mJ]'.format(
                 energyJ*1e3))
     print( '''Gaussian approximation parameters:
         center_x : {0:.2f}um.\t center_y : {1:.2f}um.
         width_x  : {2:.2f}um\t width_y : {3:.2f}um.
-        rsquared : {4:0.4f}.'''.format((center_x-numpy.floor(wfr.params.Mesh.nx/2))*dx*1e6,
-                                      (center_y-numpy.floor(wfr.params.Mesh.ny/2))*dy*1e6,
+        rsquared : {4:0.4f}.'''.format((center_x-numpy.floor(wf.params.Mesh.nx/2))*dx*1e6,
+                                      ( center_y-numpy.floor(wf.params.Mesh.ny/2))*dy*1e6,
                                       width_x*dx*1e6, width_y*dy*1e6, rsquared))
 
-    x_axis = numpy.linspace(wfr.params.Mesh.xMin,wfr.params.Mesh.xMax,wfr.params.Mesh.nx)
+    x_axis = numpy.linspace(wf.params.Mesh.xMin,wf.params.Mesh.xMax,wf.params.Mesh.nx)
     y_axis = x_axis
 
 
     pylab.figure(figsize=(15, 7))
     pylab.subplot(121)
-    pylab.imshow(data*dx*dy*1e6*J2eV/wfr.params.photonEnergy, extent=wfr.get_limits())
+    pylab.imshow(data*dx*dy*1e6*J2eV/wf.params.photonEnergy, extent=wf.get_limits())
     pylab.colorbar(orientation='horizontal')
     pylab.title('Nphotons per '+ str(numpy.floor(dx*1e6))+'x'+str(numpy.floor(dx*1e6))+' $\mu m ^2$ pixel')
 
@@ -405,20 +405,20 @@ def show_slices_hsv(wfr,slice_numbers=None,pretitle=''):
         rsquared = fit_result['rsquared']
         fit = gaussian(height, center_x, center_y, width_x, width_y)
         fit_data = fit(*numpy.indices(data.shape))
-        #$center_x = int(wfr.params.Mesh.nSlices/2); center_y = center_x
+        #$center_x = int(wf.params.Mesh.nSlices/2); center_y = center_x
 
         print( 'Slice number: {}'.format(sn))
         print( '''Gaussian approximation parameters:
             center_x : {0:.2f}um.\t center_y : {1:.2f}um.
             width_x  : {2:.2f}um\t width_y : {3:.2f}um.
-            rsquared : {4:0.4f}.'''.format((center_x-numpy.floor(wfr.params.Mesh.nx/2))*dx*1e6,
-                                           (center_y-numpy.floor(wfr.params.Mesh.ny/2))*dy*1e6,
+            rsquared : {4:0.4f}.'''.format((center_x-numpy.floor(wf.params.Mesh.nx/2))*dx*1e6,
+                                           (center_y-numpy.floor(wf.params.Mesh.ny/2))*dy*1e6,
                                            width_x*dx*1e6, width_y*dy*1e6, rsquared))
 
         pylab.figure(figsize=(15,7))
 
         pylab.subplot(121)
-        intensity = data*dx*dy*1e6*J2eV/wfr.params.photonEnergy*1e-6 #number of photons in a slice of thickness dt
+        intensity = data*dx*dy*1e6*J2eV/wf.params.photonEnergy*1e-6 #number of photons in a slice of thickness dt
         phase = wf_phase[:, :, sn]
 
         H = intensity
