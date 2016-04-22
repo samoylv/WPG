@@ -369,7 +369,12 @@ def show_slices_hsv(wf,slice_numbers=None,pretitle=''):
                                       ( center_y-numpy.floor(wf.params.Mesh.ny/2))*dy*1e6,
                                       width_x*dx*1e6, width_y*dy*1e6, rsquared))
 
-    x_axis = numpy.linspace(wf.params.Mesh.xMin,wf.params.Mesh.xMax,wf.params.Mesh.nx)
+    if wf.params.wSpace=='R-space':
+        x_axis = numpy.linspace(wf.params.Mesh.xMin,wf.params.Mesh.xMax,wf.params.Mesh.nx)
+    elif wf.params.wSpace=='Q-space':
+        x_axis = numpy.linspace(wf.params.Mesh.qxMin,wf.params.Mesh.qxMax,wf.params.Mesh.nx)
+    else:
+        raise TypeError('wSpace should be "R-space" or "Q-space"') 
     y_axis = x_axis
 
 
