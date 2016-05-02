@@ -643,12 +643,11 @@ class WFRadiationMeshXMin(RadiationField):
 
     @value.setter
     def value(self, val):
-        if self._wf.params.wSpace == 'R-space':
-            self._wf._srwl_wf.mesh.xStart = float(val)
-        else:
+        if not self._wf.params.wSpace == 'R-space':
             warnings.warn(
                 'params/Mesh/xMin not defined if NOT params/wSpace==R-space')
-            return None
+
+        self._wf._srwl_wf.mesh.xStart = float(val)
 
 
 class WFRadiationMeshXMax(RadiationField):
@@ -675,12 +674,12 @@ class WFRadiationMeshXMax(RadiationField):
 
     @value.setter
     def value(self, val):
-        if self._wf.params.wSpace == 'R-space':
-            self._wf._srwl_wf.mesh.xFin = float(val)
-        else:
+        if not self._wf.params.wSpace == 'R-space':
             warnings.warn(
                 'params/Mesh/xMax not defined if NOT params/wSpace==Rspace')
-            return None
+
+        self._wf._srwl_wf.mesh.xFin = float(val)
+
 
 
 class WFRadiationMeshYMin(RadiationField):
@@ -707,12 +706,12 @@ class WFRadiationMeshYMin(RadiationField):
 
     @value.setter
     def value(self, val):
-        if self._wf.params.wSpace == 'R-space':
-            self._wf._srwl_wf.mesh.yStart = float(val)
-        else:
+        if not self._wf.params.wSpace == 'R-space':
             warnings.warn(
                 'params/Mesh/yMin not defined if NOT params/wSpace==R-space')
-            return None
+
+        self._wf._srwl_wf.mesh.yStart = float(val)
+
 
 
 class WFRadiationMeshYMax(RadiationField):
@@ -739,13 +738,11 @@ class WFRadiationMeshYMax(RadiationField):
 
     @value.setter
     def value(self, val):
-        if self._wf.params.wSpace == 'R-space':
-            self._wf._srwl_wf.mesh.yFin = float(val)
-        else:
+        if not self._wf.params.wSpace == 'R-space':
             warnings.warn(
                 'params/Mesh/yMax not defined if NOT params/wSpace==R-space')
-            return None
 
+        self._wf._srwl_wf.mesh.yFin = float(val)
 
 class WFRadiationMeshQxMin(RadiationField):
 
@@ -771,12 +768,11 @@ class WFRadiationMeshQxMin(RadiationField):
 
     @value.setter
     def value(self, val):
-        if self._wf.params.wSpace == 'Q-space':
-            self._wf._srwl_wf.mesh.xStart = float(val)
-        else:
+        if not self._wf.params.wSpace == 'Q-space':
             warnings.warn(
                 'params/Mesh/qxMin not defined if NOT params/wSpace==Q-space')
-            return None
+
+        self._wf._srwl_wf.mesh.xStart = float(val)
 
 
 class WFRadiationMeshQxMax(RadiationField):
@@ -803,12 +799,11 @@ class WFRadiationMeshQxMax(RadiationField):
 
     @value.setter
     def value(self, val):
-        if self._wf.params.wSpace == 'Q-space':
-            self._wf._srwl_wf.mesh.xFin = float(val)
-        else:
+        if not self._wf.params.wSpace == 'Q-space':
             warnings.warn(
                 'params/Mesh/qxMax not defined if NOT params/wSpace==Q-space')
-            return None
+
+        self._wf._srwl_wf.mesh.xFin = float(val)
 
 
 class WFRadiationMeshQyMin(RadiationField):
@@ -835,12 +830,11 @@ class WFRadiationMeshQyMin(RadiationField):
 
     @value.setter
     def value(self, val):
-        if self._wf.params.wSpace == 'Q-space':
-            self._wf._srwl_wf.mesh.yStart = float(val)
-        else:
+        if not self._wf.params.wSpace == 'Q-space':
             warnings.warn(
                 'params/Mesh/qyMin not defined if NOT params/wSpace==Q-space')
-            return None
+
+        self._wf._srwl_wf.mesh.yStart = float(val)
 
 
 class WFRadiationMeshQyMax(RadiationField):
@@ -867,12 +861,11 @@ class WFRadiationMeshQyMax(RadiationField):
 
     @value.setter
     def value(self, val):
-        if self._wf.params.wSpace == 'Q-space':
-            self._wf._srwl_wf.mesh.yFin = float(val)
-        else:
+        if not self._wf.params.wSpace == 'Q-space':
             warnings.warn(
                 'params/Mesh/qyMax not defined if NOT params/wSpace==Q-space')
-            return None
+
+        self._wf._srwl_wf.mesh.yFin = float(val)
 
 
 class WFRadiationMeshSliceMin(RadiationField):
