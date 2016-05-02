@@ -5,8 +5,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-__author__ = 'A. Buzmakov, L. Samoylova, C. Fortmann-Grote'
-
 import copy
 import numpy
 import pylab
@@ -15,21 +13,30 @@ from wpg.beamline import Beamline
 from wpg.srwlib import srwl
 from wpg.wavefront import Wavefront
 
+__author__ = 'A. Buzmakov, L. Samoylova, C. Fortmann-Grote'
 
-def print_mesh(wfr):
+def print_mesh(wf):
     """
     Print out wfr wavefront mesh.
     """
 
-    wf_mesh = wf.params.Mesh;
-    w_space=wf.params.wSpace
+    wf_mesh = wf.params.Mesh
+    w_space = wf.params.wSpace
     print(w_space)
-    if (w_space=='R-space'):
-        print( 'nx {:5d}  range_x [{:.1e}, {:.1e}] mm'.format(wf_mesh.nx,wf_mesh.xMin*1e3,wf_mesh.xMax*1e3))
-        print('ny {:5d}  range_y [{:.1e}, {:.1e}] mm'.format(wf_mesh.ny,wf_mesh.yMin*1e3,wf_mesh.yMax*1e3))
-    if (w_space=='Q-space'):
-        print('nx {:5d}  range_x [{:.1e}, {:.1e}] mrad'.format(wf_mesh.nx,wf_mesh.qxMin*1e3,wf_mesh.qxMax*1e3))
-        print('ny {:5d}  range_y [{:.1e}, {:.1e}] mrad'.format(wf_mesh.ny,wf_mesh.qyMin*1e3,wf_mesh.qyMax*1e3))
+    if (w_space == 'R-space'):
+        print('nx {:5d}  range_x [{:.1e}, {:.1e}] mm'.format(
+            wf_mesh.nx, wf_mesh.xMin*1e3, wf_mesh.xMax*1e3)
+        )
+        print('ny {:5d}  range_y [{:.1e}, {:.1e}] mm'.format(
+            wf_mesh.ny, wf_mesh.yMin*1e3, wf_mesh.yMax*1e3)
+        )
+    if (w_space == 'Q-space'):
+        print('nx {:5d}  range_x [{:.1e}, {:.1e}] mrad'.format(
+            wf_mesh.nx, wf_mesh.qxMin*1e3, wf_mesh.qxMax*1e3)
+        )
+        print('ny {:5d}  range_y [{:.1e}, {:.1e}] mrad'.format(
+            wf_mesh.ny, wf_mesh.qyMin*1e3, wf_mesh.qyMax*1e3)
+        )
     return
 
 def calc_pulse_energy(wf):
@@ -42,7 +49,7 @@ def calc_pulse_energy(wf):
     if wf.params.wDomain!='time':
         print('Pulse energy cannot be calculated for {:s} domain'.format(
             wf.params.wDomain))
-        return;
+        return None
     else:
         dx = (wf.params.Mesh.xMax - wf.params.Mesh.xMin)/(wf.params.Mesh.nx - 1)
         dy = (wf.params.Mesh.yMax - wf.params.Mesh.yMin)/(wf.params.Mesh.ny - 1)
