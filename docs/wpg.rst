@@ -69,7 +69,7 @@ Run web interface.
    .. code:: sh
 
        cd samples
-       ipython notebook --pylab=inline
+       ipython notebook
 
 If web page not pop up automatically, open your browser in http://localhost:8888
 
@@ -130,7 +130,7 @@ Run web interface.
    .. code:: sh
 
        cd samples
-       ipython notebook --pylab=inline
+       ipython notebook
 
 -  If web page not pop up automatically, open your browser in http://localhost:8888
 
@@ -158,7 +158,7 @@ Please visit `Simulation <https://docs.xfel.eu/share/page/site/simulation/dashbo
 
 	.. code:: sh
 
-	   ipython notebook --pylab=inline --no-browser --port=YOUR_UNIQUE_PORT_NUMBER --notebook-dir=<your_working_directory> &
+	   ipython notebook --no-browser --port=YOUR_UNIQUE_PORT_NUMBER --notebook-dir=<your_working_directory> &
 
 Setup ssh tunnel to the server. **Please use another LOCAL terminal window!**
 

@@ -19,8 +19,8 @@ import warnings
 # This deprecate warnings form SRWLib visualization module
 
 warnings.filterwarnings("ignore")
-from . import srwlpy
-from . import srwlib
+import wpg.srwlpy as srwlib
+import wpg.srwlib as srwlib
 warnings.resetwarnings()
 
 # Create aliases for simple importing
