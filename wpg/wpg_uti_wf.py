@@ -140,7 +140,7 @@ def plot_t_wf(wf, save='', range_x=None, range_y=None):
     try:
         plt.set_cmap('viridis')
     except:
-        plt.set_cmap('gnuplot')
+        plt.set_cmap('YlGbBu_r')
 
     # Profile plot.
     profile = plt.subplot2grid((3, 3), (1, 0), colspan=2, rowspan=2)
@@ -229,7 +229,7 @@ def plot_t_wf_a(wf, save='', range_x=None, range_y=None):
     try:
         plt.set_cmap('viridis')
     except:
-        plt.set_cmap('gnuplot')
+        plt.set_cmap('YlGbBu_r')
 
     profile = plt.subplot2grid((3, 3), (1, 0), colspan=2, rowspan=2)
     xmin, xmax, ymax, ymin = wf.get_limits()
