@@ -8,7 +8,11 @@ __author__ = 'A. Buzmakov'
 
 import warnings
 from wpg import srwlib
-from wpg import srwlpy
+
+try:
+    from wpg import srwlpy
+except ImportError:
+    import srwlpy  #  Hack for read the docs
 
 
 def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, sigY, d2waist, 
