@@ -3,7 +3,12 @@
 #############################################################################
 
 from __future__ import print_function #Python 2.7 compatibility
-from wpg import srwlpy as srwl
+
+try:
+    from wpg import srwlpy as srwl
+except ImportError:
+    import srwlpy as srwl  #  Hack for read the docs
+
 from array import *
 from math import *
 from copy import *
