@@ -3,7 +3,7 @@
 #############################################################################
 
 from __future__ import print_function #Python 2.7 compatibility
-import wpg.srwlpy as srwl
+from wpg import srwlpy as srwl
 from array import *
 from math import *
 from copy import *
@@ -11,7 +11,7 @@ import random
 import sys
 import os
 import traceback
-import wpg.uti_math as uti_math
+from wpg import uti_math
 from .srwl_uti_cryst import *
 #try:
 #    from uti_plot import * #universal simple plotting module distributed together with SRWLib
