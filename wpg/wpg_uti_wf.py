@@ -138,7 +138,7 @@ def plot_t_wf(wf, save='', range_x=None, range_y=None):
     # Set colormap. Inferno is not available in all matplotlib versions, fall
     # back to gnuplot.
     try:
-        plt.set_cmap('inferno')
+        plt.set_cmap('viridis')
     except:
         plt.set_cmap('gnuplot')
 
@@ -227,7 +227,7 @@ def plot_t_wf_a(wf, save='', range_x=None, range_y=None):
     plt.figure(figsize=(10, 10), dpi=100)
     plt.axis('tight')
     try:
-        plt.set_cmap('inferno')
+        plt.set_cmap('viridis')
     except:
         plt.set_cmap('gnuplot')
 
