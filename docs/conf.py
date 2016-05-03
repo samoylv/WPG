@@ -250,8 +250,7 @@ texinfo_documents = [
 todo_include_todos = True
 autoclass_content = 'both'
 sys.path.insert(0, os.path.join('..'))
-
-
+sys.path.insert(0, os.path.join('..', 'wpg'))
 
 
 import mock
