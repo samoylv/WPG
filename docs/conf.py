@@ -250,7 +250,7 @@ texinfo_documents = [
 todo_include_todos = True
 autoclass_content = 'both'
 sys.path.insert(0, os.path.join('..'))
-ys.path.insert(0, os.path.join('..','wpg'))
+sys.path.insert(0, os.path.join('..','wpg'))
 
 
 
