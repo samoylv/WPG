@@ -7,8 +7,8 @@ from __future__ import print_function
 __author__ = 'A. Buzmakov'
 
 import warnings
-from . import srwlib
-from . import srwlpy
+from wpg import srwlib
+from wpg import srwlpy
 
 
 def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, sigY, d2waist, 
