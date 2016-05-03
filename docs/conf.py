@@ -253,13 +253,13 @@ sys.path.insert(0, os.path.join('..'))
 
 
 
-# try:
-#     import srwlpy, numpy, h5py, pylab, scipy, uti_plot
-# except ImportError, e:
-import mock
-MOCK_MODULES = ['wpg.srwlpy', 'srwlpy', 'numpy', 'h5py', 'pylab', 'scipy',
-  'uti_plot', 'uti_math', 'srwl_uti_cryst', 'srwl_uti_src', 'scipy.optimize']
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = mock.Mock()
-# else:
-#     pass
+try:
+    import srwlpy, numpy, h5py, pylab, scipy, uti_plot
+except ImportError, e:
+    import mock
+    MOCK_MODULES = ['wpg.srwlpy', 'srwlpy', '.srwlpy', 'numpy','h5py', 'pylab', 'scipy',
+      'uti_plot', 'uti_math', 'srwl_uti_cryst', 'srwl_uti_src', 'scipy.optimize']
+    for mod_name in MOCK_MODULES:
+        sys.modules[mod_name] = mock.Mock()
+else:
+    pass
