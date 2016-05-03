@@ -38,13 +38,13 @@ def show_transmission(transmission):
 
     plt.imshow(get_absorption(transmission),
                extent=(mesh.xStart, mesh.xFin, mesh.yFin, mesh.yStart),
-               cm=plt.cm.bone)
+               cmap=plt.cm.bone)
     plt.colorbar(orientation='horizontal')
     plt.title('Absorption')
 
     plt.subplot(122)
     plt.imshow(get_opd(transmission),
                extent=(mesh.xStart, mesh.xFin, mesh.yFin, mesh.yStart),
-               cm=plt.cm.bone)
+               cmap=plt.cm.bone)
     plt.colorbar(orientation='horizontal')
     plt.title('OPD [m]')
