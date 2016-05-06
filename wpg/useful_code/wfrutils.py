@@ -241,6 +241,19 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
     return dd
 
 
+def stat1(x, y):
+    """
+    Calculate statistic moments of y(x) data.
+
+    :param x: variable
+    :param y: distribution y(x)
+    :return: 'expected value' and 'variance'
+    """
+    mu = numpy.average(x, weights=y)  # expected value
+    var = numpy.sqrt(numpy.average((x - mu)**2, weights=y))  # variance
+    return mu, var
+
+
 def calculate_fwhm(dd):
     irr_x = dd[:, 1]
     irr_max = numpy.max(irr_x)
