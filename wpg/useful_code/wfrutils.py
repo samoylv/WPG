@@ -74,19 +74,18 @@ def plot_2d(amap, xmin, xmax, ymin, ymax, title_fig, title_x, title_y):
 
 def calculate_peak_pos(mwf):
     # irradiance
-    irr = mwf.get_intensity(slice_number=None, polarization='horizontal')
-    #for 3D wavefront calulate sum of all slice at z-axis
-    if mwf.params.Mesh.nSlices > 1:
-        irr = irr.sum(axis=-1)
-
-    irr_y, irr_x = numpy.unravel_index(irr.argmax(), irr.shape)  # check may be irr_x, irr_y
-
+    irr = mwf.get_intensity(slice_number=0, polarization='horizontal')
+    irr_max = numpy.max(irr)
     [nx, ny, xmin, xmax, ymin, ymax] = get_mesh(mwf)
     x_axis = numpy.linspace(xmin, xmax, nx)
     y_axis = numpy.linspace(ymin, ymax, ny)
-    x0 = x_axis[irr_x]
-    y0 = y_axis[irr_y]
-    return x0,y0
+    nc = numpy.where(irr == irr_max)
+    irr_x = irr[ny // 2, :]
+    irr_y = irr[:, nx // 2]
+    x0 = numpy.max(x_axis[numpy.where(irr_x == numpy.max(irr_x))])
+    y0 = numpy.max(y_axis[numpy.where(irr_y == numpy.max(irr_y))])
+    return [x0, y0]
+
 
 def get_mesh(mwf):
     wf_mesh = mwf.params.Mesh
