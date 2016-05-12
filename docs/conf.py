@@ -250,16 +250,11 @@ texinfo_documents = [
 todo_include_todos = True
 autoclass_content = 'both'
 sys.path.insert(0, os.path.join('..'))
+sys.path.insert(0, os.path.join('..', 'wpg'))
 
 
-
-try:
-    import wpg.srwlpy, numpy, h5py, pylab, scipy, uti_plot
-except ImportError, e:
-    import mock
-    MOCK_MODULES = ['wpg.srwlpy','srwlpy','numpy','h5py','pylab','scipy',
-      'uti_plot', 'uti_math', 'srwl_uti_cryst', 'srwl_uti_src', 'scipy.optimize']
-    for mod_name in MOCK_MODULES:
-        sys.modules[mod_name] = mock.Mock()
-else:
-    pass
+import mock
+MOCK_MODULES = ['wpg.srwlpy', 'srwlpy', 'numpy', 'h5py', 'pylab', 'scipy',
+  'uti_plot', 'uti_math', 'srwl_uti_cryst', 'srwl_uti_src', 'scipy.optimize']
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()

@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 """
 This module contains  wrapper for SRWLOptC (optical container) and propagetion parameters.
 
@@ -124,11 +129,11 @@ class Beamline(object):
                 srwl_beamline = srwlib.SRWLOptC(
                     propagation_option['optical_elements'],
                     propagation_option['propagation_parameters'])
-
+                
                 srwl.PropagElecField(wfr._srwl_wf, srwl_beamline)
 
                 # fixing wf._srwl_wf.mesh.zStart bug for Drift
-                #TODO: Try to fix it with _treat parameter
+                # TODO: Try to fix it with _treat parameter
                 for opt_element in propagation_option['optical_elements']:
                     if isinstance(opt_element, srwlib.SRWLOptD):
                         wfr.params.Mesh.zCoord = wfr.params.Mesh.zCoord + \

@@ -8,6 +8,11 @@ This module contains definitions (glossary) of Wavefront fields. Described mappi
 .. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
 """
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import inspect
 import sys
 import wpg.utils as utils
@@ -53,7 +58,7 @@ class RadiationField(object):
             start = descr.find(r'[', stop)
             stop = descr.find(r']', start)
             if start >= 0 and stop >= 0:
-                units.append(descr[start+1 : stop])
+                units.append(descr[start+1: stop])
 
         units = ' or '.join(units)
         return units
@@ -221,9 +226,9 @@ class WFRadiationWDomain(RadiationField):
 
     @value.setter
     def value(self, val):
-        if val == 'frequency':
+        if val in ['frequency', b'frequency']:
             self._wf._srwl_wf.presFT = 0
-        elif val == 'time':
+        elif val in ['time', b'time']:
             self._wf._srwl_wf.presFT = 1
         else:
             raise ValueError('value must be "frequency" or "time"')
@@ -258,9 +263,9 @@ class WFRadiationWSpace(RadiationField):
 
     @value.setter
     def value(self, val):
-        if val == 'R-space':
+        if val in ['R-space', b'R-space']:
             self._wf._srwl_wf.presCA = 0
-        elif val == 'Q-space':
+        elif val in ['Q-space', b'Q-space']:
             self._wf._srwl_wf.presCA = 1
         else:
             raise ValueError('value must be "R-space" or "Q-space"')
@@ -285,19 +290,18 @@ class WFRadiationWFloatType(RadiationField):
     @property
     def value(self):
         """Electric field numerical type"""
-
-        if self._wf._srwl_wf.numTypeElFld == 'f':
+        if self._wf._srwl_wf.numTypeElFld in ['f', b'f']:
             return 'float'
-        elif self._wf._srwl_wf.numTypeElFld == 'd':
+        elif self._wf._srwl_wf.numTypeElFld in ['d', b'd']:
             return 'double'
         else:
             raise ValueError('internal error, wrong wavefront field value')
 
     @value.setter
     def value(self, val):
-        if val == 'float':
+        if val in ['float', b'float']:
             self._wf._srwl_wf.numTypeElFld = 'f'
-        elif val == 'double':
+        elif val in ['double', b'double']:
             raise ValueError('"double" type not supprted yet')
         #            self._wf._srwl_wf.numTypeElFld = 'd'
         else:
@@ -344,9 +348,9 @@ class WFRadiationWEFieldUnit(RadiationField):
     def value(self, val):
         if val == 'arbitrary':
             self._wf._srwl_wf.unitElFld = 0
-        elif val == r'sqrt(Phot/s/0.1%bw/mm^2)':
+        elif val in ['sqrt(Phot/s/0.1%bw/mm^2)', b'sqrt(Phot/s/0.1%bw/mm^2)']:
             self._wf._srwl_wf.unitElFld = 1
-        elif val in [r'sqrt(J/eV/mm^2)', 'sqrt(W/mm^2)']:
+        elif val in ['sqrt(J/eV/mm^2)', 'sqrt(W/mm^2)', b'sqrt(J/eV/mm^2)', b'sqrt(W/mm^2)']:
             self._wf._srwl_wf.unitElFld = 2
         else:
             raise ValueError(
@@ -614,6 +618,7 @@ class WFRadiationMeshHvz(RadiationField):
 
 # TODO: add wrapper for mesh._arSurf (we should know it size)
 
+
 class WFRadiationMeshXMin(RadiationField):
 
     """Minimum of horizontal range [m]"""
@@ -638,12 +643,11 @@ class WFRadiationMeshXMin(RadiationField):
 
     @value.setter
     def value(self, val):
-        if self._wf.params.wSpace == 'R-space':
-            self._wf._srwl_wf.mesh.xStart = float(val)
-        else:
+        if not self._wf.params.wSpace == 'R-space':
             warnings.warn(
                 'params/Mesh/xMin not defined if NOT params/wSpace==R-space')
-            return None
+
+        self._wf._srwl_wf.mesh.xStart = float(val)
 
 
 class WFRadiationMeshXMax(RadiationField):
@@ -670,12 +674,12 @@ class WFRadiationMeshXMax(RadiationField):
 
     @value.setter
     def value(self, val):
-        if self._wf.params.wSpace == 'R-space':
-            self._wf._srwl_wf.mesh.xFin = float(val)
-        else:
+        if not self._wf.params.wSpace == 'R-space':
             warnings.warn(
                 'params/Mesh/xMax not defined if NOT params/wSpace==Rspace')
-            return None
+
+        self._wf._srwl_wf.mesh.xFin = float(val)
+
 
 
 class WFRadiationMeshYMin(RadiationField):
@@ -702,12 +706,12 @@ class WFRadiationMeshYMin(RadiationField):
 
     @value.setter
     def value(self, val):
-        if self._wf.params.wSpace == 'R-space':
-            self._wf._srwl_wf.mesh.yStart = float(val)
-        else:
+        if not self._wf.params.wSpace == 'R-space':
             warnings.warn(
                 'params/Mesh/yMin not defined if NOT params/wSpace==R-space')
-            return None
+
+        self._wf._srwl_wf.mesh.yStart = float(val)
+
 
 
 class WFRadiationMeshYMax(RadiationField):
@@ -734,13 +738,11 @@ class WFRadiationMeshYMax(RadiationField):
 
     @value.setter
     def value(self, val):
-        if self._wf.params.wSpace == 'R-space':
-            self._wf._srwl_wf.mesh.yFin = float(val)
-        else:
+        if not self._wf.params.wSpace == 'R-space':
             warnings.warn(
                 'params/Mesh/yMax not defined if NOT params/wSpace==R-space')
-            return None
 
+        self._wf._srwl_wf.mesh.yFin = float(val)
 
 class WFRadiationMeshQxMin(RadiationField):
 
@@ -766,12 +768,11 @@ class WFRadiationMeshQxMin(RadiationField):
 
     @value.setter
     def value(self, val):
-        if self._wf.params.wSpace == 'Q-space':
-            self._wf._srwl_wf.mesh.xStart = float(val)
-        else:
+        if not self._wf.params.wSpace == 'Q-space':
             warnings.warn(
                 'params/Mesh/qxMin not defined if NOT params/wSpace==Q-space')
-            return None
+
+        self._wf._srwl_wf.mesh.xStart = float(val)
 
 
 class WFRadiationMeshQxMax(RadiationField):
@@ -798,12 +799,11 @@ class WFRadiationMeshQxMax(RadiationField):
 
     @value.setter
     def value(self, val):
-        if self._wf.params.wSpace == 'Q-space':
-            self._wf._srwl_wf.mesh.xFin = float(val)
-        else:
+        if not self._wf.params.wSpace == 'Q-space':
             warnings.warn(
                 'params/Mesh/qxMax not defined if NOT params/wSpace==Q-space')
-            return None
+
+        self._wf._srwl_wf.mesh.xFin = float(val)
 
 
 class WFRadiationMeshQyMin(RadiationField):
@@ -830,12 +830,11 @@ class WFRadiationMeshQyMin(RadiationField):
 
     @value.setter
     def value(self, val):
-        if self._wf.params.wSpace == 'Q-space':
-            self._wf._srwl_wf.mesh.yStart = float(val)
-        else:
+        if not self._wf.params.wSpace == 'Q-space':
             warnings.warn(
                 'params/Mesh/qyMin not defined if NOT params/wSpace==Q-space')
-            return None
+
+        self._wf._srwl_wf.mesh.yStart = float(val)
 
 
 class WFRadiationMeshQyMax(RadiationField):
@@ -862,12 +861,11 @@ class WFRadiationMeshQyMax(RadiationField):
 
     @value.setter
     def value(self, val):
-        if self._wf.params.wSpace == 'Q-space':
-            self._wf._srwl_wf.mesh.yFin = float(val)
-        else:
+        if not self._wf.params.wSpace == 'Q-space':
             warnings.warn(
                 'params/Mesh/qyMax not defined if NOT params/wSpace==Q-space')
-            return None
+
+        self._wf._srwl_wf.mesh.yFin = float(val)
 
 
 class WFRadiationMeshSliceMin(RadiationField):
@@ -1147,7 +1145,7 @@ class WFDataArrEhor(RadiationField):
             if not val.count() == n_total:
                 warnings.warn(
                     'New array size not equal to wavefront size. You must set it by yourself.')
-            self._wf._srwl_wf.arEx = array.array('f', val)
+            self._wf._srwl_wf.arEx = array.array(str(u'f'), val)
         else:
             val = numpy.array(val, dtype='float32')
             if not numpy.prod(val.shape) == n_total:
@@ -1156,10 +1154,10 @@ class WFDataArrEhor(RadiationField):
                 self._wf.params.nx = val.shape[1]
                 self._wf.params.ny = val.shape[0]
                 self._wf.params.nSlices = val.shape[2]
-            # self._wf._srwl_wf.arEx = array.array('f', val.flat)
-            self._wf._srwl_wf.arEx = array.array('f')
-            val_s = val.tostring()
-            self._wf._srwl_wf.arEx.fromstring(val_s)
+            self._wf._srwl_wf.arEx = array.array(str(u'f'), val.tobytes())
+            # self._wf._srwl_wf.arEx = array.array(str(u'f'))
+            # val_s = val.tostring()
+            # self._wf._srwl_wf.arEx.fromstring(val_s)
 
 
 class WFDataArrEver(RadiationField):
@@ -1202,7 +1200,7 @@ class WFDataArrEver(RadiationField):
             if not val.count() == n_total:
                 warnings.warn(
                     'New array size not equal to wavefront size. You must set it by yourself.')
-            self._wf._srwl_wf.arEy = array.array('f', val)
+            self._wf._srwl_wf.arEy = array.array(str(u'f'), val)
         else:
             val = numpy.array(val, dtype='float32')
             if not numpy.prod(val.shape) == n_total:
@@ -1211,11 +1209,10 @@ class WFDataArrEver(RadiationField):
                 self._wf.params.nx = val.shape[1]
                 self._wf.params.ny = val.shape[0]
                 self._wf.params.nSlices = val.shape[2]
-#             self._wf._srwl_wf.arEy = array.array('f', val.flat)
-            self._wf._srwl_wf.arEy = array.array('f')
-            val_s = val.tostring()
-            self._wf._srwl_wf.arEy.fromstring(val_s)
-
+            self._wf._srwl_wf.arEy = array.array(str(u'f'), val.tobytes())
+            # self._wf._srwl_wf.arEy = array.array(str(u'f'))
+            # val_s = val.tostring()
+            # self._wf._srwl_wf.arEy.fromstring(val_s)
 
 
 # TODO: fix allocation in N(x,y,z)
@@ -1279,8 +1276,8 @@ def print_glossary():
                 units.append(descr[start+1: stop])
 
         units = ' or '.join(units)
-        print '**{name}** - {decsription} - ***{units}***'.format(
-            name=name, decsription=descr, units=units)
+        print('**{name}** - {decsription} - ***{units}***'.format(
+            name=name, decsription=descr, units=units))
     # pprint.pprint(get_glosary_info())
 
 

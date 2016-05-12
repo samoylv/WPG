@@ -17,6 +17,7 @@ Contents:
    generators
    wpg_uti_wf
    tutorials
+   real_beamlines
 
 
 ..   others

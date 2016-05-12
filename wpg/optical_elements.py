@@ -1,11 +1,17 @@
 """
-This module contains definitions custom optical elements. Described mapping (or aliases) of some of SRW optical elements (SRWLOpt* <-> wpg)
+This module contains definitions custom optical elements.
+
+Described mapping (or aliases) of some of SRW optical elements (SRWLOpt* <-> wpg)
 
 .. module:: wpg.optical_elements
    :platform: Linux, Mac OSX, Windows
 
 .. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 from wpg.srwlib import SRWLOptD as Drift
 from wpg.srwlib import SRWLOptL as Lens
@@ -16,7 +22,7 @@ import numpy as np
 
 class WPGOpticalElement(object):
 
-    """Base class for optical elements"""
+    """Base class for optical elements."""
 
     def __init__(self):
         pass
@@ -24,7 +30,7 @@ class WPGOpticalElement(object):
 
 class Empty(WPGOpticalElement):
 
-    """Optical element: Empty
+    """Optical element: Empty.
     This is empty propagator used for sampling and zooming wavefront
     """
 
@@ -267,11 +273,12 @@ def Aperture(shape, ap_or_ob, Dx, Dy=1e23, x=0, y=0):
     :param x, y:     transverse coordinates of center [m] 
     :return: opAp  - aperture propagator, ``struct SRWLOptA`` 
     """
-    from wpg.srwlib import SRWLOptA 
+    from wpg.srwlib import SRWLOptA
 
     opAp = SRWLOptA(shape, ap_or_ob, Dx, Dy, x, y)
     return opAp
-   
+
+
 def Mirror_elliptical(orient, p, q, thetaE, theta0, length):
     """
     Defining a plane elliptical focusing mirror propagator: A wrapper to a SRWL function SRWLOptMirEl() 
@@ -300,22 +307,237 @@ def Mirror_elliptical(orient, p, q, thetaE, theta0, length):
         raise TypeError('orient should be "x" or "y"')
     return opEFM
 
-def WF_dist(nx,ny,Dx,Dy):
+
+def WF_dist(nx, ny, Dx, Dy):
     """
     Create a 'phase screen' propagator for wavefront distortions:   A wrapper to SRWL struct SRWLOptT 
 
     :params nx: number of points in horizontal direction
     :params ny: number of points in vertical   direction
     :params Dx: size in m
-    :params Dy: size in m
+    :params Dy: size in 
     """
     from wpg.srwlib import SRWLOptT
-    return SRWLOptT(nx,ny,Dx,Dy)
+    return SRWLOptT(nx, ny, Dx, Dy)
+
+
+def Mirror_plane(orient, theta, length, range_xy, filename, scale=1, delim='\t'):
+    """
+    Defining a plane mirror propagator with taking into account surface height errors 
+
+    :param orient:  mirror orientation, 'x' (horizontal) or 'y' (vertical)
+    :param theta:   incidence angle [rad]
+    :param length:  mirror length, [m]
+    :range_xy: range in which the incident WF defined [m]
+    :filename: full file name with mirror profile of two columns, x and h(x) - heigh errors [m]  
+    :scale: scale factor, optical path difference OPD = 2*h*scale*sin(theta)
+    :delim: delimiter between data columns
+    :return: opIPM  - imperfect plane mirror propagator 
+    """
+    if orient == 'x':  # horizontal plane mirror
+        opIPM = WF_dist(1500, 100, range_xy, length*theta)
+    elif orient == 'y':  # vertical plane mirror
+        opIPM = WF_dist(100, 1500, length*theta, range_xy)
+    else:
+        raise TypeError('orient should be "x" or "y"')
+    calculateOPD(opIPM, filename, 2, delim, orient, theta, scale)
+    return opIPM
+
+
+def VLS_grating(_mirSub, _m=1, _grDen=100, _grDen1=0, _grDen2=0, _grDen3=0, _grDen4=0, _grAng=0):
+    """
+    Optical Element: Grating.
+
+    param _mirSub: SRWLOptMir (or derived) type object defining substrate of the grating
+    :param _m: output (diffraction) order
+    :param _grDen: groove density [lines/mm] (coefficient a0 in the polynomial groove density: a0 + a1*y + a2*y^2 + a3*y^3 + a4*y^4)
+    :param _grDen1: groove density polynomial coefficient a1 [lines/mm^2]
+    :param _grDen2: groove density polynomial coefficient a2 [lines/mm^3]
+    :param _grDen3: groove density polynomial coefficient a3 [lines/mm^4]
+    :param _grDen4: groove density polynomial coefficient a4 [lines/mm^5]
+    :param _grAng: angle between the grove direction and the saggital direction of the substrate [rad] (by default, groves are made along saggital direction (_grAng=0))
+    """
+
+    from .srwlib import SRWLOptG
+    return SRWLOptG(_mirSub, _m, _grDen, _grDen1, _grDen2, _grDen3, _grDen4, _grAng)
+
+
+def Xtal(_d_sp=5.4309, _psi0r=-0.1446E-4, _psi0i=0.3202E-6, _psi_hr=0.88004E-5, _psi_hi=0.30808E-06,
+         _psi_hbr=0.88004E-5, _psi_hbi=0.30808E-06, _tc=100e-6, _ang_as=0):
+    """
+    Optical Element: Crystal.
+
+
+    :param _d_sp: (_d_space) crystal reflecting planes d-spacing (John's dA) [A]
+    :param _psi0r: real part of 0-th Fourier component of crystal polarizability (John's psi0c.real) (units?)
+    :param _psi0i: imaginary part of 0-th Fourier component of crystal polarizability (John's psi0c.imag) (units?)
+    :param _psi_hr: (_psiHr) real part of H-th Fourier component of crystal polarizability (John's psihc.real) (units?)
+    :param _psi_hi: (_psiHi) imaginary part of H-th Fourier component of crystal polarizability (John's psihc.imag) (units?)
+    :param _psi_hbr: (_psiHBr:) real part of -H-th Fourier component of crystal polarizability (John's psimhc.real) (units?)
+    :param _psi_hbi: (_psiHBi:) imaginary part of -H-th Fourier component of crystal polarizability (John's psimhc.imag) (units?)
+    :param _tc: crystal thickness [m] (John's thicum)
+    :param _ang_as: (_Tasym) asymmetry angle [rad] (John's alphdg)
+    :param _nvx: horizontal coordinate of outward normal to crystal surface (John's angles: thdg, chidg, phidg)
+    :param _nvy: vertical coordinate of outward normal to crystal surface (John's angles: thdg, chidg, phidg)
+    :param _nvz: longitudinal coordinate of outward normal to crystal surface (John's angles: thdg, chidg, phidg)
+    :param _tvx: horizontal coordinate of central tangential vector (John's angles: thdg, chidg, phidg)
+    :param _tvy: vertical coordinate of central tangential vector (John's angles: thdg, chidg, phidg)
+
+    """
+
+    from .srwlib import SRWLOptC
+    return SRWLOptC(_d_sp, _psi0r, _psi0i, _psi_hr, _psi_h, _psi_hbr, _psi_hbi, _tc, _ang_as)
+
+
+def define_Xtal(xtal='C', h=4, k=0, l=0, tc=100.e-6, idx=0, _dE=0., doPrint=False):
+    """
+    :param xtal: crystal type (now only 'Si' and 'C' are suppoted)
+    :param h,k,l: Miller indices
+    :param tc: crystal thickness, [m]
+    :param idx: the given photon energy line number in crystal parameters tables (ascii files '<xtal>_xih_<hkl>.dat' and '<xtal>_xi0.dat')
+    :param _dE: photon energy offset, eV
+    :param doPrint: if True additional printouts for crystal orientation matrixes
+    :return
+    """
+    # double dSp; /* crystal reflecting planes d-spacing (Angstroems) */
+    # double psi0r, psi0i; /* real and imaginary parts of 0-th Fourier component of crystal polarizability (units?) */
+    # double psiHr, psiHi; /* real and imaginary parts of H-th Fourier component of crystal polarizability (units?) */
+    # double psiHbr, psiHbi; /* real and imaginary parts of -H-th Fourier component of crystal polarizability (units?) */
+    # double tc; /* crystal thickness [m] */
+    # double angAs; /* asymmetry angle [rad] */
+    # double nvx, nvy, nvz; /* horizontal, vertical and longitudinal coordinates of outward normal
+    #                         to crystal surface in the frame of incident beam */
+    # double tvx, tvy; /* horizontal and vertical coordinates of central tangential vector [m] in the frame of incident beam */
+    # C(400)
+    a_Si = 5.4309e-10
+    a_C = 3.5590e-10
+    if (xtal == 'Si'):
+        a = a_Si
+    elif (xtal == 'C'):
+        a = a_C
+    else:
+        print('Unknown Xtal type ', xtal)
+        return
+    aa = np.loadtxt(data_dir+'/%s_xih_%1d%1d%1d.dat' % (xtal, h, k, l))
+    ekev0 = aa[:, 0]
+    xhr = aa[:, 1]
+    xhi = aa[:, 2]
+    Lex = aa[:, 3]
+    d = a/np.sqrt(h**2 + k**2 + l**2)
+    dSp = d*1e10  # 0.88975#e-10
+    idx = 4  # 8.23 keV;
+    print('ekev0[%d] {.4f}'.format(idx, ekev0[idx]))
+    if (ekev0[idx] != wf.params.photonEnergy*1e-3):
+        print('Warning: Central photon energy of the beam {:.4f} keV differs from  ekev0[{:d}] {:.4f}'.format(
+            wf.params.photonEnergy*1e-3, idx, ekev0[idx]))
+    aa = np.loadtxt(data_dir+'/%s_xi0.dat' % (xtal))
+    ekev0 = aa[:, 0]
+    x0r = aa[:, 1]
+    x0i = aa[:, 2]
+    if (ekev0[idx] != wf.params.photonEnergy*1e-3):
+        print('Warning:Central photon energy of the beam {:.4f}keV differs from xi0.dat ekev0[{:d}] {:.4f}'.format(
+            wf.params.photonEnergy*1e-3, idx, ekev0[idx]))
+    psi0r = x0r[idx]
+    psi0i = x0i[idx]
+    psiHr = -xhr[idx]
+    psiHi = xhi[idx]
+    thetaB = np.arcsin(12.39e-10/ekev0[idx]/(2*d))
+    angAs = 0.
+    b = -1
+    DeltaTheta = - psi0r * (1.-1./b)/(2*np.sin(2*thetaB))
+    DeltaE = -DeltaTheta/np.tan(thetaB)*ekev0[idx]
+    print('dTheta_0 {:.1f} urad, dE_0 {:.2f} eV'.format(
+        DeltaTheta*1e6, DeltaE))
+    print('{}({:1d}{:1d}{:1d}) Lex {:.2f} um, thetaB {:.2f} deg'.format(
+        xtal, h, k, l, Lex[idx], thetaB*180/np.pi))
+    Xtal = SRWLOptCryst(_d_sp=dSp, _psi0r=psi0r, _psi0i=psi0i,
+                        _psi_hr=psiHr, _psi_hi=psiHi, _psi_hbr=psiHr, _psi_hbi=psiHi,
+                        _tc=tc, _ang_as=angAs)
+    #Xtal.set_orient(_tc=tc,_ang_as=angAs, _nvx=nvx, _nvy=nvy, _nvz=nvz,_tvx=tvx, _tvy=tvy)
+    # Find appropriate orientation of the Crystal and the corresponding output beam frame:
+    #    """Finds optimal crystal orientation in the input beam frame (i.e. surface normal and tangential vectors) and the orientation of the output beam frame (i.e. coordinates of the longitudinal and horizontal vectors in the input beam frame)
+    #        :param _en: photon energy [eV]
+    #        :param _ang_dif_pl: diffraction plane angle (0 corresponds to the vertical deflection; pi/2 to the horizontal deflection; any value in between is allowed)
+    orientDataXtal = Xtal.find_orient(
+        wf.params.photonEnergy+_dE, _ang_dif_pl=pi/2)
+    orientXtal = orientDataXtal[0]  # Crystal orientation found
+    tXtal = orientXtal[0]
+    nXtal = orientXtal[2]  # Tangential and Normal vectors to crystal surface
+    if doPrint:
+        print('sin(thetaB) {:.4f} \ncos(thetaB) {:.4f}'.format(
+            np.sin(thetaB), np.cos(thetaB)))
+        print('sin(2thetaB) {:.4f} \ncos(2thetaB) {:.4f}'.format(
+            np.sin(2*thetaB), np.cos(2*thetaB)))
+        print('Xtal orientation:')
+        print('tangential vector:\t({:.4f} {:.4f} {:.4f})'.format(
+            tXtal[0], tXtal[1], tXtal[2]))
+        print('normal vector:\t\t({:.4f} {:.4f} {:.4f})'.format(
+            nXtal[0], nXtal[1], nXtal[2]))
+        print(
+            's-vector:\t\t({:.4f} {:.4f} {:.4f})'.format(orientXtal[0][0], orientXtal[0][1], orientXtal[0][2]))
+    # Set orientation of the Crystal:
+    Xtal.set_orient(nXtal[0], nXtal[1], nXtal[2], tXtal[0], tXtal[1])
+    # Orientation of the Outgoing beam frame being found
+    orientOutFrXtal = orientDataXtal[1]
+    # Horizontal, Vertical and Longitudinal base vectors of the Output beam
+    # frame
+    rxXtal = orientOutFrXtal[0]
+    ryXtal = orientOutFrXtal[1]
+    rzXtal = orientOutFrXtal[2]
+    if doPrint:
+        print('Orientation of the Outgoing beam frame:')
+        print('Horizontal base vector:\t\t({:.4f} {:.4f} {:.4f})'.format(
+            orientOutFrXtal[0][0], orientOutFrXtal[0][1], orientOutFrXtal[0][2]))
+        print('Vertical base vector:\t\t({:.4f}  {:.4f} {:.4f})'.format(
+            orientOutFrXtal[1][0], orientOutFrXtal[1][1], orientOutFrXtal[1][2]))
+        print('Longitudinal base vector:\t({:.4f} {:.4f} {:.4f})'.format(
+            orientOutFrXtal[2][0], orientOutFrXtal[2][1], orientOutFrXtal[2][2]))
+
+    return Xtal, rxXtal, ryXtal, rzXtal
+
+
+def append_Xtal(bl, xtal='C', h=1, k=1, l=1, tc=100e-6, _dE=0., doPrint=False):
+    """
+    Append to a beamline Xtal propagator
+
+    :param bl:    Beamline() structure 
+    """
+    Xtal, rxXtal, ryXtal, rzXtal = defineXtal(
+        xtal, h=_h, k=_k, l=_l, tc=tc, _dE=_dE, doPrint=False)
+
+
+def CRL(_foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n,
+        _wall_thick, _xc, _yc, _void_cen_rad=None,
+        _e_start=0, _e_fin=0, _nx=1001, _ny=1001):
+    """
+    Setup Transmission type Optical Element which simulates Compound Refractive Lens (CRL).
+
+    :param _foc_plane: plane of focusing: 1- horizontal, 2- vertical, 3- both
+    :param _delta: refractive index decrement (can be one number of array vs photon energy)
+    :param _atten_len: attenuation length [m] (can be one number of array vs photon energy)
+    :param _shape: 1- parabolic, 2- circular (spherical)
+    :param _apert_h: horizontal aperture size [m]
+    :param _apert_v: vertical aperture size [m]
+    :param _r_min: radius (on tip of parabola for parabolic shape) [m]
+    :param _n: number of lenses (/"holes")
+    :param _wall_thick: min. wall thickness between "holes" [m]
+    :param _xc: horizontal coordinate of center [m]
+    :param _yc: vertical coordinate of center [m]
+    :param _void_cen_rad: flat array/list of void center coordinates and radii: [x1, y1, r1, x2, y2, r2,...] 
+    :param _e_start: initial photon energy
+    :param _e_fin: final photon energy
+    :return: transmission (SRWLOptT) type optical element which simulates CRL
+    """
+
+    from .srwlib import srwl_opt_setup_CRL
+    return srwl_opt_setup_CRL(_foc_plane, _delta, _atten_len, _shape,
+                              _apert_h, _apert_v, _r_min, _n, _wall_thick,
+                              _xc, _yc, _void_cen_rad, _e_start, _e_fin, _nx, _ny)
 
 
 def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., stretching=1.):
     """
-    Calculates optical path difference (OPD) from mirror profile and 
+    Calculates optical path difference (OPD) from mirror profile and
     fills the struct wf_dist (``struct SRWLOptT``) for wavefront distortions
 
 
@@ -325,16 +547,16 @@ def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., stret
     :params delim: delimiter between numbers in an row, can be space (' '), tab '\t', etc
     :params orient: mirror orientation, 'x' (horizontal) or 'y' (vertical)
     :params theta: incidence angle
-    :params scale: scaling factor for the mirror profile 
+    :params scale: scaling factor for the mirror profile
     :param stretching: scaling factor for the mirror profile x-axis (@TODO a hack, should be removed ASAP)
-    :return filled    
+    :return filled
     """
     from numpy import loadtxt
-    #import SRW helpers functions
+    # import SRW helpers functions
     from wpg.useful_code.srwutils import AuxTransmAddSurfHeightProfileScaled
 
     heightProfData = loadtxt(mdatafile).T
-    heightProfData[0,:] = heightProfData[0,:] * stretching
-    AuxTransmAddSurfHeightProfileScaled(wf_dist, heightProfData, Orient, theta, scale)
+    heightProfData[0, :] = heightProfData[0, :] * stretching
+    AuxTransmAddSurfHeightProfileScaled(
+        wf_dist, heightProfData, Orient, theta, scale)
     return wf_dist
-    

@@ -1,15 +1,22 @@
 # -*- coding: utf-8 -*-
-__author__ = 'A. Buzmakov'
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import h5py
 import sys
 import numpy
 from collections import defaultdict
 import array
+import collections
+
+__author__ = 'A. Buzmakov'
 
 
 def store_dict_hdf5(hdf5_file_name, input_dict):
-    """ Store dictionary in hdf5 file
+    """ Store dictionary in hdf5 file.
     :param hdf5_file_name:
     :param input_dict:
     """
@@ -21,7 +28,7 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
         :param pearent_goup:
         """
 
-        for (k, v) in group.items():
+        for (k, v) in list(group.items()):
             if isinstance(v, dict):
                 tmp_group = pearent_goup.create_group(k)
                 store_group(v, tmp_group)
@@ -35,7 +42,7 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
         :param value:
         :param group:
         """
-        if not value is None:
+        if value is not None:
             if name in group:
                 del group[name]
             try:
@@ -47,7 +54,7 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
             except TypeError:
                 group.create_dataset(name, data=value)
             except Exception:
-                print "Error at name='{}' value='{}' group='{}'".format(name, value, group)
+                print("Error at name='{}' value='{}' group='{}'".format(name, value, group))
                 raise
 
     with h5py.File(hdf5_file_name, 'w') as res_file:
@@ -75,12 +82,17 @@ def update_dict_slash_string(input_dict, keys_string, value):
     Update dictionary from slash separated keys_string by value
     :param input_dict: dictionary to be updated
     :param keys_string: slash separated keys_string
-    :param value: value 
+    :param value: value
     """
+    try:
+        keys_string = keys_string.decode('utf-8')
+    except AttributeError:
+        pass
+
     keys = keys_string.split('/')
     tdict = input_dict
     for k in keys[:-1]:
-        if not k in tdict:
+        if k not in tdict:
             tdict[k] = {}
         tdict = tdict[k]
     tdict[keys[-1]] = value
@@ -154,7 +166,7 @@ def set_value_attr(obj, keys_chain, value):
 
     node = obj
     for key in keys_chain[:-1]:
-        if not key in node.__dict__:
+        if key not in node.__dict__:
             node.__dict__[key] = glossary_folder()
         node = node.__dict__[key]
     node.__dict__[keys_chain[-1]] = value
@@ -171,7 +183,7 @@ def load_hdf5_tree(hdf5_file_name):
                 tmp['value'] = 'array shape = {}'.format(obj.shape)
             else:
                 tmp['value'] = obj.value
-            tmp['attrs'] = dict((k.encode(), v) for k, v in obj.attrs.items())
+            tmp['attrs'] = dict((k.encode(), v) for k, v in list(obj.attrs.items()))
             out_dict.update({name.encode(): tmp})
 
     with h5py.File(hdf5_file_name, 'r') as h5_file:
@@ -212,7 +224,7 @@ def print_hdf5(hdf5_file_name):
 
 def srw_obj2str(obj, start_str=''):
     fields = [field for field in dir(obj) if not field.startswith(
-        '__') if not callable(getattr(obj, field))]
+        '__') if not isinstance(getattr(obj, field), collections.Callable)]
     res = ''
     for f in fields:
         val = getattr(obj, f)

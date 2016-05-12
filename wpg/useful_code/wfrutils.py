@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 __author__ = 'A. Buzmakov, L. Samoylova'
 
 import time
@@ -22,10 +27,10 @@ J2EV = 6.24150934e18
 
 def print_beamline(bl):
     if isinstance(bl, Beamline):
-        print bl
+        print(bl)
     elif isinstance(bl, wpg.srwlib.SRWLOptC):
         mbl = Beamline(bl)
-        print mbl
+        print(mbl)
     else:
         raise ValueError(
             'Input type must be wpg.srwlib.SRWLOptC or wpg.Beamline, given: {}'.format(
@@ -37,7 +42,7 @@ def create_numpy_array_from_rows(rows, slices=None):
     # slice size (Re, Im)
     N = len(rows[0]) / 2
     if slices is None:
-        slices = range(len(rows) / N)
+        slices = list(range(len(rows) / N))
     slice_count = len(slices)
     # 3d array
     y = numpy.zeros(shape=(N, 2 * N, slice_count), dtype='float32')
@@ -75,8 +80,8 @@ def calculate_peak_pos(mwf):
     x_axis = numpy.linspace(xmin, xmax, nx)
     y_axis = numpy.linspace(ymin, ymax, ny)
     nc = numpy.where(irr == irr_max)
-    irr_x = irr[ny / 2, :]
-    irr_y = irr[:, nx / 2]
+    irr_x = irr[ny // 2, :]
+    irr_y = irr[:, nx // 2]
     x0 = numpy.max(x_axis[numpy.where(irr_x == numpy.max(irr_x))])
     y0 = numpy.max(y_axis[numpy.where(irr_y == numpy.max(irr_y))])
     return [x0, y0]
@@ -107,15 +112,15 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
         :return: 2-column array containing horizontal or vertical cut data in dependence of 'orient' parameter
         """
     if isHlog:
-        print 'FWHMx[um]:', calculate_fwhm_x(mwf) * 1e6
+        print('FWHMx[um]:', calculate_fwhm_x(mwf) * 1e6)
     else:
-        print 'FWHMx [mm]:', calculate_fwhm_x(mwf) * 1e3
+        print('FWHMx [mm]:', calculate_fwhm_x(mwf) * 1e3)
     if isVlog:
-        print 'FWHMy [um]:', calculate_fwhm_y(mwf) * 1e6
+        print('FWHMy [um]:', calculate_fwhm_y(mwf) * 1e6)
     else:
-        print 'FWHMy [mm]:', calculate_fwhm_y(mwf) * 1e3
+        print('FWHMy [mm]:', calculate_fwhm_y(mwf) * 1e3)
     [xc, yc] = calculate_peak_pos(mwf)
-    print 'Coordinates of center, [mm]:', xc * 1e3, yc * 1e3
+    print('Coordinates of center, [mm]:', xc * 1e3, yc * 1e3)
     ii = mwf.get_intensity(slice_number=0, polarization='horizontal')
     # [LS14-06-02] 
     # for 2D Gaussian the intrincic SRW GsnBeam wave field units Nph/mm^2/0.1%BW 
@@ -126,14 +131,14 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
     [nx, ny, xmin, xmax, ymin, ymax] = get_mesh(mwf)
     ph = mwf.get_phase(slice_number=0, polarization='horizontal')
     dx = (xmax-xmin)/(nx-1); dy = (ymax-ymin)/(ny-1)
-    print 'stepX, stepY [um]:', dx * 1e6, dy * 1e6, '\n'
+    print('stepX, stepY [um]:', dx * 1e6, dy * 1e6, '\n')
     xa = numpy.linspace(xmin, xmax, nx); 
     ya = numpy.linspace(ymin, ymax, ny); 
 
-    if mwf.params.wEFieldUnit <> 'arbitrary':
-        print 'Total power (integrated over full range): %g [GW]' %(ii.sum(axis=0).sum(axis=0)*dx*dy*1e6*1e-9) 
-        print 'Peak power calculated using FWHM:         %g [GW]' %(imax*1e-9*1e6*2*numpy.pi*(calculate_fwhm_x(mwf)/2.35)*(calculate_fwhm_y(mwf)/2.35))
-        print 'Max irradiance: %g [GW/mm^2]'    %(imax*1e-9) 
+    if mwf.params.wEFieldUnit != 'arbitrary':
+        print('Total power (integrated over full range): %g [GW]' %(ii.sum(axis=0).sum(axis=0)*dx*dy*1e6*1e-9)) 
+        print('Peak power calculated using FWHM:         %g [GW]' %(imax*1e-9*1e6*2*numpy.pi*(calculate_fwhm_x(mwf)/2.35)*(calculate_fwhm_y(mwf)/2.35)))
+        print('Max irradiance: %g [GW/mm^2]'    %(imax*1e-9)) 
         label4irradiance = 'Irradiance (W/$mm^2$)'
     else:
         ii = ii / imax
@@ -235,6 +240,19 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
     return dd
 
 
+def stat1(x, y):
+    """
+    Calculate statistic moments of y(x) data.
+
+    :param x: variable
+    :param y: distribution y(x)
+    :return: 'expected value' and 'variance'
+    """
+    mu = numpy.average(x, weights=y)  # expected value
+    var = numpy.sqrt(numpy.average((x - mu)**2, weights=y))  # variance
+    return mu, var
+
+
 def calculate_fwhm(dd):
     irr_x = dd[:, 1]
     irr_max = numpy.max(irr_x)
@@ -298,18 +316,18 @@ def propagate_run(ifname, ofname, optBL, bSaved=False):
         """
     print_beamline(optBL)
     startTime = time.time()
-    print '*****reading wavefront from h5 file...'
+    print('*****reading wavefront from h5 file...')
     w2 = Wavefront()
     w2.load_hdf5(ifname + '.h5')
     wfr = w2._srwl_wf
-    print '*****propagating wavefront (with resizing)...'
+    print('*****propagating wavefront (with resizing)...')
     srwl.PropagElecField(wfr, optBL)
     mwf = Wavefront(wfr)
-    print '[nx, ny, xmin, xmax, ymin, ymax]', get_mesh(mwf)
+    print('[nx, ny, xmin, xmax, ymin, ymax]', get_mesh(mwf))
     if bSaved:
-        print 'save hdf5:', ofname + '.h5'
+        print('save hdf5:', ofname + '.h5')
         mwf.store_hdf5(ofname + '.h5')
-    print 'done'
-    print 'propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min'
+    print('done')
+    print('propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min')
     return wfr
 

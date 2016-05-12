@@ -4,6 +4,7 @@ WPG tutorials
 .. toctree::
    :maxdepth: 2
 
+   tutorials/intro/Tutorial_intro.rst
    tutorials/1/Tutorial_case_1.rst
    tutorials/2/Tutorial_case_2.rst
    tutorials/2_new/Tutorial_case_2_new.rst

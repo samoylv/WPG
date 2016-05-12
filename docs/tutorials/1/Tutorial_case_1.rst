@@ -19,16 +19,15 @@ Import modules
 
 .. code:: python
 
-    %pylab inline
-
-
-.. parsed-literal::
-
-    Populating the interactive namespace from numpy and matplotlib
-
+    %matplotlib inline
 
 .. code:: python
 
+    from __future__ import absolute_import
+    from __future__ import division
+    from __future__ import print_function
+    from __future__ import unicode_literals
+    
     #Importing necessary modules:
     import os
     import sys
@@ -38,10 +37,13 @@ Import modules
     #sys.path.insert('../..')
     
     import time
-    import numpy
-    import pylab
+    import numpy as np
+    import pylab as plt
     
-    import cPickle as pickle
+    if sys.version_info[0] ==3:
+        import pickle
+    else:
+        import cPickle as pickle
     import errno
     
     #import SRW core functions
@@ -69,7 +71,7 @@ Import modules
     #Gaussian beam generator
     from wpg.generators import build_gauss_wavefront_xy
     
-    pylab.ion()
+    plt.ion()
 
 Use or not new syntax
 ~~~~~~~~~~~~~~~~~~~~~
@@ -91,9 +93,9 @@ Define auxiliary functions
         :param theta_fwhm: theta_fwhm [units?] 
         """
         wl = 12.39e-10/ekev
-        k = 2 * numpy.sqrt(2*numpy.log(2))
+        k = 2 * np.sqrt(2*np.log(2))
         theta_sigma = theta_fwhm /k
-        sigma0 = wl /(2*numpy.pi*theta_sigma)
+        sigma0 = wl /(2*np.pi*theta_sigma)
         return sigma0*k
     
     def calculate_theta_fwhm_cdr(ekev,qnC):
@@ -104,7 +106,7 @@ Define auxiliary functions
         :param qnC: e-bunch charge, [nC]
         :return: theta_fwhm [units?]
         """
-        theta_fwhm = (17.2 - 6.4 * numpy.sqrt(qnC))*1e-6/ekev**0.85
+        theta_fwhm = (17.2 - 6.4 * np.sqrt(qnC))*1e-6/ekev**0.85
         return theta_fwhm
     
     def defineOPD(opTrErMirr, mdatafile, ncol, delim, Orient, theta, scale):
@@ -118,9 +120,9 @@ Define auxiliary functions
         :params theta: incidence angle
         :params scale: scaling factor for the mirror profile    
         """
-        heightProfData = numpy.loadtxt(mdatafile).T
+        heightProfData = np.loadtxt(mdatafile).T
         AuxTransmAddSurfHeightProfileScaled(opTrErMirr, heightProfData, Orient, theta, scale)
-        pylab.figure()
+        plt.figure()
         plot_1d(heightProfData,'profile from ' + mdatafile,'x (m)', 'h (m)')
 
 .. code:: python
@@ -134,7 +136,7 @@ Define auxiliary functions
         :return: sampling.
         """
         sampling = zoom/mf; 
-        print 'zoom:{:.1f}; mod_factor:{:.1f}; sampling:{:.1f}'.format(zoom, mf, sampling)
+        print('zoom:{:.1f}; mod_factor:{:.1f}; sampling:{:.1f}'.format(zoom, mf, sampling))
         return sampling
 
 .. code:: python
@@ -146,7 +148,7 @@ Define auxiliary functions
         :param: obj : - python objest to be saved
         :param: file_name : - output file, wil be overwrite if exists
         """
-        with open(file_name,'w') as f:
+        with open(file_name,'wb') as f:
             pickle.dump(obj, f)
     
     def _load_object(file_name):
@@ -157,7 +159,7 @@ Define auxiliary functions
         :return: obj : - loaded pthon object
         """
         res = None
-        with open(file_name,'r') as f:
+        with open(file_name,'rb') as f:
             res = pickle.load(f)
             
         return res
@@ -197,11 +199,11 @@ Define auxiliary functions
             full_path = os.path.join(directory, subdir_name, file_name+'.pkl')
         
         if  os.path.isfile(full_path):
-            print 'Found file {}. CLR will be loaded from file'.format(full_path)
+            print('Found file {}. CLR will be loaded from file'.format(full_path))
             res = _load_object(full_path)
             return res
         else:
-            print 'CLR file NOT found. CLR will be recalculated and saved in file {}'.format(full_path)
+            print('CLR file NOT found. CLR will be recalculated and saved in file {}'.format(full_path))
             res = srwlib.srwl_opt_setup_CRL(*args)
             mkdir_p(os.path.dirname(full_path))
             _save_object(res, full_path)
@@ -221,11 +223,11 @@ Define auxiliary functions
         full_path = os.path.join(directory, file_name+'.pkl')
         
         if  os.path.isfile(full_path):
-            print 'Found file {}. CLR will be loaded from file'.format(full_path)
+            print('Found file {}. CLR will be loaded from file'.format(full_path))
             res = _load_object(full_path)
             return res
         else:
-            print 'CLR file NOT found. CLR will be recalculated and saved in file {}'.format(full_path)
+            print('CLR file NOT found. CLR will be recalculated and saved in file {}'.format(full_path))
             res = srwl_opt_setup_CRL(*args)
             mkdir_p(os.path.dirname(full_path))
             _save_object(res, full_path)
@@ -267,21 +269,23 @@ Defining initial wavefront and writing electric field data to h5-file
     
     z1 = d2crl1
     theta_fwhm = calculate_theta_fwhm_cdr(ekev,qnC)
-    k = 2*sqrt(2*log(2))
-    sigX = 12.4e-10*k/(ekev*4*pi*theta_fwhm) 
-    print 'sigX, waist_fwhm [um], far field theta_fwhms [urad]:', sigX*1e6, sigX*k*1e6, theta_fwhm*1e6
+    k = 2*np.sqrt(2*np.log(2))
+    sigX = 12.4e-10*k/(ekev*4*np.pi*theta_fwhm) 
+    print('sigX, waist_fwhm [um], far field theta_fwhms [urad]: {}, {},{}'.format(
+                                sigX*1e6, sigX*k*1e6, theta_fwhm*1e6)
+          )
     #define limits
     range_xy = theta_fwhm/k*z1*7. # sigma*7 beam size
-    np=180
+    npoints=180
     
-    wfr0 = build_gauss_wavefront_xy(np, np, ekev, -range_xy/2, range_xy/2,
+    wfr0 = build_gauss_wavefront_xy(npoints, npoints, ekev, -range_xy/2, range_xy/2,
                                     -range_xy/2, range_xy/2 ,sigX, sigX, z1,
-                                    pulseEn=pulseEnergy, pulseTau=coh_time/sqrt(2),
-                                    repRate=1/(sqrt(2)*pulse_duration))    
+                                    pulseEn=pulseEnergy, pulseTau=coh_time/np.sqrt(2),
+                                    repRate=1/(np.sqrt(2)*pulse_duration))    
         
     mwf = Wavefront(wfr0)
-    ip = floor(ekev)
-    frac = numpy.floor((ekev - ip)*1e3)
+    ip = np.floor(ekev)
+    frac = np.floor((ekev - ip)*1e3)
     ename = str(int(ip))+'_'+str(int(frac))+'kev'
     fname0 = 'g' + ename
     ifname = os.path.join(strDataFolderName,fname0+'.h5')
@@ -289,26 +293,29 @@ Defining initial wavefront and writing electric field data to h5-file
     mwf.store_hdf5(ifname)
     print('done')
     pow_x=plot_wfront(mwf, 'at '+str(z1)+' m',False, False, 1e-5,1e-5,'x', True, saveDir='./'+strDataFolderName)
-    pylab.set_cmap('bone') #set color map, 'bone', 'hot', 'jet', etc
+    plt.set_cmap('bone') #set color map, 'bone', 'hot', 'jet', etc
     fwhm_x = calculate_fwhm_x(mwf);fwhm_y = calculate_fwhm_y(mwf)
-    print 'FWHMx [mm], theta_fwhm=fwhm_x/z1 [urad], distance to waist:',fwhm_x*1e3,fwhm_x/z1*1e6, 
+    print('FWHMx [mm], theta_fwhm=fwhm_x/z1 [urad], distance to waist: {}, {}'.format(
+            fwhm_x*1e3,fwhm_x/z1*1e6)
+          )
 
 
 .. parsed-literal::
 
     *****defining initial wavefront and writing electric field data to h5-file...
-    sigX, waist_fwhm [um], far field theta_fwhms [urad]: 11.4997882319 27.0799318422 2.99702906039
+    sigX, waist_fwhm [um], far field theta_fwhms [urad]: 11.499788231945866, 27.079931842197144,2.9970290603902483
     save hdf5: g6_742kev.h5
     done
     FWHMx [mm]: 0.69007789015
     FWHMy [mm]: 0.69007789015
     Coordinates of center, [mm]: 0.00584811771314 0.00584811771314
-    stepX, stepY [um]: 11.6962354263 11.6962354263 
+    stepX, stepY [um]: 11.696235426275774 11.696235426275774 
     
     Total power (integrated over full range): 54.4369 [GW]
     Peak power calculated using FWHM:         52.4365 [GW]
     Max irradiance: 96.7817 [GW/mm^2]
-    FWHMx [mm], theta_fwhm=fwhm_x/z1 [urad], distance to waist: 0.69007789015 2.93650166021
+    R-space
+    FWHMx [mm], theta_fwhm=fwhm_x/z1 [urad], distance to waist: 0.6900778901502707, 2.9365016602139176
 
 
 
@@ -317,16 +324,16 @@ Defining initial wavefront and writing electric field data to h5-file
 
 .. code:: python
 
-    print pow_x[:,1].max()
-    print 'I_o %g [GW/mm^2]'    %(pow_x[:,1].max()*1e-9) 
-    print 'peak power %g [GW]'  %(pow_x[:,1].max()*1e-9*1e6*2*pi*(fwhm_x/2.35)**2)
+    print(pow_x[:,1].max())
+    print ('I_o {} [GW/mm^2]'.format((pow_x[:,1].max()*1e-9))) 
+    print ('peak power {} [GW]'.format((pow_x[:,1].max()*1e-9*1e6*2*np.pi*(fwhm_x/2.35)**2)))
 
 
 .. parsed-literal::
 
     96781656064.0
-    I_o 96.7817 [GW/mm^2]
-    peak power 52.4365 [GW]
+    I_o 96.781656064 [GW/mm^2]
+    peak power 52.436466558883836 [GW]
 
 
 Defining optical beamline(s)
@@ -412,8 +419,8 @@ Defining optical beamline(s)
         opTrErM1 = SRWLOptT(1500, 100, horApM1, range_xy)
         #defineOPD(opTrErM1, os.path.join(strInputDataFolder,'mirror1.dat'), 2, '\t', 'x',  thetaOM, scale)
         defineOPD(opTrErM1, os.path.join(strInputDataFolder,'mirror2.dat'), 2, ' ', 'x',  thetaOM, scale)
-        opdTmp=numpy.array(opTrErM1.arTr)[1::2].reshape(opTrErM1.mesh.ny,opTrErM1.mesh.nx)
-        pylab.figure()
+        opdTmp=np.array(opTrErM1.arTr)[1::2].reshape(opTrErM1.mesh.ny,opTrErM1.mesh.nx)
+        plt.figure()
         plot_2d(opdTmp, opTrErM1.mesh.xStart*1e3,opTrErM1.mesh.xFin*1e3,
                 opTrErM1.mesh.yStart*1e3,opTrErM1.mesh.yFin*1e3,'OPD [m]', 'x (mm)', 'y (mm)')  
     
@@ -448,7 +455,6 @@ Defining optical beamline(s)
         optBL1.append(Drift(z3),
                       Use_PP(semi_analytical_treatment=1, zoom=2.4, sampling=1.8))
         
-    
         show_transmission(opCRL2)
         optBL2 = copy.deepcopy(optBL1)
         optBL2.append(opCRL2,     Use_PP())
@@ -483,7 +489,7 @@ Propagating through BL0 beamline. Collimating CRL and ideal mirror
 
 .. code:: python
 
-    print '*****Collimating CRL and ideal mirror'
+    print('*****Collimating CRL and ideal mirror')
     bPlotted = False
     isHlog = False
     isVlog = False
@@ -491,29 +497,29 @@ Propagating through BL0 beamline. Collimating CRL and ideal mirror
     optBL = optBL0
     strBL = 'bl0'
     pos_title = 'at exp hall wall'
-    print '*****setting-up optical elements, beamline:', strBL
+    print('*****setting-up optical elements, beamline:'+ strBL)
     
     if not NEW_SYNTAX: 
         bl = Beamline(optBL)
     else:
         bl = optBL
-    print bl
+    print(bl)
     
     if bSaved:
         out_file_name = os.path.join(strDataFolderName, fname0+'_'+strBL+'.h5')
-        print 'save hdf5:', out_file_name
+        print('save hdf5:'+ out_file_name)
     else:
         out_file_name = None
         
     startTime = time.time()
     mwf = propagate_wavefront(ifname, bl,out_file_name)
-    print 'propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min'
+    print('propagation lasted: {} min'.format(round((time.time() - startTime) / 6.) / 10.))
 
 
 .. parsed-literal::
 
     *****Collimating CRL and ideal mirror
-    *****setting-up optical elements, beamline: bl0
+    *****setting-up optical elements, beamline:bl0
     Optical Element: Transmission (generic)
     Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
     	Fx = 235.0
@@ -533,10 +539,10 @@ Propagating through BL0 beamline. Collimating CRL and ideal mirror
     		nvz = 1
     		nx = 1001
     		ny = 1001
-    		xFin = 0.001969
-    		xStart = -0.001969
-    		yFin = 0.001969
-    		yStart = -0.001969
+    		xFin = 0.0019690000000000003
+    		xStart = -0.0019690000000000003
+    		yFin = 0.0019690000000000003
+    		yStart = -0.0019690000000000003
     		zStart = 0
     	
     	
@@ -560,7 +566,7 @@ Propagating through BL0 beamline. Collimating CRL and ideal mirror
     	treat = 0
     	
     
-    save hdf5: Tutorial_case_1/g6_742kev_bl0.h5
+    save hdf5:Tutorial_case_1/g6_742kev_bl0.h5
     Optical Element: Transmission (generic)
     Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
     	Fx = 235.0
@@ -580,10 +586,10 @@ Propagating through BL0 beamline. Collimating CRL and ideal mirror
     		nvz = 1
     		nx = 1001
     		ny = 1001
-    		xFin = 0.001969
-    		xStart = -0.001969
-    		yFin = 0.001969
-    		yStart = -0.001969
+    		xFin = 0.0019690000000000003
+    		xStart = -0.0019690000000000003
+    		yFin = 0.0019690000000000003
+    		yStart = -0.0019690000000000003
     		zStart = 0
     	
     	
@@ -608,22 +614,27 @@ Propagating through BL0 beamline. Collimating CRL and ideal mirror
     	
     
     *****reading wavefront from h5 file...
-    nx   180  range_x [-1.0e-03, 1.0e-03]
-    ny   180  range_y [-1.0e-03, 1.0e-03]
+    R-space
+    nx   180  range_x [-1.0e+00, 1.0e+00] mm
+    ny   180  range_y [-1.0e+00, 1.0e+00] mm
     *****propagating wavefront (with resizing)...
     save hdf5: Tutorial_case_1/g6_742kev_bl0.h5
     done
-    propagation lasted: 0.1 min
+    propagation lasted: 0.0 min
 
 
 .. code:: python
 
-    print '*****Collimating CRL and ideal mirror'
+    # bl.propagation_options[0]['optical_elements']
+
+.. code:: python
+
+    print('*****Collimating CRL and ideal mirror')
     plot_wfront(mwf, 'at '+str(z1+z2+z3)+' m',False, False, 1e-4,1e-7,'x', True, saveDir='./'+strDataFolderName)
-    pylab.set_cmap('bone') #set color map, 'bone', 'hot', 'jet', etc
-    pylab.axis('tight')    
-    print 'FWHMx [mm], theta_fwhm [urad]:',calculate_fwhm_x(mwf)*1e3,calculate_fwhm_x(mwf)/(z1+z2)*1e6
-    print 'FWHMy [mm], theta_fwhm [urad]:',calculate_fwhm_y(mwf)*1e3,calculate_fwhm_y(mwf)/(z1+z2)*1e6
+    plt.set_cmap('bone') #set color map, 'bone', 'hot', 'jet', etc
+    plt.axis('tight')    
+    print('FWHMx [mm], theta_fwhm [urad]: {}, {}'.format(calculate_fwhm_x(mwf)*1e3, calculate_fwhm_x(mwf)/(z1+z2)*1e6))
+    print('FWHMy [mm], theta_fwhm [urad]: {}, {}'.format(calculate_fwhm_y(mwf)*1e3, calculate_fwhm_y(mwf)/(z1+z2)*1e6))
 
 
 .. parsed-literal::
@@ -631,18 +642,19 @@ Propagating through BL0 beamline. Collimating CRL and ideal mirror
     *****Collimating CRL and ideal mirror
     FWHMx [mm]: 0.684951762278
     FWHMy [mm]: 0.697875380434
-    Coordinates of center, [mm]: 0.0129236181562 -0.0387708544686
-    stepX, stepY [um]: 6.4618090781 6.4618090781 
+    Coordinates of center, [mm]: 0.0129236181562 0.0387708544686
+    stepX, stepY [um]: 6.461809078096801 6.461809078096801 
     
     Total power (integrated over full range): 53.3003 [GW]
     Peak power calculated using FWHM:         52.1573 [GW]
     Max irradiance: 95.9032 [GW/mm^2]
-    FWHMx [mm], theta_fwhm [urad]: 0.684951762278 2.36190262855
-    FWHMy [mm], theta_fwhm [urad]: 0.697875380434 2.40646682908
+    R-space
+    FWHMx [mm], theta_fwhm [urad]: 0.6849517622782609, 2.3619026285457276
+    FWHMy [mm], theta_fwhm [urad]: 0.6978753804344545, 2.406466829084326
 
 
 
-.. image:: output_19_1.png
+.. image:: output_20_1.png
 
 
 Propagating through BL1 beamline. Collimating CRL and imperfect mirror
@@ -658,29 +670,29 @@ Propagating through BL1 beamline. Collimating CRL and imperfect mirror
     optBL = optBL1
     strBL = 'bl1'
     pos_title = 'at exp hall wall'
-    print '*****setting-up optical elements, beamline:', strBL
+    print('*****setting-up optical elements, beamline:' + strBL)
     
     if not NEW_SYNTAX: 
         bl = Beamline(optBL)
     else:
         bl = optBL
-    print bl
+    print(bl)
     
     if bSaved:
         out_file_name = os.path.join(strDataFolderName, fname0+'_'+strBL+'.h5')
-        print 'save hdf5:', out_file_name
+        print('save hdf5: '+ out_file_name)
     else:
         out_file_name = None
         
     startTime = time.time()
     mwf = propagate_wavefront(ifname, bl,out_file_name)
-    print 'propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min'
+    print('propagation lasted: {} min'.format(round((time.time() - startTime) / 6.) / 10.))
 
 
 .. parsed-literal::
 
     *****Collimating CRL and imperfect mirror
-    *****setting-up optical elements, beamline: bl1
+    *****setting-up optical elements, beamline:bl1
     Optical Element: Transmission (generic)
     Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
     	Fx = 235.0
@@ -700,10 +712,10 @@ Propagating through BL1 beamline. Collimating CRL and imperfect mirror
     		nvz = 1
     		nx = 1001
     		ny = 1001
-    		xFin = 0.001969
-    		xStart = -0.001969
-    		yFin = 0.001969
-    		yStart = -0.001969
+    		xFin = 0.0019690000000000003
+    		xStart = -0.0019690000000000003
+    		yFin = 0.0019690000000000003
+    		yStart = -0.0019690000000000003
     		zStart = 0
     	
     	
@@ -781,10 +793,10 @@ Propagating through BL1 beamline. Collimating CRL and imperfect mirror
     		nvz = 1
     		nx = 1001
     		ny = 1001
-    		xFin = 0.001969
-    		xStart = -0.001969
-    		yFin = 0.001969
-    		yStart = -0.001969
+    		xFin = 0.0019690000000000003
+    		xStart = -0.0019690000000000003
+    		yFin = 0.0019690000000000003
+    		yStart = -0.0019690000000000003
     		zStart = 0
     	
     	
@@ -844,21 +856,24 @@ Propagating through BL1 beamline. Collimating CRL and imperfect mirror
     	
     
     *****reading wavefront from h5 file...
-    nx   180  range_x [-1.0e-03, 1.0e-03]
-    ny   180  range_y [-1.0e-03, 1.0e-03]
+    R-space
+    nx   180  range_x [-1.0e+00, 1.0e+00] mm
+    ny   180  range_y [-1.0e+00, 1.0e+00] mm
     *****propagating wavefront (with resizing)...
     done
-    propagation lasted: 0.1 min
+    propagation lasted: 0.0 min
 
 
 .. code:: python
 
     print ('*****Collimating CRL and imperfect mirror')
     plot_wfront(mwf, 'at '+str(z1+z2+z3)+' m',False, False, 1e-4,1e-7,'x', True, saveDir='./'+strDataFolderName)
-    pylab.set_cmap('bone') #set color map, 'bone', 'hot', etc
-    pylab.axis('tight')    
-    print 'FWHMx [mm], theta_fwhm [urad]:',calculate_fwhm_x(mwf)*1e3,calculate_fwhm_x(mwf)/(z1+z2)*1e6
-    print 'FWHMy [mm], theta_fwhm [urad]:',calculate_fwhm_y(mwf)*1e3,calculate_fwhm_y(mwf)/(z1+z2)*1e6
+    plt.set_cmap('bone') #set color map, 'bone', 'hot', etc
+    plt.axis('tight')    
+    print('FWHMx [mm], theta_fwhm [urad]: {}, {}'.format(
+            calculate_fwhm_x(mwf)*1e3,calculate_fwhm_x(mwf)/(z1+z2)*1e6))
+    print('FWHMy [mm], theta_fwhm [urad]: {}, {}'.format(
+            calculate_fwhm_y(mwf)*1e3,calculate_fwhm_y(mwf)/(z1+z2)*1e6))
 
 
 .. parsed-literal::
@@ -867,17 +882,18 @@ Propagating through BL1 beamline. Collimating CRL and imperfect mirror
     FWHMx [mm]: 0.6784899532
     FWHMy [mm]: 0.697875380434
     Coordinates of center, [mm]: -0.187392463265 0.0387708544686
-    stepX, stepY [um]: 6.4618090781 6.4618090781 
+    stepX, stepY [um]: 6.461809078096801 6.461809078096801 
     
     Total power (integrated over full range): 53.3003 [GW]
     Peak power calculated using FWHM:         52.7227 [GW]
     Max irradiance: 97.8661 [GW/mm^2]
-    FWHMx [mm], theta_fwhm [urad]: 0.6784899532 2.33962052828
-    FWHMy [mm], theta_fwhm [urad]: 0.697875380434 2.40646682908
+    R-space
+    FWHMx [mm], theta_fwhm [urad]: 0.6784899532001643, 2.3396205282764284
+    FWHMy [mm], theta_fwhm [urad]: 0.6978753804344545, 2.406466829084326
 
 
 
-.. image:: output_22_1.png
+.. image:: output_23_1.png
 
 
 Propagating through BL2 beamline. Collimating CRL1, imperfect mirror, focusing CRL2
@@ -893,22 +909,22 @@ Propagating through BL2 beamline. Collimating CRL1, imperfect mirror, focusing C
     optBL = optBL2
     strBL = 'bl2'
     pos_title = 'at sample'
-    print '*****setting-up optical elements, beamline:', strBL
+    print('*****setting-up optical elements, beamline: {}'.format(strBL))
     if not NEW_SYNTAX: 
         bl = Beamline(optBL)
     else:
         bl = optBL
-    print bl
+    print(bl)
     
     if bSaved:
         out_file_name = os.path.join(strDataFolderName, fname0+'_'+strBL+'.h5')
-        print 'save hdf5:', out_file_name
+        print('save hdf5: {}'.format(out_file_name))
     else:
         out_file_name = None
         
     startTime = time.time()
     mwf = propagate_wavefront(ifname, bl,out_file_name)
-    print 'propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min'
+    print('propagation lasted: {} min'.format(round((time.time() - startTime) / 6.) / 10.))
 
 
 .. parsed-literal::
@@ -934,10 +950,10 @@ Propagating through BL2 beamline. Collimating CRL1, imperfect mirror, focusing C
     		nvz = 1
     		nx = 1001
     		ny = 1001
-    		xFin = 0.001969
-    		xStart = -0.001969
-    		yFin = 0.001969
-    		yStart = -0.001969
+    		xFin = 0.0019690000000000003
+    		xStart = -0.0019690000000000003
+    		yFin = 0.0019690000000000003
+    		yStart = -0.0019690000000000003
     		zStart = 0
     	
     	
@@ -1014,10 +1030,10 @@ Propagating through BL2 beamline. Collimating CRL1, imperfect mirror, focusing C
     		nvz = 1
     		nx = 1001
     		ny = 1001
-    		xFin = 0.001969
-    		xStart = -0.001969
-    		yFin = 0.001969
-    		yStart = -0.001969
+    		xFin = 0.0019690000000000003
+    		xStart = -0.0019690000000000003
+    		yFin = 0.0019690000000000003
+    		yStart = -0.0019690000000000003
     		zStart = 0
     	
     	
@@ -1026,7 +1042,7 @@ Propagating through BL2 beamline. Collimating CRL1, imperfect mirror, focusing C
     	L = 29.375
     	treat = 0
     	
-    Optical element: Empty
+    Optical element: Empty.
         This is empty propagator used for sampling and zooming wavefront
         
     Prop. parameters = [0, 0, 1.0, 0, 1, 0.02, 2.0, 0.02, 2.0, 0, 0, 0]
@@ -1051,10 +1067,10 @@ Propagating through BL2 beamline. Collimating CRL1, imperfect mirror, focusing C
     		nvz = 1
     		nx = 1001
     		ny = 1001
-    		xFin = 0.001969
-    		xStart = -0.001969
-    		yFin = 0.001969
-    		yStart = -0.001969
+    		xFin = 0.0019690000000000003
+    		xStart = -0.0019690000000000003
+    		yFin = 0.0019690000000000003
+    		yStart = -0.0019690000000000003
     		zStart = 0
     	
     	
@@ -1131,10 +1147,10 @@ Propagating through BL2 beamline. Collimating CRL1, imperfect mirror, focusing C
     		nvz = 1
     		nx = 1001
     		ny = 1001
-    		xFin = 0.001969
-    		xStart = -0.001969
-    		yFin = 0.001969
-    		yStart = -0.001969
+    		xFin = 0.0019690000000000003
+    		xStart = -0.0019690000000000003
+    		yFin = 0.0019690000000000003
+    		yStart = -0.0019690000000000003
     		zStart = 0
     	
     	
@@ -1143,15 +1159,16 @@ Propagating through BL2 beamline. Collimating CRL1, imperfect mirror, focusing C
     	L = 29.375
     	treat = 0
     	
-    Optical element: Empty
+    Optical element: Empty.
         This is empty propagator used for sampling and zooming wavefront
         
     Prop. parameters = [0, 0, 1.0, 0, 1, 0.02, 2.0, 0.02, 2.0, 0, 0, 0]
     	
     
     *****reading wavefront from h5 file...
-    nx   180  range_x [-1.0e-03, 1.0e-03]
-    ny   180  range_y [-1.0e-03, 1.0e-03]
+    R-space
+    nx   180  range_x [-1.0e+00, 1.0e+00] mm
+    ny   180  range_y [-1.0e+00, 1.0e+00] mm
     *****propagating wavefront (with resizing)...
     done
     propagation lasted: 0.2 min
@@ -1161,26 +1178,26 @@ Propagating through BL2 beamline. Collimating CRL1, imperfect mirror, focusing C
 
     print ('*****Collimating CRL1, imperfect mirror, focusing CRL2')
     plot_wfront(mwf, 'at '+str(z1+z2+z3+z4)+' m',True, True, 1e-4,1e-6,'x', True, saveDir='./'+strDataFolderName)
-    #pylab.set_cmap('bone') #set color map, 'bone', 'hot', etc
-    pylab.axis('tight')    
-    print 'FWHMx [um], FWHMy [um]:',calculate_fwhm_y(mwf)*1e6,calculate_fwhm_y(mwf)*1e6 
+    #plt.set_cmap('bone') #set color map, 'bone', 'hot', etc
+    plt.axis('tight')    
+    print('FWHMx [um], FWHMy [um]: {}, {}'.format(calculate_fwhm_y(mwf)*1e6,calculate_fwhm_y(mwf)*1e6))
 
 
 .. parsed-literal::
 
     *****Collimating CRL1, imperfect mirror, focusing CRL2
-    FWHMx[um]: 3.18983483347
-    FWHMy [um]: 3.64552552396
+    FWHMx[um]: 3.18983482886
+    FWHMy [um]: 3.6455255187
     Coordinates of center, [mm]: 0.0 0.0
-    stepX, stepY [um]: 0.455690690496 0.455690690496 
+    stepX, stepY [um]: 0.45569068983763483 0.45569068983763483 
     
     Total power (integrated over full range): 44.8729 [GW]
     Peak power calculated using FWHM:         38.874 [GW]
     Max irradiance: 2.93824e+06 [GW/mm^2]
-    FWHMx [um], FWHMy [um]: 3.64552552396 3.64552552396
+    R-space
+    FWHMx [um], FWHMy [um]: 3.6455255187010787, 3.6455255187010787
 
 
 
-.. image:: output_25_1.png
-
+.. image:: output_26_1.png
 
