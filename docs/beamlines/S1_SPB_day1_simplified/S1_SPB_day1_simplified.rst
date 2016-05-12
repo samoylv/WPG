@@ -1,5 +1,5 @@
 
-S1 SPB Day1 simple beamline with gussian pulse
+S1 SPB Day1 simplified beamline
 ==============================================
 
 .. code:: python
