@@ -1,4 +1,4 @@
-Real beamlines simulation
+XFEL beamlines examples
 =========================
 
 This section contain examples of simulation of real beamlines.
