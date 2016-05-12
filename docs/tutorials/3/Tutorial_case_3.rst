@@ -19,15 +19,15 @@ Import modules
 
 .. code:: python
 
-    %pylab inline
-
-.. parsed-literal::
-
-    Populating the interactive namespace from numpy and matplotlib
-
+    %matplotlib inline
 
 .. code:: python
 
+    from __future__ import absolute_import
+    from __future__ import division
+    from __future__ import print_function
+    from __future__ import unicode_literals
+    
     #Importing necessary modules:
     
     import os
@@ -36,8 +36,8 @@ Import modules
     
     import time
     import copy
-    import numpy
-    import pylab
+    import numpy as np
+    import pylab as plt
     
     
     #import SRW core functions
@@ -58,7 +58,8 @@ Import modules
     from wpg import Beamline
     from wpg.optical_elements import Empty, Use_PP
     
-    pylab.ion()
+    plt.ion()
+
 Define auxiliary functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -72,9 +73,9 @@ Define auxiliary functions
         :param theta_fwhm: theta_fwhm [units?] 
         """
         wl = 12.39e-10/ekev
-        k = 2 * numpy.sqrt(2*numpy.log(2))
+        k = 2 * np.sqrt(2*np.log(2))
         theta_sigma = theta_fwhm /k
-        sigma0 = wl /(2*numpy.pi*theta_sigma)
+        sigma0 = wl /(2*np.pi*theta_sigma)
         return sigma0*k
     
     def calculate_theta_fwhm_cdr(ekev,qnC):
@@ -85,7 +86,7 @@ Define auxiliary functions
         :param qnC: e-bunch charge, [nC]
         :return: theta_fwhm [units?]
         """
-        theta_fwhm = (17.2 - 6.4 * numpy.sqrt(qnC))*1e-6/ekev**0.85
+        theta_fwhm = (17.2 - 6.4 * np.sqrt(qnC))*1e-6/ekev**0.85
         return theta_fwhm
     
     def defineOPD(opTrErMirr, mdatafile, ncol, delim, Orient, theta, scale):
@@ -99,10 +100,11 @@ Define auxiliary functions
         :params theta: incidence angle
         :params scale: scaling factor for the mirror profile    
         """
-        heightProfData = numpy.loadtxt(mdatafile).T
+        heightProfData = np.loadtxt(mdatafile).T
         AuxTransmAddSurfHeightProfileScaled(opTrErMirr, heightProfData, Orient, theta, scale)
-        pylab.figure()
+        plt.figure()
         plot_1d(heightProfData,'profile from ' + mdatafile,'x (m)', 'h (m)')
+
 
 Defining initial wavefront and writing electric field data to h5-file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -146,23 +148,23 @@ Defining initial wavefront and writing electric field data to h5-file
     
     z1 = d2m1
     theta_fwhm = calculate_theta_fwhm_cdr(ekev,qnC)
-    k = 2*sqrt(2*log(2))
-    sigX = 12.4e-10*k/(ekev*4*pi*theta_fwhm) 
-    print 'waist_fwhm [um], theta_fwhms [urad]:', sigX*k*1e6, theta_fwhm*1e6
+    k = 2*np.sqrt(2*np.log(2))
+    sigX = 12.4e-10*k/(ekev*4*np.pi*theta_fwhm) 
+    print('waist_fwhm [um], theta_fwhms [urad]:', sigX*k*1e6, theta_fwhm*1e6)
     #define limits
     range_xy = theta_fwhm/k*z1*7. # sigma*7 beam size
-    np=400
+    npoints=400
     
     #define unique filename for storing results
-    ip = floor(ekev)
-    frac = numpy.floor((ekev - ip)*1e3)
+    ip = np.floor(ekev)
+    frac = np.floor((ekev - ip)*1e3)
     fname0 = 'g' + str(int(ip))+'_'+str(int(frac))+'kev'
     print('save hdf5: '+fname0+'.h5')
     ifname = os.path.join(strOutputDataFolder,fname0+'.h5')
     
     #tiltX = theta_rms
     #build SRW gauusian wavefront
-    wfr0=build_gauss_wavefront_xy(nx=np, ny=np, ekev=ekev,
+    wfr0=build_gauss_wavefront_xy(nx=npoints, ny=npoints, ekev=ekev,
                                   xMin=-range_xy/2, xMax=range_xy/2,
                                   yMin=-range_xy/2, yMax=range_xy/2,
                                   sigX=sigX, sigY=sigX, d2waist=z1,
@@ -178,7 +180,7 @@ Defining initial wavefront and writing electric field data to h5-file
     plt.subplot(1,2,1)
     plt.imshow(mwf.get_intensity(slice_number=0))
     plt.subplot(1,2,2)
-    plt.imshow(mwf.get_phase(slice_number=0,polarization='vertical'))
+    plt.imshow(mwf.get_phase(slice_number=0,polarization='horizontal'))
     plt.show()
     
     #draw wavefront with cuts
@@ -186,9 +188,10 @@ Defining initial wavefront and writing electric field data to h5-file
                 isHlog=False, isVlog=False,
                 i_x_min=1e-5, i_y_min=1e-5, orient='x', onePlot=True)
     
-    pylab.set_cmap('bone') #set color map, 'bone', 'hot', 'jet', etc
+    plt.set_cmap('bone') #set color map, 'bone', 'hot', 'jet', etc
     fwhm_x = calculate_fwhm_x(mwf)
-    print 'FWHMx [mm], theta_fwhm [urad]:',fwhm_x*1e3,fwhm_x/z1*1e6
+    print('FWHMx [mm], theta_fwhm [urad]:',fwhm_x*1e3,fwhm_x/z1*1e6)
+
 
 .. parsed-literal::
 
@@ -206,8 +209,9 @@ Defining initial wavefront and writing electric field data to h5-file
     FWHMx [mm]: 0.943784566665
     FWHMy [mm]: 0.943784566665
     Coordinates of center, [mm]: 0.0035480622807 0.0035480622807
-    stepX, stepY [um]: 7.09612456139 7.09612456139 
+    stepX, stepY [um]: 7.096124561394084 7.096124561394084 
     
+    R-space
     FWHMx [mm], theta_fwhm [urad]: 0.943784566665 3.82874063556
 
 
@@ -266,8 +270,8 @@ Defining optical beamline(s)
     opTrErM1 = SRWLOptT(1500, 100, horApM1, range_xy)
     #defineOPD(opTrErM1, os.path.join(strInputDataFolder,'mirror1.dat'), 2, '\t', 'x',  thetaOM, scale)
     defineOPD(opTrErM1, os.path.join(strInputDataFolder,'mirror2.dat'), 2, ' ', 'x',  thetaOM, scale)
-    opdTmp=numpy.array(opTrErM1.arTr)[1::2].reshape(opTrErM1.mesh.ny,opTrErM1.mesh.nx)
-    figure()
+    opdTmp=np.array(opTrErM1.arTr)[1::2].reshape(opTrErM1.mesh.ny,opTrErM1.mesh.nx)
+    plt.figure()
     plot_2d(opdTmp, opTrErM1.mesh.xStart*1e3,opTrErM1.mesh.xFin*1e3,opTrErM1.mesh.yStart*1e3,opTrErM1.mesh.yFin*1e3,
             'OPD [m]', 'x (mm)', 'y (mm)')  
     
@@ -292,6 +296,7 @@ Defining optical beamline(s)
                         [ppM1,ppTrErM1,ppDriftM1_KB,ppApKB,ppHKB,ppDrift_KB,ppVKB,ppDrift_foc,ppFin]) 
 
 
+
 .. parsed-literal::
 
     *****Defining optical beamline(s) ...
@@ -311,7 +316,7 @@ Propagating through BL0 beamline. Ideal mirror: HOM as an aperture
 
 .. code:: python
 
-    print '*****Ideal mirror: HOM as an aperture'
+    print('*****Ideal mirror: HOM as an aperture')
     bPlotted = False
     isHlog = False
     isVlog = False
@@ -319,19 +324,20 @@ Propagating through BL0 beamline. Ideal mirror: HOM as an aperture
     optBL = optBL0
     strBL = 'bl0'
     pos_title = 'at exp hall wall'
-    print '*****setting-up optical elements, beamline:', strBL
+    print('*****setting-up optical elements, beamline:', strBL)
     bl = Beamline(optBL)
-    print bl
+    print(bl)
     
     if bSaved:
         out_file_name = os.path.join(strOutputDataFolder, fname0+'_'+strBL+'.h5')
-        print 'save hdf5:', out_file_name
+        print('save hdf5:', out_file_name)
     else:
         out_file_name = None
         
     startTime = time.time()
     mwf = propagate_wavefront(ifname, bl,out_file_name)
-    print 'propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min'
+    print('propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min')
+
 
 .. parsed-literal::
 
@@ -339,7 +345,7 @@ Propagating through BL0 beamline. Ideal mirror: HOM as an aperture
     *****setting-up optical elements, beamline: bl0
     Optical Element: Aperture / Obstacle
     Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
-    	Dx = 0.0028
+    	Dx = 0.0028000000000000004
     	Dy = 0.0028313537
     	ap_or_ob = a
     	shape = r
@@ -353,9 +359,26 @@ Propagating through BL0 beamline. Ideal mirror: HOM as an aperture
     	
     
     save hdf5: Tutorial_case_3/g5_0kev_bl0.h5
+    Optical Element: Aperture / Obstacle
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Dx = 0.0028000000000000004
+    	Dy = 0.0028313537
+    	ap_or_ob = a
+    	shape = r
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 2.4, 1.8, 2.4, 1.8, 0, 0, 0]
+    	L = 683.1
+    	treat = 0
+    	
+    
     *****reading wavefront from h5 file...
+    R-space
+    nx   400  range_x [-1.4e+00, 1.4e+00] mm
+    ny   400  range_y [-1.4e+00, 1.4e+00] mm
     *****propagating wavefront (with resizing)...
-    [nx, ny, xmin, xmax, ymin, ymax] [1728, 1728, -0.00768337191673277, 0.007683371916732772, -0.007726062980405428, 0.00772606298040543]
     save hdf5: Tutorial_case_3/g5_0kev_bl0.h5
     done
     propagation lasted: 0.1 min
@@ -363,23 +386,25 @@ Propagating through BL0 beamline. Ideal mirror: HOM as an aperture
 
 .. code:: python
 
-    print '*****Ideal mirror: HOM as an aperture'
+    print('*****Ideal mirror: HOM as an aperture')
     plot_wfront(mwf, 'at '+str(z1+z2)+' m',False, False, 1e-5,1e-5,'x', True)
-    #pylab.set_cmap('bone') #set color map, 'bone', 'hot', 'jet', etc
-    pylab.axis('tight')    
-    print 'FWHMx [mm], theta_fwhm [urad]:',calculate_fwhm_x(mwf)*1e3,calculate_fwhm_x(mwf)/(z1+z2)*1e6
-    print 'FWHMy [mm], theta_fwhm [urad]:',calculate_fwhm_y(mwf)*1e3,calculate_fwhm_y(mwf)/(z1+z2)*1e6
+    #plt.set_cmap('bone') #set color map, 'bone', 'hot', 'jet', etc
+    plt.axis('tight')    
+    print('FWHMx [mm], theta_fwhm [urad]:',calculate_fwhm_x(mwf)*1e3,calculate_fwhm_x(mwf)/(z1+z2)*1e6)
+    print('FWHMy [mm], theta_fwhm [urad]:',calculate_fwhm_y(mwf)*1e3,calculate_fwhm_y(mwf)/(z1+z2)*1e6)
+
 
 .. parsed-literal::
 
     *****Ideal mirror: HOM as an aperture
-    FWHMx [mm]: 3.58587015917
-    FWHMy [mm]: 3.5521100211
-    Coordinates of center, [mm]: -0.0489386746289 0.0134210706087
-    stepX, stepY [um]: 8.89794084161 8.9473804058 
+    FWHMx [mm]: 3.58585062243
+    FWHMy [mm]: 3.55209077523
+    Coordinates of center, [mm]: -0.0489384079984 0.0134209978913
+    stepX, stepY [um]: 8.897892363337482 8.94733192752122 
     
-    FWHMx [mm], theta_fwhm [urad]: 3.58587015917 3.85743347587
-    FWHMy [mm], theta_fwhm [urad]: 3.5521100211 3.82111663199
+    R-space
+    FWHMx [mm], theta_fwhm [urad]: 3.58585062243 3.85741245958
+    FWHMy [mm], theta_fwhm [urad]: 3.55209077523 3.8210959286
 
 
 
@@ -391,7 +416,7 @@ Propagating through BL1 beamline. Imperfect mirror, at KB aperture
 
 .. code:: python
 
-    print ('*****Imperfect HOM mirror, at KB aperture')
+    print('*****Imperfect HOM mirror, at KB aperture')
     bPlotted = False
     isHlog = True
     isVlog = False
@@ -399,19 +424,20 @@ Propagating through BL1 beamline. Imperfect mirror, at KB aperture
     optBL = optBL1
     strBL = 'bl1'
     pos_title = 'at exp hall wall'
-    print '*****setting-up optical elements, beamline:', strBL
+    print('*****setting-up optical elements, beamline:', strBL)
     bl = Beamline(optBL)
-    print bl
+    print(bl)
     
     if bSaved:
         out_file_name = os.path.join(strOutputDataFolder, fname0+'_'+strBL+'.h5')
-        print 'save hdf5:', out_file_name
+        print('save hdf5:', out_file_name)
     else:
         out_file_name = None
         
     startTime = time.time()
     mwf = propagate_wavefront(ifname, bl,out_file_name)
-    print 'propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min'
+    print('propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min')
+
 
 .. parsed-literal::
 
@@ -419,7 +445,7 @@ Propagating through BL1 beamline. Imperfect mirror, at KB aperture
     *****setting-up optical elements, beamline: bl1
     Optical Element: Aperture / Obstacle
     Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
-    	Dx = 0.0028
+    	Dx = 0.0028000000000000004
     	Dy = 0.0028313537
     	ap_or_ob = a
     	shape = r
@@ -445,8 +471,49 @@ Propagating through BL1 beamline. Imperfect mirror, at KB aperture
     		nvz = 1
     		nx = 1500
     		ny = 100
-    		xFin = 0.0014
-    		xStart = -0.0014
+    		xFin = 0.0014000000000000002
+    		xStart = -0.0014000000000000002
+    		yFin = 0.00141567685
+    		yStart = -0.00141567685
+    		zStart = 0
+    	
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 2.4, 1.8, 2.4, 1.8, 0, 0, 0]
+    	L = 683.1
+    	treat = 0
+    	
+    
+    Optical Element: Aperture / Obstacle
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Dx = 0.0028000000000000004
+    	Dy = 0.0028313537
+    	ap_or_ob = a
+    	shape = r
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Transmission (generic)
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 1e+23
+    	Fy = 1e+23
+    	arTr = array of size 300000
+    	extTr = 0
+    	mesh = Radiation Mesh (Sampling)
+    		arSurf = None
+    		eFin = 0
+    		eStart = 0
+    		hvx = 1
+    		hvy = 0
+    		hvz = 0
+    		ne = 1
+    		nvx = 0
+    		nvy = 0
+    		nvz = 1
+    		nx = 1500
+    		ny = 100
+    		xFin = 0.0014000000000000002
+    		xStart = -0.0014000000000000002
     		yFin = 0.00141567685
     		yStart = -0.00141567685
     		zStart = 0
@@ -459,31 +526,35 @@ Propagating through BL1 beamline. Imperfect mirror, at KB aperture
     	
     
     *****reading wavefront from h5 file...
+    R-space
+    nx   400  range_x [-1.4e+00, 1.4e+00] mm
+    ny   400  range_y [-1.4e+00, 1.4e+00] mm
     *****propagating wavefront (with resizing)...
-    [nx, ny, xmin, xmax, ymin, ymax] [1728, 1728, -0.007700854156063072, 0.007700854156063072, -0.007726062980405428, 0.00772606298040543]
     done
-    propagation lasted: 0.0 min
+    propagation lasted: 0.1 min
 
 
 .. code:: python
 
-    print ('*****Imperfect HOM mirror, at KB aperture')
+    print('*****Imperfect HOM mirror, at KB aperture')
     plot_wfront(mwf, 'at '+str(z1+z2)+' m',False, False, 1e-5,1e-5,'x', True)
-    #pylab.set_cmap('bone') #set color map, 'bone', 'hot', etc
-    pylab.axis('tight')    
-    print 'FWHMx [mm], theta_fwhm [urad]:',calculate_fwhm_x(mwf)*1e3,calculate_fwhm_x(mwf)/(z1+z2)*1e6
-    print 'FWHMy [mm], theta_fwhm [urad]:',calculate_fwhm_y(mwf)*1e3,calculate_fwhm_y(mwf)/(z1+z2)*1e6
+    #plt.set_cmap('bone') #set color map, 'bone', 'hot', etc
+    plt.axis('tight')    
+    print('FWHMx [mm], theta_fwhm [urad]:',calculate_fwhm_x(mwf)*1e3,calculate_fwhm_x(mwf)/(z1+z2)*1e6)
+    print('FWHMy [mm], theta_fwhm [urad]:',calculate_fwhm_y(mwf)*1e3,calculate_fwhm_y(mwf)/(z1+z2)*1e6)
+
 
 .. parsed-literal::
 
     *****Imperfect HOM mirror, at KB aperture
-    FWHMx [mm]: 2.91624702841
-    FWHMy [mm]: 3.5521100211
-    Coordinates of center, [mm]: -0.967623249488 -0.0134210706087
-    stepX, stepY [um]: 8.91818663123 8.9473804058 
+    FWHMx [mm]: 2.89758221191
+    FWHMy [mm]: 3.55209077523
+    Coordinates of center, [mm]: -0.968117421268 0.0134209978913
+    stepX, stepY [um]: 13.540103793954389 8.94733192752122 
     
-    FWHMx [mm], theta_fwhm [urad]: 2.91624702841 3.13709878271
-    FWHMy [mm], theta_fwhm [urad]: 3.5521100211 3.82111663199
+    R-space
+    FWHMx [mm], theta_fwhm [urad]: 2.89758221191 3.11702045171
+    FWHMy [mm], theta_fwhm [urad]: 3.55209077523 3.8210959286
 
 
 
@@ -495,7 +566,7 @@ Propagating through BL2 beamline. Focused beam: perfect KB
 
 .. code:: python
 
-    print ('*****Focused beam: perfect KB')
+    print('*****Focused beam: perfect KB')
     bSaved = False
     z3 = dhkb_vkb
     z4 = dvkb_foc 
@@ -513,20 +584,21 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     optBL = optBL2
     strBL = 'bl2'
     pos_title = 'at sample position'
-    print '*****setting-up optical elements, beamline:', strBL
+    print('*****setting-up optical elements, beamline:', strBL)
     bl = Beamline(optBL)
     bl.append(Empty(), Use_PP(zoom=0.02, sampling=5.0))
-    print bl
+    print(bl)
     
     if bSaved:
         out_file_name = os.path.join(strOutputDataFolder, fname0+'_'+strBL+'.h5')
-        print 'save hdf5:', out_file_name
+        print('save hdf5:', out_file_name)
     else:
         out_file_name = None
         
     startTime = time.time()
     mwf = propagate_wavefront(ifname, bl,out_file_name)
-    print 'propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min'
+    print('propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min')
+
 
 .. parsed-literal::
 
@@ -534,7 +606,7 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     *****setting-up optical elements, beamline: bl2
     Optical Element: Aperture / Obstacle
     Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
-    	Dx = 0.0028
+    	Dx = 0.0028000000000000004
     	Dy = 0.0028313537
     	ap_or_ob = a
     	shape = r
@@ -560,8 +632,8 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     		nvz = 1
     		nx = 1500
     		ny = 100
-    		xFin = 0.0014
-    		xStart = -0.0014
+    		xFin = 0.0014000000000000002
+    		xStart = -0.0014000000000000002
     		yFin = 0.00141567685
     		yStart = -0.00141567685
     		zStart = 0
@@ -574,8 +646,8 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     	
     Optical Element: Aperture / Obstacle
     Prop. parameters = [0, 0, 1.0, 0, 0, 0.6, 8.0, 0.6, 4.0, 0, 0, 0]
-    	Dx = 0.0028
-    	Dy = 0.0028
+    	Dx = 0.0028000000000000004
+    	Dy = 0.0028000000000000004
     	ap_or_ob = a
     	shape = r
     	x = 0
@@ -583,7 +655,7 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     	
     Optical Element: Thin Lens
     Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
-    	Fx = 2.99034956037
+    	Fx = 2.9903495603688612
     	Fy = 1e+23
     	x = 0
     	y = 0
@@ -596,7 +668,7 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     Optical Element: Thin Lens
     Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
     	Fx = 1e+23
-    	Fy = 1.89612910144
+    	Fy = 1.8961291014368435
     	x = 0
     	y = 0
     	
@@ -605,39 +677,122 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     	L = 1.9
     	treat = 0
     	
-    Optical element: Empty
+    Optical element: Empty.
+        This is empty propagator used for sampling and zooming wavefront
+        
+    Prop. parameters = [0, 0, 1.0, 0, 0, 0.02, 5.0, 0.02, 5.0, 0, 0, 0]
+    	
+    
+    Optical Element: Aperture / Obstacle
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Dx = 0.0028000000000000004
+    	Dy = 0.0028313537
+    	ap_or_ob = a
+    	shape = r
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Transmission (generic)
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 1e+23
+    	Fy = 1e+23
+    	arTr = array of size 300000
+    	extTr = 0
+    	mesh = Radiation Mesh (Sampling)
+    		arSurf = None
+    		eFin = 0
+    		eStart = 0
+    		hvx = 1
+    		hvy = 0
+    		hvz = 0
+    		ne = 1
+    		nvx = 0
+    		nvy = 0
+    		nvz = 1
+    		nx = 1500
+    		ny = 100
+    		xFin = 0.0014000000000000002
+    		xStart = -0.0014000000000000002
+    		yFin = 0.00141567685
+    		yStart = -0.00141567685
+    		zStart = 0
+    	
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 2.4, 1.8, 2.4, 1.8, 0, 0, 0]
+    	L = 683.1
+    	treat = 0
+    	
+    Optical Element: Aperture / Obstacle
+    Prop. parameters = [0, 0, 1.0, 0, 0, 0.6, 8.0, 0.6, 4.0, 0, 0, 0]
+    	Dx = 0.0028000000000000004
+    	Dy = 0.0028000000000000004
+    	ap_or_ob = a
+    	shape = r
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Thin Lens
+    Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 2.9903495603688612
+    	Fy = 1e+23
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	L = 1.1
+    	treat = 0
+    	
+    Optical Element: Thin Lens
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 1e+23
+    	Fy = 1.8961291014368435
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	L = 1.9
+    	treat = 0
+    	
+    Optical element: Empty.
         This is empty propagator used for sampling and zooming wavefront
         
     Prop. parameters = [0, 0, 1.0, 0, 0, 0.02, 5.0, 0.02, 5.0, 0, 0, 0]
     	
     
     *****reading wavefront from h5 file...
+    R-space
+    nx   400  range_x [-1.4e+00, 1.4e+00] mm
+    ny   400  range_y [-1.4e+00, 1.4e+00] mm
     *****propagating wavefront (with resizing)...
-    [nx, ny, xmin, xmax, ymin, ymax] [832, 416, -5.298680569883682e-07, 5.298680569883817e-07, -6.448693451909495e-07, 6.448693451909631e-07]
     done
-    propagation lasted: 0.8 min
+    propagation lasted: 1.6 min
 
 
 .. code:: python
 
-    print ('*****Focused beam: Focused beam: perfect KB')
+    print('*****Focused beam: Focused beam: perfect KB')
     bOnePlot = True
     isHlog = False
     isVlog = False
     plot_wfront(mwf, 'at '+str(z1+z2+z3+z4)+' m',isHlog, isVlog, 1e-5,1e-5,'x', bOnePlot)
-    #pylab.set_cmap('bone') #set color map, 'bone', 'hot', etc
-    pylab.axis('tight')    
-    print 'FWHMx [um], FWHMy [um]:',calculate_fwhm_x(mwf)*1e6,calculate_fwhm_y(mwf)*1e6
+    #plt.set_cmap('bone') #set color map, 'bone', 'hot', etc
+    plt.axis('tight')    
+    print('FWHMx [um], FWHMy [um]:',calculate_fwhm_x(mwf)*1e6,calculate_fwhm_y(mwf)*1e6)
+
 
 .. parsed-literal::
 
     *****Focused beam: Focused beam: perfect KB
-    FWHMx [mm]: 0.0002359219989
-    FWHMy [mm]: 0.000152282399587
-    Coordinates of center, [mm]: -2.99684701305e-05 -1.5539020366e-06
-    stepX, stepY [um]: 0.00127525404811 0.00310780407321 
+    FWHMx [mm]: 0.000234193434075
+    FWHMy [mm]: 0.000152352450272
+    Coordinates of center, [mm]: -3.19354682829e-05 1.55461683951e-06
+    stepX, stepY [um]: 0.001935482926236052 0.0031092336790285112 
     
-    FWHMx [um], FWHMy [um]: 0.2359219989 0.152282399587
+    R-space
+    FWHMx [um], FWHMy [um]: 0.234193434075 0.152352450272
 
 
 
@@ -650,17 +805,18 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     scale = 2 #scaling factor of mirror
     opTrErHKB = SRWLOptT(1500, 100, horApKB, horApKB)
     defineOPD(opTrErHKB, os.path.join(strInputDataFolder,'mirror1.dat'), 2, '\t', 'x',  thetaOM, scale)
-    opdTmp=numpy.array(opTrErHKB.arTr)[1::2].reshape(opTrErHKB.mesh.ny,opTrErHKB.mesh.nx)
-    figure()
+    opdTmp=np.array(opTrErHKB.arTr)[1::2].reshape(opTrErHKB.mesh.ny,opTrErHKB.mesh.nx)
+    plt.figure()
     plot_2d(opdTmp, opTrErM1.mesh.xStart*1e3,opTrErM1.mesh.xFin*1e3,opTrErM1.mesh.yStart*1e3,opTrErM1.mesh.yFin*1e3,
             'OPD [m]', 'x (mm)', 'y (mm)')  
     print('*****VKB data  ')
     opTrErVKB = SRWLOptT(100, 1500, horApKB, horApKB)
     defineOPD(opTrErVKB, os.path.join(strInputDataFolder,'mirror2.dat'), 2, ' ', 'y',  thetaOM, scale)
-    opdTmp=numpy.array(opTrErVKB.arTr)[1::2].reshape(opTrErVKB.mesh.ny,opTrErVKB.mesh.nx)
-    figure()
+    opdTmp=np.array(opTrErVKB.arTr)[1::2].reshape(opTrErVKB.mesh.ny,opTrErVKB.mesh.nx)
+    plt.figure()
     plot_2d(opdTmp, opTrErVKB.mesh.xStart*1e3,opTrErVKB.mesh.xFin*1e3,opTrErVKB.mesh.yStart*1e3,opTrErVKB.mesh.yFin*1e3,
             'OPD [m]', 'x (mm)', 'y (mm)')  
+
 
 .. parsed-literal::
 
@@ -686,7 +842,7 @@ Propagating through BL2 beamline. Focused beam: perfect KB
 
 .. code:: python
 
-    print ('*****Focused beam on focus: imperfect KB')
+    print('*****Focused beam on focus: imperfect KB')
     z3 = dhkb_vkb
     z4 = dvkb_foc #distance to focal plane
     #z4 = vkbfoc  #focus distance of lens
@@ -704,24 +860,25 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     bl = Beamline(optBL)
     bl.append(Empty(), Use_PP(zoom=0.02, sampling=5.0))
     
-    print bl
+    print(bl)
     
     if bSaved:
         out_file_name = os.path.join(strOutputDataFolder, fname0+'_'+strBL+'.h5')
-        print 'save hdf5:', out_file_name
+        print('save hdf5:', out_file_name)
     else:
         out_file_name = None
         
     startTime = time.time()
     mwf = propagate_wavefront(ifname, bl,out_file_name)
-    print 'propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min'
+    print('propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min')
+
 
 .. parsed-literal::
 
     *****Focused beam on focus: imperfect KB
     Optical Element: Aperture / Obstacle
     Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
-    	Dx = 0.0028
+    	Dx = 0.0028000000000000004
     	Dy = 0.0028313537
     	ap_or_ob = a
     	shape = r
@@ -747,8 +904,8 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     		nvz = 1
     		nx = 1500
     		ny = 100
-    		xFin = 0.0014
-    		xStart = -0.0014
+    		xFin = 0.0014000000000000002
+    		xStart = -0.0014000000000000002
     		yFin = 0.00141567685
     		yStart = -0.00141567685
     		zStart = 0
@@ -761,8 +918,8 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     	
     Optical Element: Aperture / Obstacle
     Prop. parameters = [0, 0, 1.0, 0, 0, 0.6, 8.0, 0.6, 4.0, 0, 0, 0]
-    	Dx = 0.0028
-    	Dy = 0.0028
+    	Dx = 0.0028000000000000004
+    	Dy = 0.0028000000000000004
     	ap_or_ob = a
     	shape = r
     	x = 0
@@ -770,7 +927,7 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     	
     Optical Element: Thin Lens
     Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
-    	Fx = 2.99034956037
+    	Fx = 2.9903495603688612
     	Fy = 1e+23
     	x = 0
     	y = 0
@@ -794,10 +951,10 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     		nvz = 1
     		nx = 1500
     		ny = 100
-    		xFin = 0.0014
-    		xStart = -0.0014
-    		yFin = 0.0014
-    		yStart = -0.0014
+    		xFin = 0.0014000000000000002
+    		xStart = -0.0014000000000000002
+    		yFin = 0.0014000000000000002
+    		yStart = -0.0014000000000000002
     		zStart = 0
     	
     	
@@ -809,7 +966,7 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     Optical Element: Thin Lens
     Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
     	Fx = 1e+23
-    	Fy = 1.89612910144
+    	Fy = 1.8961291014368435
     	x = 0
     	y = 0
     	
@@ -832,10 +989,10 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     		nvz = 1
     		nx = 100
     		ny = 1500
-    		xFin = 0.0014
-    		xStart = -0.0014
-    		yFin = 0.0014
-    		yStart = -0.0014
+    		xFin = 0.0014000000000000002
+    		xStart = -0.0014000000000000002
+    		yFin = 0.0014000000000000002
+    		yStart = -0.0014000000000000002
     		zStart = 0
     	
     	
@@ -844,44 +1001,179 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     	L = 1.9
     	treat = 0
     	
-    Optical element: Empty
+    Optical element: Empty.
+        This is empty propagator used for sampling and zooming wavefront
+        
+    Prop. parameters = [0, 0, 1.0, 0, 0, 0.02, 5.0, 0.02, 5.0, 0, 0, 0]
+    	
+    
+    Optical Element: Aperture / Obstacle
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Dx = 0.0028000000000000004
+    	Dy = 0.0028313537
+    	ap_or_ob = a
+    	shape = r
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Transmission (generic)
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 1e+23
+    	Fy = 1e+23
+    	arTr = array of size 300000
+    	extTr = 0
+    	mesh = Radiation Mesh (Sampling)
+    		arSurf = None
+    		eFin = 0
+    		eStart = 0
+    		hvx = 1
+    		hvy = 0
+    		hvz = 0
+    		ne = 1
+    		nvx = 0
+    		nvy = 0
+    		nvz = 1
+    		nx = 1500
+    		ny = 100
+    		xFin = 0.0014000000000000002
+    		xStart = -0.0014000000000000002
+    		yFin = 0.00141567685
+    		yStart = -0.00141567685
+    		zStart = 0
+    	
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 2.4, 1.8, 2.4, 1.8, 0, 0, 0]
+    	L = 683.1
+    	treat = 0
+    	
+    Optical Element: Aperture / Obstacle
+    Prop. parameters = [0, 0, 1.0, 0, 0, 0.6, 8.0, 0.6, 4.0, 0, 0, 0]
+    	Dx = 0.0028000000000000004
+    	Dy = 0.0028000000000000004
+    	ap_or_ob = a
+    	shape = r
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Thin Lens
+    Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 2.9903495603688612
+    	Fy = 1e+23
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Transmission (generic)
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 1e+23
+    	Fy = 1e+23
+    	arTr = array of size 300000
+    	extTr = 0
+    	mesh = Radiation Mesh (Sampling)
+    		arSurf = None
+    		eFin = 0
+    		eStart = 0
+    		hvx = 1
+    		hvy = 0
+    		hvz = 0
+    		ne = 1
+    		nvx = 0
+    		nvy = 0
+    		nvz = 1
+    		nx = 1500
+    		ny = 100
+    		xFin = 0.0014000000000000002
+    		xStart = -0.0014000000000000002
+    		yFin = 0.0014000000000000002
+    		yStart = -0.0014000000000000002
+    		zStart = 0
+    	
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	L = 1.1
+    	treat = 0
+    	
+    Optical Element: Thin Lens
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 1e+23
+    	Fy = 1.8961291014368435
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Transmission (generic)
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 1e+23
+    	Fy = 1e+23
+    	arTr = array of size 300000
+    	extTr = 0
+    	mesh = Radiation Mesh (Sampling)
+    		arSurf = None
+    		eFin = 0
+    		eStart = 0
+    		hvx = 1
+    		hvy = 0
+    		hvz = 0
+    		ne = 1
+    		nvx = 0
+    		nvy = 0
+    		nvz = 1
+    		nx = 100
+    		ny = 1500
+    		xFin = 0.0014000000000000002
+    		xStart = -0.0014000000000000002
+    		yFin = 0.0014000000000000002
+    		yStart = -0.0014000000000000002
+    		zStart = 0
+    	
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	L = 1.9
+    	treat = 0
+    	
+    Optical element: Empty.
         This is empty propagator used for sampling and zooming wavefront
         
     Prop. parameters = [0, 0, 1.0, 0, 0, 0.02, 5.0, 0.02, 5.0, 0, 0, 0]
     	
     
     *****reading wavefront from h5 file...
+    R-space
+    nx   400  range_x [-1.4e+00, 1.4e+00] mm
+    ny   400  range_y [-1.4e+00, 1.4e+00] mm
     *****propagating wavefront (with resizing)...
-    [nx, ny, xmin, xmax, ymin, ymax] [832, 416, -5.298680569883682e-07, 5.298680569883817e-07, -6.448693451909495e-07, 6.448693451909631e-07]
     done
-    propagation lasted: 0.8 min
+    propagation lasted: 1.5 min
 
 
 .. code:: python
 
-    print ('*****Focused beam: Focused beam: imperfect KB')
+    print('*****Focused beam: Focused beam: imperfect KB')
     bOnePlot= True
     isHlog = False
     isVlog = False
     bSaved = False
     try:
         plot_wfront(mwf, 'at '+str(z1+z2+z3+z4)+' m',isHlog, isVlog, 1e-3,1e-3,'x', bOnePlot)
-    except ValueError, e:
-        print e
-    #pylab.set_cmap('bone') #set color map, 'bone', 'hot', etc
-    pylab.axis('tight')    
-    print 'FWHMx [um], FWHMy [um]:',calculate_fwhm_x(mwf)*1e6,calculate_fwhm_y(mwf)*1e6
+    except ValueError as e:
+        print(e)
+    #plt.set_cmap('bone') #set color map, 'bone', 'hot', etc
+    plt.axis('tight')    
+    print('FWHMx [um], FWHMy [um]:',calculate_fwhm_x(mwf)*1e6,calculate_fwhm_y(mwf)*1e6)
+
 
 .. parsed-literal::
 
     *****Focused beam: Focused beam: imperfect KB
-    FWHMx [mm]: 0.0002359219989
-    FWHMy [mm]: 0.000149174595514
-    Coordinates of center, [mm]: -2.99684701305e-05 -1.5539020366e-06
-    stepX, stepY [um]: 0.00127525404811 0.00310780407321 
+    FWHMx [mm]: 0.000236128917001
+    FWHMy [mm]: 0.000149243216593
+    Coordinates of center, [mm]: -3.38709512091e-05 -1.55461683952e-06
+    stepX, stepY [um]: 0.001935482926236052 0.0031092336790285112 
     
+    R-space
     zero-size array to reduction operation minimum which has no identity
-    FWHMx [um], FWHMy [um]: 0.2359219989 0.149174595514
+    FWHMx [um], FWHMy [um]: 0.236128917001 0.149243216593
 
 
 
@@ -890,7 +1182,7 @@ Propagating through BL2 beamline. Focused beam: perfect KB
 
 .. code:: python
 
-    print ('*****Focused beam behind focus: imperfect KB')
+    print('*****Focused beam behind focus: imperfect KB')
     #optBL2 = SRWLOptC([opApM1,opTrErM1,  DriftM1_KB,opApKB, HKB,   Drift_KB,  VKB,  Drift_foc], 
     #                    [ppM1,ppTrErM1,ppDriftM1_KB,ppApKB,ppHKB,ppDrift_KB,ppVKB,ppDrift_foc]) 
     z3 = dhkb_vkb
@@ -907,19 +1199,20 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     optBL = optBL2
     strBL = 'bl2'
     pos_title = 'at sample position'
-    print '*****setting-up optical elements, beamline:', strBL
+    print('*****setting-up optical elements, beamline:', strBL)
     bl = Beamline(optBL)
-    print bl
+    print(bl)
     
     if bSaved:
         out_file_name = os.path.join(strOutputDataFolder, fname0+'_'+strBL+'.h5')
-        print 'save hdf5:', out_file_name
+        print('save hdf5:', out_file_name)
     else:
         out_file_name = None
         
     startTime = time.time()
     mwf = propagate_wavefront(ifname, bl,out_file_name)
-    print 'propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min'
+    print('propagation lasted:', round((time.time() - startTime) / 6.) / 10., 'min')
+
 
 .. parsed-literal::
 
@@ -927,7 +1220,7 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     *****setting-up optical elements, beamline: bl2
     Optical Element: Aperture / Obstacle
     Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
-    	Dx = 0.0028
+    	Dx = 0.0028000000000000004
     	Dy = 0.0028313537
     	ap_or_ob = a
     	shape = r
@@ -953,8 +1246,8 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     		nvz = 1
     		nx = 1500
     		ny = 100
-    		xFin = 0.0014
-    		xStart = -0.0014
+    		xFin = 0.0014000000000000002
+    		xStart = -0.0014000000000000002
     		yFin = 0.00141567685
     		yStart = -0.00141567685
     		zStart = 0
@@ -967,8 +1260,8 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     	
     Optical Element: Aperture / Obstacle
     Prop. parameters = [0, 0, 1.0, 0, 0, 0.6, 8.0, 0.6, 4.0, 0, 0, 0]
-    	Dx = 0.0028
-    	Dy = 0.0028
+    	Dx = 0.0028000000000000004
+    	Dy = 0.0028000000000000004
     	ap_or_ob = a
     	shape = r
     	x = 0
@@ -976,7 +1269,7 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     	
     Optical Element: Thin Lens
     Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
-    	Fx = 2.99034956037
+    	Fx = 2.9903495603688612
     	Fy = 1e+23
     	x = 0
     	y = 0
@@ -1000,10 +1293,10 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     		nvz = 1
     		nx = 1500
     		ny = 100
-    		xFin = 0.0014
-    		xStart = -0.0014
-    		yFin = 0.0014
-    		yStart = -0.0014
+    		xFin = 0.0014000000000000002
+    		xStart = -0.0014000000000000002
+    		yFin = 0.0014000000000000002
+    		yStart = -0.0014000000000000002
     		zStart = 0
     	
     	
@@ -1015,7 +1308,7 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     Optical Element: Thin Lens
     Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
     	Fx = 1e+23
-    	Fy = 1.89612910144
+    	Fy = 1.8961291014368435
     	x = 0
     	y = 0
     	
@@ -1038,47 +1331,177 @@ Propagating through BL2 beamline. Focused beam: perfect KB
     		nvz = 1
     		nx = 100
     		ny = 1500
-    		xFin = 0.0014
-    		xStart = -0.0014
-    		yFin = 0.0014
-    		yStart = -0.0014
+    		xFin = 0.0014000000000000002
+    		xStart = -0.0014000000000000002
+    		yFin = 0.0014000000000000002
+    		yStart = -0.0014000000000000002
     		zStart = 0
     	
     	
     Optical Element: Drift Space
     Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
-    	L = 1.89612910144
+    	L = 1.8961291014368435
+    	treat = 0
+    	
+    
+    Optical Element: Aperture / Obstacle
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Dx = 0.0028000000000000004
+    	Dy = 0.0028313537
+    	ap_or_ob = a
+    	shape = r
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Transmission (generic)
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 1e+23
+    	Fy = 1e+23
+    	arTr = array of size 300000
+    	extTr = 0
+    	mesh = Radiation Mesh (Sampling)
+    		arSurf = None
+    		eFin = 0
+    		eStart = 0
+    		hvx = 1
+    		hvy = 0
+    		hvz = 0
+    		ne = 1
+    		nvx = 0
+    		nvy = 0
+    		nvz = 1
+    		nx = 1500
+    		ny = 100
+    		xFin = 0.0014000000000000002
+    		xStart = -0.0014000000000000002
+    		yFin = 0.00141567685
+    		yStart = -0.00141567685
+    		zStart = 0
+    	
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 2.4, 1.8, 2.4, 1.8, 0, 0, 0]
+    	L = 683.1
+    	treat = 0
+    	
+    Optical Element: Aperture / Obstacle
+    Prop. parameters = [0, 0, 1.0, 0, 0, 0.6, 8.0, 0.6, 4.0, 0, 0, 0]
+    	Dx = 0.0028000000000000004
+    	Dy = 0.0028000000000000004
+    	ap_or_ob = a
+    	shape = r
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Thin Lens
+    Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 2.9903495603688612
+    	Fy = 1e+23
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Transmission (generic)
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 1e+23
+    	Fy = 1e+23
+    	arTr = array of size 300000
+    	extTr = 0
+    	mesh = Radiation Mesh (Sampling)
+    		arSurf = None
+    		eFin = 0
+    		eStart = 0
+    		hvx = 1
+    		hvy = 0
+    		hvz = 0
+    		ne = 1
+    		nvx = 0
+    		nvy = 0
+    		nvz = 1
+    		nx = 1500
+    		ny = 100
+    		xFin = 0.0014000000000000002
+    		xStart = -0.0014000000000000002
+    		yFin = 0.0014000000000000002
+    		yStart = -0.0014000000000000002
+    		zStart = 0
+    	
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	L = 1.1
+    	treat = 0
+    	
+    Optical Element: Thin Lens
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 1e+23
+    	Fy = 1.8961291014368435
+    	x = 0
+    	y = 0
+    	
+    Optical Element: Transmission (generic)
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 1e+23
+    	Fy = 1e+23
+    	arTr = array of size 300000
+    	extTr = 0
+    	mesh = Radiation Mesh (Sampling)
+    		arSurf = None
+    		eFin = 0
+    		eStart = 0
+    		hvx = 1
+    		hvy = 0
+    		hvz = 0
+    		ne = 1
+    		nvx = 0
+    		nvy = 0
+    		nvz = 1
+    		nx = 100
+    		ny = 1500
+    		xFin = 0.0014000000000000002
+    		xStart = -0.0014000000000000002
+    		yFin = 0.0014000000000000002
+    		yStart = -0.0014000000000000002
+    		zStart = 0
+    	
+    	
+    Optical Element: Drift Space
+    Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	L = 1.8961291014368435
     	treat = 0
     	
     
     *****reading wavefront from h5 file...
+    R-space
+    nx   400  range_x [-1.4e+00, 1.4e+00] mm
+    ny   400  range_y [-1.4e+00, 1.4e+00] mm
     *****propagating wavefront (with resizing)...
-    [nx, ny, xmin, xmax, ymin, ymax] [8316, 4158, -2.654699779600155e-05, 2.6546997796001564e-05, -3.230883296886678e-05, 3.230883296886679e-05]
     done
-    propagation lasted: 0.8 min
+    propagation lasted: 1.5 min
 
 
 .. code:: python
 
-    print ('*****Focused beam behind focus: imperfect KB')
+    print('*****Focused beam behind focus: imperfect KB')
     bOnePlot= True
     isHlog = False
     isVlog = False
     bSaved = False
     plot_wfront(mwf, 'at '+str(z1+z2+z3+z4)+' m',isHlog, isVlog, 1e-3,1e-3,'x', bOnePlot)
-    #pylab.set_cmap('bone') #set color map, 'bone', 'hot', etc
-    pylab.axis('tight')    
-    print 'FWHMx [um], FWHMy [um]:',calculate_fwhm_x(mwf)*1e6,calculate_fwhm_y(mwf)*1e6
+    #plt.set_cmap('bone') #set color map, 'bone', 'hot', etc
+    plt.axis('tight')    
+    print('FWHMx [um], FWHMy [um]:',calculate_fwhm_x(mwf)*1e6,calculate_fwhm_y(mwf)*1e6)
+
 
 .. parsed-literal::
 
     *****Focused beam behind focus: imperfect KB
-    FWHMx [mm]: 0.00238172704219
-    FWHMy [mm]: 0.00449230345345
-    Coordinates of center, [mm]: -0.0010503863229 -0.000660632860802
-    stepX, stepY [um]: 0.00638532719086 0.0155443026071 
+    FWHMx [mm]: 0.0023646431961
+    FWHMy [mm]: 0.00447881848302
+    Coordinates of center, [mm]: -0.00106118209005 -0.000676488208373
+    stepX, stepY [um]: 0.00969116063974761 0.015551453066055028 
     
-    FWHMx [um], FWHMy [um]: 2.38172704219 4.49230345345
+    R-space
+    FWHMx [um], FWHMy [um]: 2.3646431961 4.47881848302
 
 
 
