@@ -1,5 +1,5 @@
 
-S1 SPB Day1 simple beamline with real mirrors and gussian pulse
+S1 SPB Day1 simplified beamline with imperfect offset mirrors
 ===============================================================
 
 .. code:: python
