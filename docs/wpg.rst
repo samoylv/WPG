@@ -184,17 +184,16 @@ Download `SRW library <https://github.com/ochubar/SRW/archive/master.zip>`_ and 
 
 Copy the following files from the SRW folder to WPG folder:	
 
-- SRW-master/env/work/srw_python/*.py to WGP/wpg
 - SRW-master/env/work/srw_python/lib/srwlpy2_x64.pyd to WGP/wpg
 
 Rename srwlpy2_x64.pyd to srwlpy.pyd
 
-Run ```ipython notebook --pylab=inline``` in ```WGP/samples```
+Run ```ipython notebook ``` in ```WGP/samples```
 
 If you have SRW already installed
 +++++++++++++++++++++++++++++++++
 
-Just copy all pyhon files ``SRW-master/env/work/srw_python/*.py`` and ``srwlpy.so`` in 'wpg'
+Just copy ``srwlpy.so`` in 'wpg'
 folder
 
 Useful links
