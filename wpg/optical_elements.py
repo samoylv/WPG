@@ -335,9 +335,9 @@ def Mirror_plane(orient, theta, length, range_xy, filename, scale=1, delim='\t')
     :return: opIPM  - imperfect plane mirror propagator 
     """
     if orient == 'x':  # horizontal plane mirror
-        opIPM = WF_dist(1500, 100, range_xy, length*theta)
+        opIPM = WF_dist(1500, 100, length*theta, range_xy)
     elif orient == 'y':  # vertical plane mirror
-        opIPM = WF_dist(100, 1500, length*theta, range_xy)
+        opIPM = WF_dist(100, 1500, range_xy, length*theta)
     else:
         raise TypeError('orient should be "x" or "y"')
     calculateOPD(opIPM, filename, 2, delim, orient, theta, scale)
