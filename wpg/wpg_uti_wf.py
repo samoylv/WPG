@@ -76,28 +76,35 @@ def averaged_intensity(wf, bPlot=True):
     """
     J2eV = 6.24150934e18
     # total0=wf.get_intensity().sum();
-    dt = (wf.params.Mesh.sliceMax-wf.params.Mesh.sliceMin) * \
-        1.e15/(wf.params.Mesh.nSlices-1)
-    dx = (wf.params.Mesh.xMax - wf.params.Mesh.xMin)/(wf.params.Mesh.nx - 1)
-    dy = (wf.params.Mesh.yMax - wf.params.Mesh.yMin)/(wf.params.Mesh.ny - 1)
-    int0 = wf.get_intensity().sum(axis=0).sum(axis=0)  # I(t/slice_num)
-    int0 = int0*(J2eV/wf.params.photonEnergy*dt*1.e-15*dx*dy*1.e4)
-    # print(int0.shape)#,int0
-    # print(J2eV/wf.params.photonEnergy*dt*1e-15*1e-4)
+    mesh = wf.params.Mesh
+    dx = (mesh.xMax - mesh.xMin)/(mesh.nx - 1)
+    dy = (mesh.yMax - mesh.yMin)/(mesh.ny - 1)
+    int0 = wf.get_intensity().sum(axis=0).sum(axis=0)  # I(slice_num)
+    int0 = int0*(dx*dy*1.e6) # wf amplitude units sqrt(W/mm^2)
+    int0_00 = wf.get_intensity()[mesh.nx/2,mesh.ny/2,:]
     int0max = max(int0)
     threshold = int0max * 0.01
     aw = numpy.argwhere(int0 > threshold)
     #print( aw.shape)
     int0_mean = int0[min(aw):max(aw)]  # meaningful range of pulse
-    # total0 =
-    # total0*J2eV/wf.params.photonEnergy*dx*dy*dt*1e-15*1e4/(dx*dy*1e12)#
-    # units: [ph/um^2], intrinsic wf: cm^2
+    print('local version')
     if bPlot:
-        # transfer Nphotons per px to Watts
-        Nph2W = wf.params.photonEnergy/(J2eV*dt*1e-15)
+        dSlice = (mesh.sliceMax - mesh.sliceMin)/(mesh.nSlices - 1)
         pylab.figure()
-        pylab.plot(int0*Nph2W)
-        pylab.plot(numpy.arange(min(aw), max(aw)), int0_mean*Nph2W, 'ro')
+        pylab.plot(numpy.arange(mesh.nSlices)*dSlice+ mesh.sliceMin,int0)
+        pylab.plot(numpy.arange(min(aw), max(aw))*dSlice + mesh.sliceMin, int0_mean, 'ro')
+        if(wf.params.wDomain=='time'): 
+            pylab.title('Power');pylab.xlabel('s');pylab.ylabel('W')
+        else: #frequency domain
+            pylab.title('Spectral Energy');pylab.xlabel('eV');pylab.ylabel('J/eV')
+        pylab.show()
+        pylab.figure()
+        pylab.plot(numpy.arange(mesh.nSlices)*dSlice+ mesh.sliceMin,int0_00)
+        pylab.plot(numpy.arange(min(aw), max(aw))*dSlice + mesh.sliceMin, int0_00[min(aw):max(aw)], 'ro')
+        if(wf.params.wDomain=='time'): 
+            pylab.title('On-Axis Power Density');pylab.xlabel('s');pylab.ylabel('W/mm^2')
+        else: #frequency domain
+            pylab.title('On-Axis Spectral Fluence');pylab.xlabel('eV');pylab.ylabel('J/eV/mm^2')
         pylab.show()
     averaged = int0_mean.sum()/len(int0_mean)
     print('number of meaningful slices:', len(int0_mean))
