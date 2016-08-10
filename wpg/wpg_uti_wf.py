@@ -81,7 +81,7 @@ def averaged_intensity(wf, bPlot=True):
     dy = (mesh.yMax - mesh.yMin)/(mesh.ny - 1)
     int0 = wf.get_intensity().sum(axis=0).sum(axis=0)  # I(slice_num)
     int0 = int0*(dx*dy*1.e6) # wf amplitude units sqrt(W/mm^2)
-    int0_00 = wf.get_intensity()[mesh.nx/2,mesh.ny/2,:]
+    int0_00 = wf.get_intensity()[mesh.ny/2,mesh.nx/2,:]
     int0max = max(int0)
     threshold = int0max * 0.01
     aw = numpy.argwhere(int0 > threshold)
