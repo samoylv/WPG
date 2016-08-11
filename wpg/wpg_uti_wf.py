@@ -87,7 +87,6 @@ def averaged_intensity(wf, bPlot=True):
     aw = numpy.argwhere(int0 > threshold)
     #print( aw.shape)
     int0_mean = int0[min(aw):max(aw)]  # meaningful range of pulse
-    print('local version')
     if bPlot:
         dSlice = (mesh.sliceMax - mesh.sliceMin)/(mesh.nSlices - 1)
         pylab.figure()
