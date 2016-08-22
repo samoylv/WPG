@@ -204,7 +204,7 @@ class Wavefront(object):
             raise ValueError(
                 'unknown polarization value, should be "total" or "horizontal" or "vertical"')
 
-        res = array.array(str(u'f'), [0] * self._get_total_elements())
+        res = array.array(str(u'f'), np.zeros(self._get_total_elements(), 'float32').tobytes())
         res = srwlib.srwl.CalcIntFromElecField(
             res, self._srwl_wf, pol, 0, 6, self.params.photonEnergy, 0, 0)
         res = np.array(res, dtype='float32', copy=False)
@@ -273,7 +273,7 @@ class Wavefront(object):
             raise ValueError(
                 'unknown polarization value, should be "total" or "horizontal" or "vertical"')
 
-        res = array.array(str(u'f'), [0] * self._get_total_elements())
+        res = array.array(str(u'f'), np.zeros(self._get_total_elements(), 'float32').tobytes())
         res = srwlib.srwl.CalcIntFromElecField(
             res, self._srwl_wf, pol, 5, 6, self.params.photonEnergy, 0, 0)
         res = np.array(res, dtype='float32')
@@ -303,7 +303,7 @@ class Wavefront(object):
             raise ValueError(
                 'unknown polarization value, should be "total" or "horizontal" or "vertical"')
 
-        res = array.array(str(u'f'), [0] * self._get_total_elements())
+        res = array.array(str(u'f'), np.zeros(self._get_total_elements(), 'float32').tobytes())
         res = srwlib.srwl.CalcIntFromElecField(
             res, self._srwl_wf, pol, 6, 6, self.params.photonEnergy, 0, 0)
         res = np.array(res, dtype='float32')
