@@ -47,7 +47,7 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
                 del group[name]
             try:
                 group.create_dataset(name, data=value, chunks=True,
-                                     compression='lzf')
+                                     compression='gzip', compression_opts=1)    # compression='lzf'
             except ValueError:  # if h5py not support compression
                 group.create_dataset(name, data=value, chunks=True)
             except TypeError:
