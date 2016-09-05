@@ -344,6 +344,84 @@ def Mirror_plane(orient, theta, length, range_xy, filename, scale=1, delim='\t')
     return opIPM
 
 
+def Mirror_plane_2d(orient, theta, length, range_xy, filename, scale=1, x0=0.,y0=0.,xscale=1.,yscale=1.):
+    """
+    Defining a plane mirror propagator with taking into account 2D surface height errors 
+
+    :param orient:  mirror orientation, 'x' (horizontal) or 'y' (vertical)
+    :param theta:   incidence angle [rad]
+    :param length:  mirror length, [m]
+    :range_xy: range in which the incident WF defined [m]
+    :filename: full file name with 2d mirror profile of three columns, x, y, and h(x, y) - heigh errors [m]  
+    :scale: scale factor, optical path difference OPD = 2*h*scale*sin(theta)
+    :x0: shift of mirror longitudinal position [m]
+    :y0: shift of mirror transverse position [m]
+    :xscale: units of 1st column of filename,  x[m]=x[nits]*xscale  [m]
+    :yscale: shift of mirror transverse position [m]
+    :return: opIPM  - imperfect plane mirror propagator 
+    """
+    from scipy import interpolate
+    from wpg.srwlib import SRWLOptT
+    import os
+
+    sinTheta = np.sin(theta)
+    _height_prof_data = np.loadtxt(filename); dim = np.shape(_height_prof_data);ntotal=dim[0];
+    nx = np.size(np.where(_height_prof_data[:,1]==_height_prof_data[0,1]))
+    ny = int(ntotal/nx);print('nx,ny:',nx,ny)
+
+    xax = _height_prof_data[0:nx,0]*xscale;       
+    xmin=min(xax);xmax=max(xax); xc = (xmin+xmax)/2; 
+    yax = _height_prof_data[0:ntotal:nx,1]*yscale;
+    ymin=min(yax);ymax=max(yax); yc = (ymin+ymax)/2; 
+    xax = xax - x0 - xc; xmin=min(xax); xmax=max(xax);
+    yax = yax - y0 - yc; ymin=min(yax); ymax=max(yax);
+
+    print('length: {:.1f} mm, width: {:.1f} mm'.format((xmax-xmin)*1e3,(ymax-ymin)*1e3))
+    if (xmin <= -length/2.) and (xmax >= length/2):
+        xmin =  -length/2; xmax = length/2
+    else:
+        raise ValueError('specified length -{0:.0f}:{0:.0f} mm exceeds \'{1:s}\' mirror limits {2:.0f}:{3:.0f} mm'.format(
+            length*1e3/2,os.path.basename(filename),xmin*1e3,xmax*1e3))
+    if (ymin <= -range_xy/2) and (ymax >= range_xy/2):
+        ymin =  -range_xy/2; ymax = range_xy/2
+    else:
+        raise ValueError('specified width -{0:.0f}:{0:.0f} mm exceeds \'{1:s}\' mirror limits {2:.0f}:{3:.0f} mm'.format(
+            range_xy*1e3/2,os.path.basename(filename),ymin*1e3,ymax*1e3))
+
+    #plt.figure();plt.plot(xax,'bx');plt.plot(yax,'ro');plt.title('xax(blue) yax(red)');
+    _height_prof_data_val = np.reshape(_height_prof_data[:,2], (ny,nx))
+    #plt.figure();plt.imshow(_height_prof_data_val);plt.colorbar(orientation='horizontal')
+    if orient=='y':
+        opIPM = SRWLOptT(100, 1500, (ymax-ymin), (xmax-xmin)*sinTheta)
+    elif orient == 'x':
+        opIPM = SRWLOptT(1500, 100, (xmax-xmin)*sinTheta, (ymax-ymin)) 
+    else:
+        raise TypeError('orient should be "x" or "y"')
+    xnew, ynew = np.mgrid[xmin:xmax:1500j, ymin:ymax:100j]
+    f = interpolate.RectBivariateSpline(xax, yax, _height_prof_data_val.T)
+    h_new = f(xnew[:,0], ynew[0,:])
+    #plt.figure();plt.pcolor(xnew, ynew, h_new);plt.colorbar(orientation='horizontal');plt.show()
+    #print('len:',len(_height_prof_data[2,:]))
+
+    auxMesh = opIPM.mesh ;
+    from array import array
+    foo = array('d',[]); 
+    for i in range(150000): 
+        foo.append(1.)
+    opIPM.arTr[::2] = foo  # Amplitude Transmission
+    foo = array('d',[]); 
+    if orient=='y':
+        for ix in range(1500): 
+            for iy in range(100):
+                foo.append(-2 * sinTheta *h_new[ix,iy]* scale)
+    elif orient == 'x':
+        for iy in range(100):
+            for ix in range(1500): 
+                foo.append(-2 * sinTheta *h_new[ix,iy]* scale)
+    opIPM.arTr[1::2] = foo    # Optical Path Difference (to check sign!)
+    return opIPM
+
+
 def VLS_grating(_mirSub, _m=1, _grDen=100, _grDen1=0, _grDen2=0, _grDen3=0, _grDen4=0, _grAng=0):
     """
     Optical Element: Grating.
