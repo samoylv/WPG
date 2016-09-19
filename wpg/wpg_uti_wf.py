@@ -109,8 +109,28 @@ def averaged_intensity(wf, bPlot=True):
     print('number of meaningful slices:', len(int0_mean))
     return averaged
 
+def plot_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
+    """
+    wrapper to plot_t_wf() that can be applied to frequency domain WF as well
 
-def plot_t_wf(wf, save='', range_x=None, range_y=None):
+    :params: wf: wavefront structure
+
+    :params: save: Whether to save the figure on disk
+    :type:  string for filename. Empty string '' means don't save.
+    :default: '', do not save the figure.
+
+    :params: range_x: x-axis range.
+    :type: float
+    :default: None, take entire x range.
+
+    :params: range_y: y-ayis range.
+    :type: float
+    :default: None, take entire y range.
+    """
+    plot_t_wf(wf, save, range_x, range_y,im_aspect)
+
+
+def plot_t_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
     """
     Plot wavefront in  R-space.
 
@@ -127,6 +147,10 @@ def plot_t_wf(wf, save='', range_x=None, range_y=None):
     :params: range_y: y-ayis range.
     :type: float
     :default: None, take entire y range.
+
+    :params: im_aspect: aspect for 2D image.
+    :type: string or float number, see matplotlib set_aspect()
+    :default: 'equal'.
     """
     import matplotlib.pyplot as plt
     # Get the wavefront and integrate over time.
@@ -157,7 +181,7 @@ def plot_t_wf(wf, save='', range_x=None, range_y=None):
     # Plot profile as 2D colorcoded map.
     profile.imshow(
         wf_intensity, extent=[xmin*1.e3, xmax*1.e3, ymax*1.e3, ymin*1.e3])
-    profile.set_aspect('equal', 'datalim')
+    profile.set_aspect(im_aspect, 'datalim')
 
     # Get x and y ranges.
     # [LS:2016-03-17]
