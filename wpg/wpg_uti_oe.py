@@ -37,14 +37,15 @@ def show_transmission(transmission):
     plt.subplot(121)
 
     plt.imshow(get_absorption(transmission),
-               extent=(mesh.xStart, mesh.xFin, mesh.yFin, mesh.yStart),
-               cmap=plt.cm.bone)
+               extent=(mesh.xStart*1e3, mesh.xFin*1e3, mesh.yFin*1e3, mesh.yStart*1e3),
+               cmap=plt.cm.bone, aspect='auto')
     plt.colorbar(orientation='horizontal')
-    plt.title('Absorption')
+    plt.title('Absorption');plt.xlabel('mm')
 
     plt.subplot(122)
     plt.imshow(get_opd(transmission),
-               extent=(mesh.xStart, mesh.xFin, mesh.yFin, mesh.yStart),
-               cmap=plt.cm.bone)
+               extent=(mesh.xStart*1e3, mesh.xFin*1e3, mesh.yFin*1e3, mesh.yStart*1e3),
+               cmap=plt.cm.bone, aspect='auto')
     plt.colorbar(orientation='horizontal')
-    plt.title('OPD [m]')
+    plt.title('OPD [m]');plt.xlabel('mm')
+    plt.show()
