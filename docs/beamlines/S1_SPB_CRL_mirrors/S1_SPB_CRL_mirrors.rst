@@ -1,6 +1,6 @@
 
-S1 SPB Day1 simplified beamline
-==============================================
+S1 SPB CRL simplified beamline with imperfect mirrors
+=====================================================
 
 .. code:: python
 
@@ -40,7 +40,7 @@ S1 SPB Day1 simplified beamline
 .. code:: python
 
     from IPython.display import Image
-    Image(filename='day1_1.png')
+    Image(filename='CRL_1.png')
 
 
 
@@ -51,72 +51,114 @@ S1 SPB Day1 simplified beamline
 
 .. code:: python
 
-    %%file bl_S1_SPB_day1_simplified.py
-    
+    %%file bl_S1_SPB_CRL_mirrors.py
     
     def get_beamline():
+        import os
+        import wpg
         from wpg import Beamline
-        from wpg.optical_elements import Aperture, Drift, CRL, Empty, Use_PP
-        #S1 beamline layout
-        ### Geometry ###
-        src_to_hom1 = 257.8 # Distance source to HOM 1 [m]
-        src_to_hom2 = 267.8 # Distance source to HOM 2 [m]
+        from wpg.optical_elements import Aperture, Drift, CRL, Empty, Use_PP, WF_dist, calculateOPD
+    
+        wpg_path = os.path.abspath(os.path.dirname(wpg.__file__))
+    
+        # S1 beamline layout
+        # Geometry ###
+        src_to_hom1 = 257.8  # Distance source to HOM 1 [m]
+        src_to_hom2 = 267.8  # Distance source to HOM 2 [m]
         src_to_crl = 887.8  # Distance source to CRL [m]
-    #     src_to_exp = 920.42 # Distance source to experiment [m]
-        z0 = src_to_hom1
-        
+        #     src_to_exp = 920.42 # Distance source to experiment [m]
+    
         # Drift to focus aperture
-        #crl_to_exp_drift = Drift( src_to_exp - src_to_crl )
+        # crl_to_exp_drift = Drift( src_to_exp - src_to_crl )
         z = 34.0
-        #define distances, angles, etc
-        #...
-        #Incidence angle at HOM
-        theta_om = 3.6e-3       # [rad]
+        # define distances, angles, etc
+        # ...
+        # Incidence angle at HOM
     
-        om_mirror_length = 0.8 # [m]
-        om_clear_ap = om_mirror_length*theta_om
+          # should be checked for other beams !!!
     
+        theta_om = 3.6e-3  # [rad]
     
-        #define the beamline:
+        om_mirror_length = 0.8  # [m]
+        om_clear_ap = om_mirror_length * theta_om
+    
+        # define the beamline:
         bl0 = Beamline()
-        zoom=1
+        zoom = 1
     
         # Define HOM1.
         aperture_x_to_y_ratio = 1
-        hom1 = Aperture(shape='r',ap_or_ob='a',Dx=om_clear_ap,Dy=om_clear_ap/aperture_x_to_y_ratio)
-        bl0.append( hom1, Use_PP(semi_analytical_treatment=0, zoom=zoom, sampling=zoom) )
+        hom1 = Aperture(
+            shape='r', ap_or_ob='a', Dx=om_clear_ap, Dy=om_clear_ap / aperture_x_to_y_ratio)
+        bl0.append(
+            hom1, Use_PP(semi_analytical_treatment=0, zoom=zoom, sampling=zoom))
+    
+        # Define mirror profile
+        hom1_wavefront_distortion = WF_dist(nx=1500, ny=100,
+                                            Dx=om_clear_ap, Dy=om_clear_ap / aperture_x_to_y_ratio)
+        # Apply distortion.
+        mirrors_path = os.path.join(wpg_path, '..', 'samples', 'data_common')
+        hom1_wavefront_distortion = calculateOPD(wf_dist=hom1_wavefront_distortion,
+                                                 mdatafile=os.path.join(
+                                                     mirrors_path, 'mirror1.dat'),
+                                                 ncol=2,
+                                                 delim=' ',
+                                                 Orient='x',
+                                                 theta=theta_om,
+                                                 scale=1.,
+                                                 stretching=1.)
+        bl0.append(hom1_wavefront_distortion,
+                   Use_PP(semi_analytical_treatment=0, zoom=zoom, sampling=zoom))
     
         # Free space propagation from hom1 to hom2
-        hom1_to_hom2_drift = Drift(src_to_hom2 - src_to_hom1); z0 = z0+(src_to_hom2 - src_to_hom1)
-        bl0.append( hom1_to_hom2_drift, Use_PP(semi_analytical_treatment=0))
-    
+        hom1_to_hom2_drift = Drift(src_to_hom2 - src_to_hom1)
+        bl0.append(hom1_to_hom2_drift, Use_PP(semi_analytical_treatment=0))
     
         # Define HOM2.
         zoom = 1.0
-        hom2 = Aperture('r','a', om_clear_ap, om_clear_ap/aperture_x_to_y_ratio)
-        bl0.append( hom2,  Use_PP(semi_analytical_treatment=0, zoom=zoom, sampling=zoom/0.75))
+        hom2 = Aperture('r', 'a', om_clear_ap, om_clear_ap / aperture_x_to_y_ratio)
+        bl0.append(hom2, Use_PP(semi_analytical_treatment=0,
+                                zoom=zoom, sampling=zoom / 0.75))
     
-        #drift to CRL aperture
-        hom2_to_crl_drift = Drift( src_to_crl - src_to_hom2 );z0 = z0+( src_to_crl - src_to_hom2 )
-        #bl0.append( hom2_to_crl_drift, Use_PP(semi_analytical_treatment=0))
-        bl0.append( hom2_to_crl_drift, Use_PP(semi_analytical_treatment=1))
+        # define mirror 2
+        # nx, ny from tutorial #3 (new).
+        hom2_wavefront_distortion = WF_dist(nx=1500, ny=100,
+                                            Dx=om_clear_ap, Dy=om_clear_ap / aperture_x_to_y_ratio)
+        # Apply distortion.
+        hom2_wavefront_distortion = calculateOPD(wf_dist=hom2_wavefront_distortion,
+                                                 mdatafile=os.path.join(
+                                                     mirrors_path, 'mirror2.dat'),
+                                                 ncol=2,
+                                                 delim=' ',
+                                                 Orient='x',
+                                                 theta=theta_om,
+                                                 scale=1.,
+                                                 stretching=1.)
     
-        
+        bl0.append(hom2_wavefront_distortion, Use_PP(
+            semi_analytical_treatment=0, zoom=zoom, sampling=zoom))
+    
+        # drift to CRL aperture
+        hom2_to_crl_drift = Drift(src_to_crl - src_to_hom2)
+    
+        bl0.append(hom2_to_crl_drift, Use_PP(semi_analytical_treatment=1))
+    
         # Define CRL
-        crl_focussing_plane = 3 # Both horizontal and vertical.
-        crl_delta = 4.7177e-06 # Refractive index decrement (n = 1- delta - i*beta)
-        crl_attenuation_length  = 6.3e-3    # Attenuation length [m], Henke data.
+        crl_focussing_plane = 3  # Both horizontal and vertical.
+        # Refractive index decrement (n = 1- delta - i*beta)
+        crl_delta = 4.7177e-06
+        crl_attenuation_length = 6.3e-3    # Attenuation length [m], Henke data.
         crl_shape = 1         # Parabolic lenses
-        crl_aperture = 5.0e-3 # [m]
-        crl_curvature_radius = 5.8e-3 # [m]
+        crl_aperture = 5.0e-3  # [m]
+        crl_curvature_radius = 5.8e-3  # [m]
         crl_number_of_lenses = 19
-        crl_wall_thickness = 8.0e-5 # Thickness
+        crl_wall_thickness = 8.0e-5  # Thickness
         crl_center_horizontal_coordinate = 0.0
         crl_center_vertical_coordinate = 0.0
-        crl_initial_photon_energy = 8.48e3 # [eV] ### OK ???
-        crl_final_photon_energy = 8.52e3 # [eV]   ### OK ???
+        crl_initial_photon_energy = 8.48e3  # [eV] ### OK ???
+        crl_final_photon_energy = 8.52e3  # [eV]   ### OK ???
     
-        crl = CRL( _foc_plane=crl_focussing_plane,
+        crl = CRL(_foc_plane=crl_focussing_plane,
                   _delta=crl_delta,
                   _atten_len=crl_attenuation_length,
                   _shape=crl_shape,
@@ -130,23 +172,24 @@ S1 SPB Day1 simplified beamline
                   _void_cen_rad=None,
                   _e_start=crl_initial_photon_energy,
                   _e_fin=crl_final_photon_energy,
-                 )
-        zoom=0.6
+                  )
+        zoom = 0.6
     
-        bl0.append( crl, Use_PP(semi_analytical_treatment=1, zoom=zoom, sampling=zoom/0.1) )
+        bl0.append(
+            crl, Use_PP(semi_analytical_treatment=1, zoom=zoom, sampling=zoom/0.1))
     
+        crl_to_exp_drift = Drift(z)
+        bl0.append(crl_to_exp_drift, Use_PP(
+            semi_analytical_treatment=1, zoom=1, sampling=1))
+        #     bl0.append(Empty(),Use_PP(zoom=0.25, sampling=0.25))
     
-        crl_to_exp_drift = Drift( z ); z0 = z0+z
-        bl0.append( crl_to_exp_drift, Use_PP(semi_analytical_treatment=1, zoom=1, sampling=1))
-    #     bl0.append(Empty(),Use_PP(zoom=0.25, sampling=0.25))
-       
         return bl0
 
 
 
 .. parsed-literal::
 
-    Overwriting bl_S1_SPB_day1_simplified.py
+    Overwriting bl_S1_SPB_CRL_mirrors.py
 
 
 initial Gaussian wavefront
@@ -250,6 +293,10 @@ Expected FWHM at first screen or focusing mirror: :math:`\theta_{FWHM}*z`
 .. image:: output_9_1.png
 
 
+
+.. image:: output_9_2.png
+
+
 .. parsed-literal::
 
     number of meaningful slices: 13
@@ -258,26 +305,26 @@ Expected FWHM at first screen or focusing mirror: :math:`\theta_{FWHM}*z`
 
 
 
-.. image:: output_9_3.png
+.. image:: output_9_4.png
 
 
 .. parsed-literal::
 
     Q-space
-    {'fwhm_x': 1.999254044117647e-06, 'fwhm_y': 1.999254044117647e-06}
+    {'fwhm_y': 1.999254044117647e-06, 'fwhm_x': 1.999254044117647e-06}
     Q-space
     (400,) (400,)
 
 
 
-.. image:: output_9_5.png
+.. image:: output_9_6.png
 
 
 .. code:: python
 
     #loading beamline from file
     import imp
-    custom_beamline = imp.load_source('custom_beamline', 'bl_S1_SPB_day1_simplified.py')
+    custom_beamline = imp.load_source('custom_beamline', 'bl_S1_SPB_CRL_mirrors.py')
     get_beamline = custom_beamline.get_beamline
     bl = get_beamline()
     print(bl)
@@ -295,6 +342,32 @@ Expected FWHM at first screen or focusing mirror: :math:`\theta_{FWHM}*z`
     	x = 0
     	y = 0
     	
+    Optical Element: Transmission (generic)
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 1e+23
+    	Fy = 1e+23
+    	arTr = array of size 300000
+    	extTr = 0
+    	mesh = Radiation Mesh (Sampling)
+    		arSurf = None
+    		eFin = 0
+    		eStart = 0
+    		hvx = 1
+    		hvy = 0
+    		hvz = 0
+    		ne = 1
+    		nvx = 0
+    		nvy = 0
+    		nvz = 1
+    		nx = 1500
+    		ny = 100
+    		xFin = 0.00144
+    		xStart = -0.00144
+    		yFin = 0.00144
+    		yStart = -0.00144
+    		zStart = 0
+    	
+    	
     Optical Element: Drift Space
     Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
     	L = 10.0
@@ -308,6 +381,32 @@ Expected FWHM at first screen or focusing mirror: :math:`\theta_{FWHM}*z`
     	shape = r
     	x = 0
     	y = 0
+    	
+    Optical Element: Transmission (generic)
+    Prop. parameters = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
+    	Fx = 1e+23
+    	Fy = 1e+23
+    	arTr = array of size 300000
+    	extTr = 0
+    	mesh = Radiation Mesh (Sampling)
+    		arSurf = None
+    		eFin = 0
+    		eStart = 0
+    		hvx = 1
+    		hvy = 0
+    		hvz = 0
+    		ne = 1
+    		nvx = 0
+    		nvy = 0
+    		nvz = 1
+    		nx = 1500
+    		ny = 100
+    		xFin = 0.00144
+    		xStart = -0.00144
+    		yFin = 0.00144
+    		yStart = -0.00144
+    		zStart = 0
+    	
     	
     Optical Element: Drift Space
     Prop. parameters = [0, 0, 1.0, 1, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
@@ -363,13 +462,17 @@ Expected FWHM at first screen or focusing mirror: :math:`\theta_{FWHM}*z`
 .. parsed-literal::
 
     FWHM after CRLs:
-    {'fwhm_x': 1.7897682395761173e-05, 'fwhm_y': 1.779350912766013e-05}
+    {'fwhm_y': 1.779350912766013e-05, 'fwhm_x': 1.5219562037271364e-05}
     FWHM at distance 921.8 m:
-    {'fwhm_x': 1.7897682395761173e-05, 'fwhm_y': 1.779350912766013e-05}
+    {'fwhm_y': 1.779350912766013e-05, 'fwhm_x': 1.5219562037271364e-05}
 
 
 
 .. image:: output_11_1.png
+
+
+
+.. image:: output_11_2.png
 
 
 .. parsed-literal::
@@ -380,18 +483,18 @@ Expected FWHM at first screen or focusing mirror: :math:`\theta_{FWHM}*z`
 
 
 
-.. image:: output_11_3.png
+.. image:: output_11_4.png
 
 
 .. parsed-literal::
 
     Q-space
-    {'fwhm_x': 4.242918502417042e-05, 'fwhm_y': 4.298910472684863e-05}
+    {'fwhm_y': 4.298910472684863e-05, 'fwhm_x': 4.242918502417042e-05}
     Q-space
     (1944,) (1944,)
 
 
 
-.. image:: output_11_5.png
+.. image:: output_11_6.png
 
 
