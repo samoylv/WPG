@@ -13,11 +13,19 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import os
+import errno
 from wpg.srwlib import SRWLOptD as Drift
 from wpg.srwlib import SRWLOptL as Lens
-from wpg.srwlib import srwl
+from wpg.srwlib import srwl, srwl_opt_setup_CRL
 import wpg.srwlib
 import numpy as np
+
+import sys
+if sys.version_info[0] == 3:
+    import pickle
+else:
+    import cPickle as pickle
 
 
 class WPGOpticalElement(object):
@@ -629,7 +637,6 @@ def CRL(_foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n,
     :return: transmission (SRWLOptT) type optical element which simulates CRL
     """
 
-    from .srwlib import srwl_opt_setup_CRL
     return srwl_opt_setup_CRL(_foc_plane, _delta, _atten_len, _shape,
                               _apert_h, _apert_v, _r_min, _n, _wall_thick,
                               _xc, _yc, _void_cen_rad, _e_start, _e_fin, _nx, _ny)
@@ -669,3 +676,141 @@ def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., stret
     AuxTransmAddSurfHeightProfileScaled(
         wf_dist, heightProfData, Orient, theta, scale)
     return wf_dist
+
+
+def _save_object(obj, file_name):
+    """
+    Save any python object to file.
+
+    :param: obj : - python objest to be saved
+    :param: file_name : - output file, wil be overwrite if exists
+    """
+    with open(file_name, 'wb') as f:
+        pickle.dump(obj, f)
+
+
+def _load_object(file_name):
+    """
+    Save any python object to file.
+
+    :param: file_name : - output file, wil be overwrite if exists
+    :return: obj : - loaded pthon object
+    """
+    res = None
+    with open(file_name, 'rb') as f:
+        res = pickle.load(f)
+
+    return res
+
+
+def mkdir_p(path):
+    """
+    Create directory with subfolders (like Linux mkdir -p)
+
+    :param path: Path to be created
+    """
+    try:
+        os.makedirs(path)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+
+
+def create_CRL(directory=None, voids_params=None,
+               _foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n,
+               _wall_thick, _xc, _yc, _void_cen_rad=None,
+               _e_start=0, _e_fin=0, _nx=1001, _ny=1001):
+    """
+    This function build CLR or load it from file if it was created beforehand.
+    Out/input filename builded as sequence of function parameters.
+
+    Adiitinal parameters (*args) passed to srwlib.srwl_opt_setup_CRL function
+
+    :param directory: output directory to save file.
+    :param voids_params: void params to build CRL and construct unique file name
+    :param _foc_plane: plane of focusing: 1- horizontal, 2- vertical, 3- both
+    :param _delta: refractive index decrement (can be one number of array vs photon energy)
+    :param _atten_len: attenuation length [m] (can be one number of array vs photon energy)
+    :param _shape: 1- parabolic, 2- circular (spherical)
+    :param _apert_h: horizontal aperture size [m]
+    :param _apert_v: vertical aperture size [m]
+    :param _r_min: radius (on tip of parabola for parabolic shape) [m]
+    :param _n: number of lenses (/"holes")
+    :param _wall_thick: min. wall thickness between "holes" [m]
+    :param _xc: horizontal coordinate of center [m]
+    :param _yc: vertical coordinate of center [m]
+    :param _void_cen_rad: flat array/list of void center coordinates and radii: [x1, y1, r1, x2, y2, r2,...] 
+    :param _e_start: initial photon energy
+    :param _e_fin: final photon energy
+    :return: SRWL CRL object
+    """
+    if not isinstance(voids_params, tuple):
+        raise TypeError('Voids_params must be tuple')
+
+    file_name = '_'.join([str(a) for a in args[:-1]])
+    subdir_name = '_'.join([str(v) for v in voids_params])
+    if directory is None:
+        full_path = os.path.join(subdir_name, file_name + '.pkl')
+    else:
+        full_path = os.path.join(directory, subdir_name, file_name + '.pkl')
+
+    if os.path.isfile(full_path):
+        print('Found file {}. CLR will be loaded from file'.format(full_path))
+        res = _load_object(full_path)
+        return res
+    else:
+        print('CLR file NOT found. CLR will be recalculated and saved in file {}'.format(
+            full_path))
+        res = CRL(_foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n,
+                  _wall_thick, _xc, _yc, _void_cen_rad,
+                  _e_start, _e_fin, _nx, _ny)
+        mkdir_p(os.path.dirname(full_path))
+        _save_object(res, full_path)
+        return res
+
+
+def create_CRL_from_file(directory, file_name,
+                         _foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n,
+                         _wall_thick, _xc, _yc, _void_cen_rad=None,
+                         _e_start=0, _e_fin=0, _nx=1001, _ny=1001):
+    """
+    This function build CLR or load it from file.
+    Out/input filename builded as sequence of function parameters.
+    Adiitinal parameters (*args) passed to srwlib.srwl_opt_setup_CRL function
+
+    :param directory: output directory
+    :param fiel_name: CRL file name
+    :param _foc_plane: plane of focusing: 1- horizontal, 2- vertical, 3- both
+    :param _delta: refractive index decrement (can be one number of array vs photon energy)
+    :param _atten_len: attenuation length [m] (can be one number of array vs photon energy)
+    :param _shape: 1- parabolic, 2- circular (spherical)
+    :param _apert_h: horizontal aperture size [m]
+    :param _apert_v: vertical aperture size [m]
+    :param _r_min: radius (on tip of parabola for parabolic shape) [m]
+    :param _n: number of lenses (/"holes")
+    :param _wall_thick: min. wall thickness between "holes" [m]
+    :param _xc: horizontal coordinate of center [m]
+    :param _yc: vertical coordinate of center [m]
+    :param _void_cen_rad: flat array/list of void center coordinates and radii: [x1, y1, r1, x2, y2, r2,...] 
+    :param _e_start: initial photon energy
+    :param _e_fin: final photon energy
+    :return: SRWL CRL object
+    """
+
+    full_path = os.path.join(directory, file_name + '.pkl')
+
+    if os.path.isfile(full_path):
+        print('Found file {}. CLR will be loaded from file'.format(full_path))
+        res = _load_object(full_path)
+        return res
+    else:
+        print('CLR file NOT found. CLR will be recalculated and saved in file {}'.format(
+            full_path))
+        res = CRL(_foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n,
+                  _wall_thick, _xc, _yc, _void_cen_rad,
+                  _e_start, _e_fin, _nx, _ny)
+        mkdir_p(os.path.dirname(full_path))
+        _save_object(res, full_path)
+        return res
