@@ -7,6 +7,17 @@ def test_import_wpg_members():
     import sys
     sys.path.insert(0, '..')
     from wpg import Wavefront, Beamline
+    import wpg.beamline
+    import wpg.glossary
+    import wpg.generators
+    import wpg.optical_elements
+    import wpg.srwlib
+    import wpg.srwlpy
+    import wpg.utils
+    import wpg.wpg_uti_exfl
+    import wpg.wpg_uti_oe
+    import wpg.wpg_uti_wf
+
 
 def test_simple_gauusina_propagation():
 
