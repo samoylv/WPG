@@ -718,7 +718,7 @@ def mkdir_p(path):
             raise
 
 
-def create_CRL(directory=None, voids_params=None,
+def create_CRL(directory, voids_params,
                _foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n,
                _wall_thick, _xc, _yc, _void_cen_rad=None,
                _e_start=0, _e_fin=0, _nx=1001, _ny=1001):
