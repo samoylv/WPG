@@ -30,7 +30,10 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
 
         for (k, v) in list(group.items()):
             if isinstance(v, dict):
-                tmp_group = pearent_goup.create_group(k)
+                if k not in pearent_goup:
+                    tmp_group = pearent_goup.create_group(k)
+                else:
+                    tmp_group = pearent_goup[k]
                 store_group(v, tmp_group)
             else:
                 store_value(k, v, pearent_goup)
