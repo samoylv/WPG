@@ -3,6 +3,7 @@ def test_import_wpg():
     sys.path.insert(0, '..')
     import wpg
 
+
 def test_import_wpg_members():
     import sys
     sys.path.insert(0, '..')
@@ -20,7 +21,7 @@ def test_import_wpg_members():
 
 
 def test_simple_gauusina_propagation():
-
+    # TODO: fix propagation for coerrect results
     import sys
     sys.path.insert(0, '..')
     import os
@@ -49,7 +50,7 @@ def test_simple_gauusina_propagation():
     xmin = - xmax
     ymin = xmin
     ymax = xmax
-    nx = 600
+    nx = 300
     ny = nx
     nz = 3
     tau = 0.12e-15
@@ -60,17 +61,19 @@ def test_simple_gauusina_propagation():
     b = Beamline()
     b.append(Drift(5), Use_PP())
     b.propagate(wf)
-    # srwl.ResizeElecField(srw_wf, 'c', [0, 0.25, 1, 0.25, 1])
+    srwl.ResizeElecField(srw_wf, 'c', [0, 0.25, 1, 0.25, 1])
 
-    if not os.path.exists('tests_data'):
-        os.mkdir('tests_data')
+    out_folder = os.path.join(os.path.dirname(__file__), 'tests_data')
+    if not os.path.exists(out_folder):
+        os.mkdir(out_folder)
 
-    wf_hdf5_out_file_path = os.path.join('tests_data', 'my_gauss.h5')
+    wf_hdf5_out_file_path = os.path.join(out_folder, 'my_gauss.h5')
     wf.store_hdf5(wf_hdf5_out_file_path)
 
     wf_out = wpg.Wavefront()
     wf_out.load_hdf5(wf_hdf5_out_file_path)
     return wf
+
 
 def test_hisotry():
     import sys
@@ -81,7 +84,7 @@ def test_hisotry():
     from wpg.generators import build_gauss_wavefront
     from wpg.beamline import Beamline
     from wpg.optical_elements import Drift, Use_PP
-    from wpg.srwlib import srwl
+    # from wpg.srwlib import srwl
 
     import numpy as np
 
@@ -101,7 +104,7 @@ def test_hisotry():
     xmin = - xmax
     ymin = xmin
     ymax = xmax
-    nx = 600
+    nx = 300
     ny = nx
     nz = 3
     tau = 0.12e-15
@@ -110,20 +113,22 @@ def test_hisotry():
         nx, ny, nz, ekev, xmin, xmax, ymin, ymax, tau, sigX, sigX, d2waist)
     wf = wpg.Wavefront(srw_wf)
     b = Beamline()
-    b.append(Drift(5), Use_PP())
-    b.propagate(wf)
+    # b.append(Drift(5), Use_PP())
+    # b.propagate(wf)
     # srwl.ResizeElecField(srw_wf, 'c', [0, 0.25, 1, 0.25, 1])
 
-    if not os.path.exists('tests_data'):
-        os.mkdir('tests_data')
+    out_folder = os.path.join(os.path.dirname(__file__), 'tests_data')
+    if not os.path.exists(out_folder):
+        os.mkdir(out_folder)
 
-    wf_hdf5_out_file_path = os.path.join('tests_data', 'my_gauss.h5')
+    wf_hdf5_out_file_path = os.path.join(out_folder, 'my_gauss_history.h5')
+    wf.store_hdf5(wf_hdf5_out_file_path)
 
-    wf.custom_fields['/params/beamline/printout'] = str(b)
+    wf.custom_fields['/history/params/beamline/printout'] = str(b)
     wf.store_hdf5(wf_hdf5_out_file_path)
 
     wf_out = wpg.Wavefront()
     wf_out.load_hdf5(wf_hdf5_out_file_path)
-    wf_out.custom_fields['/params/beamline/printout'] = str(b)
+    wf_out.custom_fields['/history/params/beamline/printout'] = str(b)
     wf_out.store_hdf5(wf_hdf5_out_file_path)
     return wf
