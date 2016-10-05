@@ -44,19 +44,19 @@ Download and build library
 
  .. code:: sh
 
-		wget http://github.com/samoylv/WPG/archive/master.zip
+		wget http://github.com/samoylv/WPG/archive/develop.zip
 
 Extract package:
 
 	.. code:: sh
 
-		unzip master.zip
+		unzip develop.zip
 
 Change the directory:
 
 	.. code:: sh
 
-		cd WPG-master
+		cd WPG-develop
 
 Build library. This will download and build FFTW2 and SRW:
 
@@ -117,7 +117,7 @@ Change the directory
 
 	.. code:: sh
 
-		cd WPG-master
+		cd WPG-develop
 
 Build library. This will download and build FFTW2 and SRW
 
