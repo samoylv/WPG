@@ -105,13 +105,13 @@ Download and build library
 
 	.. code:: sh
 
-		wget --no-check-certificate http://github.com/samoylv/WPG/archive/master.zip
+		wget --no-check-certificate http://github.com/samoylv/WPG/archive/develop.zip
 
 Extract package
 
 	.. code:: sh
 
-		unzip master.zip
+		unzip develop.zip
 
 Change the directory
 
@@ -178,13 +178,13 @@ On MS Windows
 
 You should have installed python2.7 with modules numpy, matplotlib, h5py and ipython. If these modules have not been installed yet, you can download a free python bundle with preinstalled packages `here <http://continuum.io/downloads>`_ 
 
-Download `WPG package <https://github.com/samoylv/WPG/archive/master.zip>`_ and unpack it.
+Download `WPG package <https://github.com/samoylv/WPG/archive/develop.zip>`_ and unpack it.
 
-Download `SRW library <https://github.com/ochubar/SRW/archive/master.zip>`_ and unpack it in any folder.
+Download `Our small brunch of SRW library <https://github.com/buzmakov/SRW/archive/feature/srw_lite.zip>`_ and unpack it in any folder.
 
 Copy the following files from the SRW folder to WPG folder:	
 
-- SRW-master/env/work/srw_python/lib/srwlpy2_x64.pyd to WGP/wpg
+- SRW-feature-srw_lite/env/work/srw_python/lib/srwlpy2_x64.pyd to WGP/wpg
 
 Rename srwlpy2_x64.pyd to srwlpy.pyd
 
