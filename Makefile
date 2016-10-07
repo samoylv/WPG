@@ -12,8 +12,6 @@ modules: core
 clean:
 	cd build; make clean
 	rm wpg/srwlpy*.so
-	rm wpg/srwlib.py
-	rm wpg/uti_plot.py
 	rm docs/srwlib.h
 
 ipython: core
