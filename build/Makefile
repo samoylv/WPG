@@ -86,10 +86,10 @@ srw:
 	unzip -o $(SRC_DIR)/srw.zip -d $(TMP_DIR)
 	rm -rf $(TMP_DIR)/SRW
 	mv $(TMP_DIR)/SRW-feature-srw_lite_update $(TMP_DIR)/SRW
-	cp $(BUILD_DIR)/lib/libfftw.a $(TMP_DIR)/SRW/ext_lib/
-	cp $(BUILD_DIR)/lib/librfftw.a $(TMP_DIR)/SRW/ext_lib/
+	# cp $(BUILD_DIR)/lib/libfftw.a $(TMP_DIR)/SRW/ext_lib/
+	# cp $(BUILD_DIR)/lib/librfftw.a $(TMP_DIR)/SRW/ext_lib/
 
 	cd $(TMP_DIR)/SRW; make all;
-	cp $(TMP_DIR)/SRW/cpp/gcc/libsrw.a $(BUILD_DIR)/lib
-	cp $(TMP_DIR)/SRW/cpp/gcc/srwlpy*.so $(BUILD_DIR)/lib
+	# cp $(TMP_DIR)/SRW/cpp/gcc/libsrw.a $(BUILD_DIR)/lib
+	cp $(TMP_DIR)/SRW/cpp/gcc/srwlpy*.so $(BUILD_DIR)/lib/
 	cp $(TMP_DIR)/SRW/cpp/gcc/srwlpy*.so $(TMP_DIR)/SRW/env/work/srw_python
