@@ -90,6 +90,7 @@ srw:
 	# cp $(BUILD_DIR)/lib/librfftw.a $(TMP_DIR)/SRW/ext_lib/
 
 	cd $(TMP_DIR)/SRW; make all;
+	mkdir -p $(BUILD_DIR)/lib
 	# cp $(TMP_DIR)/SRW/cpp/gcc/libsrw.a $(BUILD_DIR)/lib
 	cp $(TMP_DIR)/SRW/cpp/gcc/srwlpy*.so $(BUILD_DIR)/lib/
 	cp $(TMP_DIR)/SRW/cpp/gcc/srwlpy*.so $(TMP_DIR)/SRW/env/work/srw_python
