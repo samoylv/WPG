@@ -85,7 +85,7 @@ srw:
 	wget --no-check-certificate -nc -O $(SRC_DIR)/srw.zip https://github.com/buzmakov/SRW/archive/feature/srw_lite_update.zip; echo 'Done'
 	unzip -o $(SRC_DIR)/srw.zip -d $(TMP_DIR)
 	rm -rf $(TMP_DIR)/SRW
-	mv $(TMP_DIR)/SRW-feature-srw_lite $(TMP_DIR)/SRW
+	mv $(TMP_DIR)/SRW-feature-srw_lite_update $(TMP_DIR)/SRW
 	cp $(BUILD_DIR)/lib/libfftw.a $(TMP_DIR)/SRW/ext_lib/
 	cp $(BUILD_DIR)/lib/librfftw.a $(TMP_DIR)/SRW/ext_lib/
 
