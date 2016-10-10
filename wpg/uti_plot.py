@@ -30,7 +30,7 @@ Modules:
 .. moduleauthor:: Rob Nagler <nagler@radiasoft.net>
 """
 import sys
-import uti_plot_com
+import wpg.uti_plot_com as uti_plot_com
 import traceback
 
 _backend = None

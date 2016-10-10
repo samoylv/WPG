@@ -20,7 +20,7 @@ import sys
 import os
 import traceback
 from wpg import uti_math
-from .srwl_uti_cryst import *
+from wpg.srwl_uti_cryst import *
 #try:
 #    from uti_plot import * #universal simple plotting module distributed together with SRWLib
 #except:

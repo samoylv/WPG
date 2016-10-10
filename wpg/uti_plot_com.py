@@ -8,8 +8,8 @@ import traceback
 #import sys
 #import numpy as np
 
-import uti_math
-import uti_io
+from wpg import uti_math
+from wpg import uti_io
 
 
 def _traj_file_load(fname, traj_axis='x'):  #MR20160725
