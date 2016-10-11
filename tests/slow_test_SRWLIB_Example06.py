@@ -18,7 +18,7 @@ print('SRWLIB Extended Example # 6:')
 print('Calculating spectral flux of undulator radiation by finite-emittance electron beam collected through a finite aperture and power density distribution of this radiation (integrated over all photon energies)')
 
 #**********************Input Parameters:
-strExDataFolderName = 'data_example_06' #example data sub-folder name
+strExDataFolderName = os.path.join(os.path.dirname(__file__),'data_example_06')  #example data sub-folder name
 strFluxOutFileName = 'ex06_res_flux.dat' #file name for output UR flux data
 strPowOutFileName = 'ex06_res_pow.dat' #file name for output power density data
 strTrjOutFileName = 'ex06_res_trj.dat' #file name for output trajectory data

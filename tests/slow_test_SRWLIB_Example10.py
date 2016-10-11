@@ -28,7 +28,7 @@ print('so the execution of the long loop over "macro-electrons" can be aborted a
 print('')
 
 #**********************Input Parameters:
-strExDataFolderName = 'data_example_10' #example data sub-folder name
+strExDataFolderName = os.path.join(os.path.dirname(__file__),'data_example_10')  #example data sub-folder name
 strIntSE_OutFileName = 'ex10_res_int_se.dat' #file name for output initial single-electron SR intensity data
 strIntPropSE_OutFileName = 'ex10_res_int_prop_se.dat' #file name for output propagated single-electron SR intensity data
 strIntPropME_OutFileName = 'ex10_res_int_prop_me.dat' #file name for output propagated multi-electron SR intensity data

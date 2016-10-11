@@ -17,7 +17,7 @@ print('SRWLIB Python Example # 1:')
 print('Calculating electron trajectory in 3D magnetic field of an APPLE-II undulator')
 
 #**********************Input Parameters:
-strExDataFolderName = 'data_example_01' #example data sub-folder name
+strExDataFolderName = os.path.join(os.path.dirname(__file__), 'data_example_01') #example data sub-folder name
 #arFldInFileNames = ['epu49term1.dat', 'epu49cen.dat', 'epu49term2.dat'] #3D Magnetic Field data file names
 arFldInFileNames = ['epu49HEtot.dat'] #3D Magnetic Field data file names
 strTrajOutFileName = 'ex01_res_traj_off.dat' #file name for output trajectory data

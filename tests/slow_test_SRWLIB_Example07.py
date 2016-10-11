@@ -19,7 +19,7 @@ print('Simulating propagation of a Gaussian X-ray beam through a simple optical 
 
 #**********************Input Parameters and structures:
 
-strDataFolderName = 'data_example_07' #data sub-folder name
+strDataFolderName = os.path.join(os.path.dirname(__file__), 'data_example_07')  #data sub-folder name
 strIntOutFileName1 = 'ex07_res_int_in.dat' #file name for output SR intensity data
 strPhOutFileName1 = 'ex07_res_ph_in.dat' #file name for output SR phase data
 strIntPropOutFileName1 = 'ex07_res_int_dist_crl_p1.dat' #file name for output SR intensity data

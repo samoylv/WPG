@@ -17,7 +17,7 @@ print('SRWLIB Python Example # 5:')
 print('Calculating electron trajectory in long segmented undulator, and the corresponding single-electron on-axis spectrum and intensity distribution at fundamental harmonic')
 
 #**********************Input Parameters:
-strExDataFolderName = 'data_example_05' #example data sub-folder name
+strExDataFolderName = os.path.join(os.path.dirname(__file__), 'data_example_05')  #example data sub-folder name
 arFldInFileName = 'segmented.dat' #3D Magnetic Field data file names
 strTrajOutFileName = 'ex05_res_traj.dat' #file name for output trajectory data
 strIntOutFileName1 = 'ex05_res_int1.dat' #file name for output SR intensity data

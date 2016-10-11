@@ -19,7 +19,7 @@ print('Calculating spectral flux of undulator radiation by finite-emittance elec
 print('through a simple optical system containing dispersive CRL')
 
 #**********************Input Parameters:
-strDataFolderName = 'data_example_11' #example data sub-folder name
+strDataFolderName = os.path.join(os.path.dirname(__file__),'data_example_11')  #example data sub-folder name
 strOptPathDifCRL_Be = 'ex11_res_opt_path_dif_crl_be.dat' #file name for optical path difference of Be CRL
 strOptPathDifCRL_Al = 'ex11_res_opt_path_dif_crl_al.dat' #file name for optical path difference of Al CRL
 strFluxOutFileName = 'ex11_res_multi_e_in_spec_flux.dat' #file name for output UR flux data

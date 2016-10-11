@@ -16,7 +16,7 @@ print('SRWLIB Python Example # 3:')
 print('Calculating synchrotron (undulator) radiation emitted by an electron travelling in a helical undulator')
 
 #**********************Input Parameters:
-strExDataFolderName = 'data_example_03' #example data sub-folder name
+strExDataFolderName = os.path.join(os.path.dirname(__file__),'data_example_03') #example data sub-folder name
 strTrajOutFileName = 'ex03_res_traj.dat' #file name for output trajectory data
 strIntOutFileName1 = 'ex03_res_int1.dat' #file name for output SR intensity data
 strIntOutFileName2 = 'ex03_res_int2.dat' #file name for output SR intensity data

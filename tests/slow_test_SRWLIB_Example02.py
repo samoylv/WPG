@@ -17,7 +17,7 @@ print('Calculating electron trajectory in magnetic field of a segmented planar u
 
 #**********************Input Parameters
 #**********************Folder and File names
-strExDataFolderName = 'data_example_02' #example data sub-folder name
+strExDataFolderName = os.path.join(os.path.dirname(__file__),'data_example_02')  #example data sub-folder name
 strFldOutFileName = 'ex02_res_fld.dat' #file name for output (tabulated) magnetic field data
 strTrajOutFileName = 'ex02_res_traj.dat' #file name for output trajectory data
 

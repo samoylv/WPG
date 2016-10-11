@@ -16,7 +16,7 @@ print('SRWLIB Python Example # 4:')
 print('Calculating synchrotron (undulator) radiation electric field (from one electron) and performing simulation of wavefront propagation through a simple optical system')
 
 #**********************Input Parameters:
-strExDataFolderName = 'data_example_04' #example data sub-folder name
+strExDataFolderName = os.path.join(os.path.dirname(__file__), 'data_example_04') #example data sub-folder name
 strIntOutFileName1 = 'ex04_res_int1.dat' #file names for output SR intensity data
 strIntOutFileName2 = 'ex04_res_int2.dat'
 
