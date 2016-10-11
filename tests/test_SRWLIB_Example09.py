@@ -18,7 +18,7 @@ print('Simulating propagation of a Coherent Gaussian X-ray beam through a Beamli
 
 #**********************Input Parameters and Structures
 #***********Folder and Data File Names
-strDataFolderName = 'data_example_09' #data sub-folder name
+strDataFolderName = os.path.join(os.path.dirname(__file__),'data_example_09') #data sub-folder name
 strMirSurfHeightErrInFileName01 = 'mirror1.dat' #mirror surface height error input file name
 strMirOptPathDifOutFileName01 = 'ex09_res_opt_path_dif_er_m1.dat' #optical path difference due to mirror surface height error output file name
 strMirOptPathDifOutFileName02 = 'ex09_res_opt_path_dif_er_vfm.dat' #optical path difference due to mirror surface height error output file name

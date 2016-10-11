@@ -19,7 +19,7 @@ print('SRWLIB Python Example # 15:')
 print('Calculating propagation of a gaussian beam through a drift and comparison with the analytical calculation.')
 
 #************************************* Create examples directory if it does not exist
-example_folder = 'data_example_15'
+example_folder = os.path.join(os.path.dirname(__file__),'data_example_15') 
 if not os.path.isdir(example_folder):
     os.mkdir(example_folder)
 

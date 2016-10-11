@@ -34,7 +34,7 @@ be sure that a folder data_esm is present in the current working directory.
 '''
 
 #*********************************File Names
-strExDataFolderName = 'data_example_12' #example data sub-folder name
+strExDataFolderName = os.path.join(os.path.dirname(__file__),'data_example_12') #example data sub-folder name
 strIntSE_OutFilePath = os.path.join(os.getcwd(), strExDataFolderName, 'ex12_res_int_se') #file name for output initial single-electron SR intensity data
 strIntPropSE_OutFilePath = os.path.join(os.getcwd(), strExDataFolderName, 'ex12_res_int_prop_se') #file name for output propagated single-electron SR intensity data
 strIntPropME_OutFilePath = os.path.join(os.getcwd(), strExDataFolderName, 'ex12_res_int_prop_me') #file name for output propagated multi-electron SR intensity data

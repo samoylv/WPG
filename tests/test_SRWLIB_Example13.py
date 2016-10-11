@@ -16,7 +16,7 @@ print('SRWLIB Python Example # 13:')
 print('Simulating emission and propagation of Bending Magnet Synchrotron Radiaiton wavefront through a simple beamline')
 
 #***********Data Folder and File Names
-strExDataFolderName = 'data_example_13' #example data sub-folder name
+strExDataFolderName = os.path.join(os.path.dirname(__file__),'data_example_13') #example data sub-folder name
 strSpecOutFileName0 = 'ex13_res_spec.dat' #file name for output SR spectrum vs photon energy data
 strIntOutFileName0 = 'ex13_res_int_se.dat' #file name for output initial single-electron SR intensity vs X and Y data
 strIntOutFileName1 = 'ex13_res_int_prop_se.dat' #file name for output propagated single-electron SR intensity vs X and Y data

@@ -112,7 +112,7 @@ def ExtractAndSavePulseData(_wfr, _fn_prefix, _ec=0, _xc=0, _yc=0):
 
 #**********************Input Parameters and Structures
 #***********Folder and Data File Names
-strDataFolderName = 'data_example_14' #data sub-folder name
+strDataFolderName = os.path.join(os.path.dirname(__file__),'data_example_14')  #data sub-folder name
 strIntOutFileNameCore0 = 'ex14_res_int_in' #file name core for initial radiation intensity data
 strPhOutFileNameCore0 = 'ex14_res_ph_in' #file name core for initial radiation phase data
 strIntOutFileNameCore1 = 'ex14_res_int_pr' #file name core for propagated radiation intensity data
