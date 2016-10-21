@@ -2833,8 +2833,8 @@ def srwl_opt_setup_CRL(_foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_
                 pathInBody -= ray_path_in_spheres(x, y, _void_cen_rad)
 
             for ie in range(ne):
-                opT.arTr[ofst] = exp(-0.5*pathInBody/arAttenLen[0][ie]) #amplitude transmission   <-- FIX by AB
-                opT.arTr[ofst + 1] = -arDelta[0][ie]*pathInBody #optical path difference  <-- FIX by AB
+                opT.arTr[ofst] = exp(-0.5*pathInBody/arAttenLen[ie]) #amplitude transmission
+                opT.arTr[ofst + 1] = -arDelta[ie]*pathInBody #optical path difference
                 ofst += 2
             x += hx
         y += hy
