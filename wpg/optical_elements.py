@@ -433,12 +433,12 @@ def Mirror_plane_2d(orient, theta, length, range_xy, filename, scale=1, x0=0., y
 
     auxMesh = opIPM.mesh
     from array import array
-    foo = array('d', [])
+    foo = array(str(u'd'), [])
     # for i in range(150000):
     #     foo.append(1.)
-    foo = array('d', [1.]*150000)
+    foo = array(str(u'd'), [1.]*150000)
     opIPM.arTr[::2] = foo  # Amplitude Transmission
-    foo = array('d', [])
+    foo = array(str(u'd'), [])
     if orient == 'y':
         for ix in range(1500):
             for iy in range(100):
