@@ -329,7 +329,7 @@ def WF_dist(nx, ny, Dx, Dy):
     return SRWLOptT(nx, ny, Dx, Dy)
 
 
-def Mirror_plane(orient, theta, length, range_xy, filename, scale=1, delim=' ', stretching=1, bPlot=False):
+def Mirror_plane(orient, theta, length, range_xy, filename, scale=1, delim=' ', xscale = 1, x0 = 0., bPlot=False):
     """
     Defining a plane mirror propagator with taking into account surface height errors 
 
@@ -338,8 +338,10 @@ def Mirror_plane(orient, theta, length, range_xy, filename, scale=1, delim=' ', 
     :param length:  mirror length, [m]
     :range_xy: range in which the incident WF defined [m]
     :filename: full file name with mirror profile of two columns, x and h(x) - heigh errors [m]  
-    :scale: scale factor, optical path difference OPD = 2*h*scale*sin(theta)
+    :scale: - height errors scale factor, optical path difference OPD = 2*h*scale*sin(theta)
     :delim: delimiter between data columns
+    :param xscale: scaling factor for the mirror profile x-axis (for taking an arbitrary scaled axis, i.e. im mm)
+    :x0: shift of mirror longitudinal position [m]
     :return: opIPM  - imperfect plane mirror propagator 
     """
     if orient == 'x':  # horizontal plane mirror
@@ -350,7 +352,8 @@ def Mirror_plane(orient, theta, length, range_xy, filename, scale=1, delim=' ', 
         raise TypeError('orient should be "x" or "y"')
 
     calculateOPD(opIPM, mdatafile=filename, ncol=2, delim=delim,
-                 Orient=orient, theta=theta, scale=scale, bPlot=bPlot)
+                 Orient=orient, theta=theta, scale=scale, 
+                 length = length, scale_x = xscale, bPlot=bPlot)
     return opIPM
 
 
@@ -642,7 +645,7 @@ def CRL(_foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n,
                               _xc, _yc, _void_cen_rad, _e_start, _e_fin, _nx, _ny)
 
 
-def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., stretching=1., bPlot=False):
+def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., length=1., scale_x=1., bPlot=False):
     """
     Calculates optical path difference (OPD) from mirror profile and
     fills the struct wf_dist (``struct SRWLOptT``) for wavefront distortions
@@ -655,7 +658,8 @@ def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., stret
     :params orient: mirror orientation, 'x' (horizontal) or 'y' (vertical)
     :params theta: incidence angle
     :params scale: scaling factor for the mirror profile
-    :param stretching: scaling factor for the mirror profile x-axis (@TODO a hack, should be removed ASAP)
+    :param scale_x: scaling factor for the mirror profile x-axis (for taking an arbitrary scaled axis, i.e. im mm)
+    :param length: mirror length, m, default value 1 m
     :return filled
     """
     from numpy import loadtxt
@@ -663,14 +667,14 @@ def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., stret
     from wpg.useful_code.srwutils import AuxTransmAddSurfHeightProfileScaled
 
     heightProfData = loadtxt(mdatafile).T
-    heightProfData[0, :] = heightProfData[0, :] * stretching
+    heightProfData[0, :] = heightProfData[0, :] * scale_x
 
     if bPlot:
         import pylab as plt
         plt.figure()
         plt.plot(heightProfData[0, :]*1e3, heightProfData[1, :]*scale*1.e9)
-        plt.xlabel('mm')
-        plt.ylabel('nm')
+        plt.xlim([-length*0.5e3,length*0.5e3])
+        plt.xlabel('mm'); plt.ylabel('nm')
         plt.title('Height error profile {:s}'.format(mdatafile))
         plt.show()
     AuxTransmAddSurfHeightProfileScaled(

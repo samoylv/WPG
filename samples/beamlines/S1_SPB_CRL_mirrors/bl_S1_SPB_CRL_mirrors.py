@@ -3,7 +3,7 @@ def get_beamline():
     import os
     import wpg
     from wpg import Beamline
-    from wpg.optical_elements import Aperture, Drift, CRL, Empty, Use_PP, WF_dist, calculateOPD
+    from wpg.optical_elements import Aperture, Drift, CRL, Empty, Use_PP, Mirror_plane
 
     wpg_path = os.path.abspath(os.path.dirname(wpg.__file__))
 
@@ -39,20 +39,16 @@ def get_beamline():
     bl0.append(
         hom1, Use_PP(semi_analytical_treatment=0, zoom=zoom, sampling=zoom))
 
-    # Define mirror profile
-    hom1_wavefront_distortion = WF_dist(nx=1500, ny=100,
-                                        Dx=om_clear_ap, Dy=om_clear_ap / aperture_x_to_y_ratio)
-    # Apply distortion.
+    # Define and apply mirror distortion profile.
     mirrors_path = os.path.join(wpg_path, '..', 'samples', 'data_common')
-    hom1_wavefront_distortion = calculateOPD(wf_dist=hom1_wavefront_distortion,
-                                             mdatafile=os.path.join(
-                                                 mirrors_path, 'mirror1.dat'),
-                                             ncol=2,
-                                             delim=' ',
-                                             Orient='x',
-                                             theta=theta_om,
+    hom1_wavefront_distortion = Mirror_plane(orient='x', 
+                                             theta=theta_om, 
+                                             length=om_mirror_length, 
+                                             range_xy=om_clear_ap/aperture_x_to_y_ratio, 
+                                             filename=os.path.join(
+                                             mirrors_path, 'mirror1.dat'), 
                                              scale=1.,
-                                             stretching=1.)
+                                             bPlot=True)
     bl0.append(hom1_wavefront_distortion,
                Use_PP(semi_analytical_treatment=0, zoom=zoom, sampling=zoom))
 
@@ -66,21 +62,16 @@ def get_beamline():
     bl0.append(hom2, Use_PP(semi_analytical_treatment=0,
                             zoom=zoom, sampling=zoom / 0.75))
 
-    # define mirror 2
-    # nx, ny from tutorial #3 (new).
-    hom2_wavefront_distortion = WF_dist(nx=1500, ny=100,
-                                        Dx=om_clear_ap, Dy=om_clear_ap / aperture_x_to_y_ratio)
-    # Apply distortion.
-    hom2_wavefront_distortion = calculateOPD(wf_dist=hom2_wavefront_distortion,
-                                             mdatafile=os.path.join(
-                                                 mirrors_path, 'mirror2.dat'),
-                                             ncol=2,
-                                             delim=' ',
-                                             Orient='x',
-                                             theta=theta_om,
+    # define and apply mirror distortion.
+    hom2_wavefront_distortion = Mirror_plane(orient='x', 
+                                             theta=theta_om, 
+                                             length=om_mirror_length, 
+                                             range_xy=om_clear_ap/aperture_x_to_y_ratio, 
+                                             filename=os.path.join(
+                                             mirrors_path, 'mirror2.dat'), 
                                              scale=1.,
-                                             stretching=1.)
-
+                                             xscale=1.,
+                                             bPlot=True)
     bl0.append(hom2_wavefront_distortion, Use_PP(
         semi_analytical_treatment=0, zoom=zoom, sampling=zoom))
 
