@@ -353,11 +353,11 @@ def Mirror_plane(orient, theta, length, range_xy, filename, scale=1, delim=' ', 
 
     calculateOPD(opIPM, mdatafile=filename, ncol=2, delim=delim,
                  Orient=orient, theta=theta, scale=scale, 
-                 length = length, scale_x = xscale, bPlot=bPlot)
+                 length = length, xscale = xscale, bPlot=bPlot)
     return opIPM
 
 
-def Mirror_plane_2d(orient, theta, length, range_xy, filename, scale=1, x0=0., y0=0., xscale=1., yscale=1.):
+def Mirror_plane_2d(orient, theta, length, range_xy, filename, scale=1, x0=0., y0=0., xscale=1., yscale=1.,bPlot=False):
     """
     Defining a plane mirror propagator with taking into account 2D surface height errors 
 
@@ -431,7 +431,9 @@ def Mirror_plane_2d(orient, theta, length, range_xy, filename, scale=1, x0=0., y
     xnew, ynew = np.mgrid[xmin:xmax:1500j, ymin:ymax:100j]
     f = interpolate.RectBivariateSpline(xax, yax, _height_prof_data_val.T)
     h_new = f(xnew[:, 0], ynew[0, :])
-    # plt.figure();plt.pcolor(xnew, ynew, h_new);plt.colorbar(orientation='horizontal');plt.show()
+    if bPlot: 
+        import pylab as plt
+        plt.figure();plt.pcolor(xnew, ynew, h_new);plt.colorbar(orientation='horizontal');plt.show()
     # print('len:',len(_height_prof_data[2,:]))
 
     auxMesh = opIPM.mesh
@@ -645,7 +647,7 @@ def CRL(_foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n,
                               _xc, _yc, _void_cen_rad, _e_start, _e_fin, _nx, _ny)
 
 
-def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., length=1., scale_x=1., bPlot=False):
+def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., length=1., xscale=1., bPlot=False):
     """
     Calculates optical path difference (OPD) from mirror profile and
     fills the struct wf_dist (``struct SRWLOptT``) for wavefront distortions
@@ -658,7 +660,7 @@ def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., lengt
     :params orient: mirror orientation, 'x' (horizontal) or 'y' (vertical)
     :params theta: incidence angle
     :params scale: scaling factor for the mirror profile
-    :param scale_x: scaling factor for the mirror profile x-axis (for taking an arbitrary scaled axis, i.e. im mm)
+    :param xscale: scaling factor for the mirror profile x-axis (for taking an arbitrary scaled axis, i.e. im mm)
     :param length: mirror length, m, default value 1 m
     :return filled
     """
@@ -667,7 +669,7 @@ def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., lengt
     from wpg.useful_code.srwutils import AuxTransmAddSurfHeightProfileScaled
 
     heightProfData = loadtxt(mdatafile).T
-    heightProfData[0, :] = heightProfData[0, :] * scale_x
+    heightProfData[0, :] = heightProfData[0, :] * xscale
 
     if bPlot:
         import pylab as plt

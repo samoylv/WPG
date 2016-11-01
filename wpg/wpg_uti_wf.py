@@ -66,7 +66,7 @@ def calc_pulse_energy(wf):
         return pulse_energy_J
 
 
-def averaged_intensity(wf, bPlot=True):
+def averaged_intensity(wf, bPlot=False):
     """
     calculate the slice-to-slice integral intensity averaged over a meaningful range, mainly needed for processing spiky FEL source
 
