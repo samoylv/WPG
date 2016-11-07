@@ -370,7 +370,7 @@ def Mirror_plane_2d(orient, theta, length, range_xy, filename, scale=1, x0=0., y
     :x0: shift of mirror longitudinal position [m]
     :y0: shift of mirror transverse position [m]
     :xscale: units of 1st column of filename,  x[m]=x[nits]*xscale  [m]
-    :yscale: shift of mirror transverse position [m]
+    :yscale: units of 1st column of filename,  y[m]=y[nits]*yscale  [m]
     :return: opIPM  - imperfect plane mirror propagator 
     """
     from scipy import interpolate
@@ -433,7 +433,10 @@ def Mirror_plane_2d(orient, theta, length, range_xy, filename, scale=1, x0=0., y
     h_new = f(xnew[:, 0], ynew[0, :])
     if bPlot: 
         import pylab as plt
-        plt.figure();plt.pcolor(xnew, ynew, h_new);plt.colorbar(orientation='horizontal');plt.show()
+        plt.figure();plt.pcolor(xnew, ynew, h_new*scale*1e9);
+        plt.axis([xnew.min(), xnew.max(), ynew.min(), ynew.max()])
+        plt.colorbar(orientation='horizontal');
+        plt.title('surface height errors map, nm');plt.show()
     # print('len:',len(_height_prof_data[2,:]))
 
     auxMesh = opIPM.mesh
