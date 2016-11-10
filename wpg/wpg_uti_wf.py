@@ -109,7 +109,7 @@ def averaged_intensity(wf, bPlot=False):
     print('number of meaningful slices:', len(int0_mean))
     if(wf.params.wDomain=='time'):
         dt = (mesh.sliceMax - mesh.sliceMin)/(mesh.nSlices - 1)
-        print('Pulse energy {:1.4f} mJ'.format(int0_mean.sum()*dt*1e3))
+        print('Pulse energy {:1.2g} J'.format(int0_mean.sum()*dt))
     return averaged
 
 def plot_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
@@ -213,11 +213,9 @@ def plot_t_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
 
     # Set title.
     if(wf.params.wDomain=='time'): 
-        x_projection.set_title('relative intensity={:03.3g}, t0={:03.2f} fs'.format(
-        wf_intensity.sum()/average, t0*1.e15))
+        x_projection.set_title('t0={:03.1g} s '.format(t0))
     else: #frequency domain
-        x_projection.set_title('relative intensity={:03.3g}, E0={:03.2f} keV'.format(
-        wf_intensity.sum()/average, t0*1.e-3))
+        x_projection.set_title('E0={:05.2g} eV'.format(t0))
  
     # y-projection plot right of main plot.
     y_projection = plt.subplot2grid((3, 3), (1, 2), rowspan=2, sharey=profile)
