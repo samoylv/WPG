@@ -5,4 +5,4 @@ where ~/tmp/data - your local folder to save data
 
 2) Open browser on http://localhost:8088
 
-WPG tutorials can be font here /opt/WPG-develop/samples/Tutorials
+WPG tutorials can be found here /opt/WPG-develop/samples/Tutorials
