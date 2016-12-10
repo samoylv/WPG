@@ -91,3 +91,6 @@ ENV/
 # binary files
 *.h5
 *.pkl
+
+#pycharm files
+.idea
