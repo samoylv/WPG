@@ -7,4 +7,4 @@ where ~/tmp/data - your local folder to save data
 
 WPG tutorials can be found here /opt/WPG-develop/samples/Tutorials
 
-To run your python script put it in ~/tmp/data (or other directory mount as /data in starting docker command) and run ```docker run -it --rm  -p 6611:8888 -v ~/tmp/data:/data buzmakov/wpg3 python /data/my_script``` . WPG is already in python path.
+To run your python script put it in ~/tmp/data (or other directory mount as /data in starting docker command) and run ```docker run -it --rm   -u `id -u`:`id -g` -v ~/tmp/data:/data buzmakov/wpg3 python /data/my_script``` . WPG is already in python path.
