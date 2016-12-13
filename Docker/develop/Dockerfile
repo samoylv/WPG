@@ -1,15 +1,5 @@
-FROM continuumio/miniconda3
+FROM buzmakov/baseimage
 MAINTAINER Alexey Buzmakov <buzmakov@gmail.com>
-
-RUN conda install -y nomkl \
-					numpy \
-					scipy \
-					pyqt=4.11 \
-					matplotlib \
-					h5py \
-					pytest \
-					jupyter &&\
-	conda clean -y --all
 
 ADD wpg_install.sh /opt/wpg_install.sh
 

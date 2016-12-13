@@ -21,7 +21,7 @@ clean:
 srw:
 	mkdir -p $(TMP_DIR)
 	mkdir -p $(BUILD_DIR)/sources
-	wget --no-check-certificate -nc -O $(SRC_DIR)/srw.zip https://github.com/buzmakov/SRW/archive/feature/srw_lite_update.zip; echo 'Done'
+	wget --no-check-certificate -nc -O $(SRC_DIR)/srw.zip https://github.com/buzmakov/SRW/archive/feature/srw_lite_openmp.zip; echo 'Done'
 	unzip -o $(SRC_DIR)/srw.zip -d $(TMP_DIR)
 	rm -rf $(TMP_DIR)/SRW
 	mv $(TMP_DIR)/SRW-feature-srw_lite_update $(TMP_DIR)/SRW
