@@ -1132,9 +1132,13 @@ class WFDataArrEhor(RadiationField):
                          self._wf.params.Mesh.nx,
                          self._wf.params.Mesh.nSlices,
                          self._wf.params.nval)
-        if numpy.prod(res.shape) == numpy.prod(correct_shape):
+        if not res.shape:
+            pass
+        elif numpy.prod(res.shape) == numpy.prod(correct_shape):
             res.shape = correct_shape
         else:
+            print(res.shape, correct_shape)
+            raise ValueError('Alarm')
             res = numpy.zeros(shape= (correct_shape),
                     dtype='float32')
         return res
@@ -1201,9 +1205,13 @@ class WFDataArrEver(RadiationField):
                          self._wf.params.Mesh.nx,
                          self._wf.params.Mesh.nSlices,
                          self._wf.params.nval)
-        if numpy.prod(res.shape) == numpy.prod(correct_shape):
+        if not res.shape:
+            pass
+        elif numpy.prod(res.shape) == numpy.prod(correct_shape):
             res.shape = correct_shape
         else:
+            print(res.shape, correct_shape)
+            raise ValueError('Alarm')
             res = numpy.zeros(shape= (correct_shape),
                     dtype='float32')
         return res
@@ -1227,7 +1235,7 @@ class WFDataArrEver(RadiationField):
                 self._wf.params.nSlices = val.shape[2]
 
             val.shape = (numpy.prod(val.shape),)
-            self._wf._srwl_wf.arEx = val
+            self._wf._srwl_wf.arEy = val
             # self._wf._srwl_wf.arEy = array.array(str(u'f'), val.tobytes())
             # self._wf._srwl_wf.arEy = array.array(str(u'f'))
             # val_s = val.tostring()
