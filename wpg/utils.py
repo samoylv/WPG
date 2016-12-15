@@ -49,10 +49,16 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
             if name in group:
                 del group[name]
             try:
-                group.create_dataset(name, data=value, chunks=True,
-                                     compression='gzip', compression_opts=1)    # compression='lzf'
+                if type(value) == numpy.ndarray:
+                    if numpy.allclose(value, 0):
+                        group.create_dataset(name, data=value, chunks=True,
+                            compression='gzip', compression_opts=1)    # compression='lzf'
+                    else:
+                        group.create_dataset(name, data=value)
+                else:
+                    group.create_dataset(name, data=value)
             except ValueError:  # if h5py not support compression
-                group.create_dataset(name, data=value, chunks=True)
+                group.create_dataset(name, data=value)
             except TypeError:
                 group.create_dataset(name, data=value)
             except Exception:
