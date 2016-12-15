@@ -1128,9 +1128,15 @@ class WFDataArrEhor(RadiationField):
         """
 
         res = numpy.array(self._wf._srwl_wf.arEx, dtype='float32', copy=False)
-        if res.shape:
-            res.shape = (self._wf.params.Mesh.ny, self._wf.params.Mesh.nx,
-                         self._wf.params.Mesh.nSlices, self._wf.params.nval)
+        correct_shape = (self._wf.params.Mesh.ny,
+                         self._wf.params.Mesh.nx,
+                         self._wf.params.Mesh.nSlices,
+                         self._wf.params.nval)
+        if numpy.prod(res.shape) == numpy.prod(correct_shape):
+            res.shape = correct_shape
+        else:
+            res = numpy.zeros(shape= (correct_shape),
+                    dtype='float32')
         return res
 
     @value.setter
@@ -1191,9 +1197,15 @@ class WFDataArrEver(RadiationField):
         """
 
         res = numpy.array(self._wf._srwl_wf.arEy, dtype='float32', copy=False)
-        if res.shape:
-            res.shape = (self._wf.params.Mesh.ny, self._wf.params.Mesh.nx,
-                         self._wf.params.Mesh.nSlices, self._wf.params.nval)
+        correct_shape = (self._wf.params.Mesh.ny,
+                         self._wf.params.Mesh.nx,
+                         self._wf.params.Mesh.nSlices,
+                         self._wf.params.nval)
+        if numpy.prod(res.shape) == numpy.prod(correct_shape):
+            res.shape = correct_shape
+        else:
+            res = numpy.zeros(shape= (correct_shape),
+                    dtype='float32')
         return res
 
     @value.setter
