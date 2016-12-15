@@ -19,6 +19,6 @@ VOLUME /data
 WORKDIR /data
 EXPOSE 8888
 ENV PYTHONPATH=$PYTHONPATH:/opt/WPG-feature-openmp
-RUN cd /opt/WPG-feature-openmp/ && python -m pytest .
+RUN cd /opt/WPG-feature-openmp/ && python -m pytest . && md5sum -c tests/reference.md5
 
 CMD jupyter notebook --no-browser --ip 0.0.0.0 --notebook-dir /
