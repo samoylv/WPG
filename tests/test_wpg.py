@@ -65,6 +65,8 @@ def test_simple_gauusina_propagation():
     srwl.SetRepresElecField(wf._srwl_wf, 'c')
     srwl.ResizeElecField(srw_wf, 'c', [0, 0.25, 1, 0.25, 1])
 
+    ti = wf.get_intensity()
+    
     out_folder = os.path.join(os.path.dirname(__file__), 'tests_data')
     if not os.path.exists(out_folder):
         os.mkdir(out_folder)
