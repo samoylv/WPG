@@ -66,13 +66,14 @@ def calc_pulse_energy(wf):
         return pulse_energy_J
 
 
-def averaged_intensity(wf, bPlot=False):
+#def averaged_intensity(wf, bPlot=False):
+def integral_intensity(wf, bPlot=True):
     """
-    calculate the slice-to-slice integral intensity averaged over a meaningful range, mainly needed for processing spiky FEL source
-
+    plot the slice-to-slice integral intensity averaged over a meaningful range
     :params: wf: wavefront structure
-    :params: bPlot: if True plot temporary pulse structure in the meaningful range
-    :return: intensity averaged over 'meaningful' slices, i.e. above 1% threshold
+    :params: bPlot: if True plot temporary structure or spectrum in the meaningful range
+    :return: intensity averaged over 'meaningful' slices, i.e. above 1% threshold, mainly needed for processing spiky FEL source
+
     """
     J2eV = 6.24150934e18
     # total0=wf.get_intensity().sum();
@@ -112,7 +113,7 @@ def averaged_intensity(wf, bPlot=False):
         print('Pulse energy {:1.2g} J'.format(int0_mean.sum()*dt))
     return averaged
 
-def plot_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
+def plot_t_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
     """
     wrapper to plot_t_wf() that can be applied to frequency domain WF as well
 
@@ -130,10 +131,11 @@ def plot_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
     :type: float
     :default: None, take entire y range.
     """
-    plot_t_wf(wf, save, range_x, range_y,im_aspect)
+    integral_intensity(wf, bPlot=True)
+    plot_intensity_map(wf, save, range_x, range_y,im_aspect)
 
 
-def plot_t_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
+def plot_intensity_map(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
     """
     Plot wavefront in  R-space.
 
@@ -160,10 +162,13 @@ def plot_t_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
     wf_intensity = wf.get_intensity().sum(axis=-1)
 
     # Get average and time slicing.
-    average = averaged_intensity(wf, bPlot=True)
+    #average = averaged_intensity(wf, bPlot=True)
     nslices = wf.params.Mesh.nSlices
-    dt = (wf.params.Mesh.sliceMax-wf.params.Mesh.sliceMin)/(nslices-1)
-    t0 = dt*nslices/2 + wf.params.Mesh.sliceMin
+    if (nslices>1):
+        dt = (wf.params.Mesh.sliceMax-wf.params.Mesh.sliceMin)/(nslices-1)
+        t0 = dt*nslices/2 + wf.params.Mesh.sliceMin
+    else:
+        t0 = (wf.params.Mesh.sliceMax+wf.params.Mesh.sliceMin)/2
 
     # Setup a figure.
     figure = plt.figure(figsize=(10, 10), dpi=100)
