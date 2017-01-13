@@ -68,11 +68,21 @@ def calc_pulse_energy(wf):
 
 def averaged_intensity(wf, bPlot=False):
     """
-    calculate the slice-to-slice integral intensity averaged over a meaningful range, mainly needed for processing spiky FEL source
-
+    wrapper for integral_intensity for backward compatibility 
     :params: wf: wavefront structure
-    :params: bPlot: if True plot temporary pulse structure in the meaningful range
-    :return: intensity averaged over 'meaningful' slices, i.e. above 1% threshold
+    :params: bPlot: if True plot temporary structure or spectrum in the meaningful range
+    :return: intensity averaged over 'meaningful' slices, i.e. above 1% threshold, mainly needed for processing spiky FEL source
+
+    """
+    integral_intensity(wf, bPlot)
+
+def integral_intensity(wf, bPlot=True):
+    """
+    plot the slice-to-slice integral intensity averaged over a meaningful range
+    :params: wf: wavefront structure
+    :params: bPlot: if True plot temporary structure or spectrum in the meaningful range
+    :return: intensity averaged over 'meaningful' slices, i.e. above 1% threshold, mainly needed for processing spiky FEL source
+
     """
     J2eV = 6.24150934e18
     # total0=wf.get_intensity().sum();
@@ -112,28 +122,23 @@ def averaged_intensity(wf, bPlot=False):
         print('Pulse energy {:1.2g} J'.format(int0_mean.sum()*dt))
     return averaged
 
+def plot_t_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
+    """
+    a wrapper for backward compatibility
+
+    """
+    integral_intensity(wf, bPlot=True)
+    plot_intensity_map(wf, save, range_x, range_y,im_aspect)
+
 def plot_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
     """
-    wrapper to plot_t_wf() that can be applied to frequency domain WF as well
+    a wrapper for backward compatibility
 
-    :params: wf: wavefront structure
-
-    :params: save: Whether to save the figure on disk
-    :type:  string for filename. Empty string '' means don't save.
-    :default: '', do not save the figure.
-
-    :params: range_x: x-axis range.
-    :type: float
-    :default: None, take entire x range.
-
-    :params: range_y: y-ayis range.
-    :type: float
-    :default: None, take entire y range.
     """
-    plot_t_wf(wf, save, range_x, range_y,im_aspect)
+    integral_intensity(wf, bPlot=True)
+    plot_intensity_map(wf, save, range_x, range_y,im_aspect)
 
-
-def plot_t_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
+def plot_intensity_map(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
     """
     Plot wavefront in  R-space.
 
@@ -160,10 +165,13 @@ def plot_t_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
     wf_intensity = wf.get_intensity().sum(axis=-1)
 
     # Get average and time slicing.
-    average = averaged_intensity(wf, bPlot=True)
+    #average = averaged_intensity(wf, bPlot=True)
     nslices = wf.params.Mesh.nSlices
-    dt = (wf.params.Mesh.sliceMax-wf.params.Mesh.sliceMin)/(nslices-1)
-    t0 = dt*nslices/2 + wf.params.Mesh.sliceMin
+    if (nslices>1):
+        dt = (wf.params.Mesh.sliceMax-wf.params.Mesh.sliceMin)/(nslices-1)
+        t0 = dt*nslices/2 + wf.params.Mesh.sliceMin
+    else:
+        t0 = (wf.params.Mesh.sliceMax+wf.params.Mesh.sliceMin)/2
 
     # Setup a figure.
     figure = plt.figure(figsize=(10, 10), dpi=100)
