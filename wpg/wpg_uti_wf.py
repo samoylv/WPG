@@ -76,10 +76,11 @@ def averaged_intensity(wf, bPlot=False):
     """
     integral_intensity(wf, bPlot)
 
-def integral_intensity(wf, bPlot=True):
+def integral_intensity(wf, threshold=0.01, bPlot=True):
     """
     plot the slice-to-slice integral intensity averaged over a meaningful range
     :params: wf: wavefront structure
+    :params: threshold: defined the threshold for slices, integrated_slice_intensity_max*threshold 
     :params: bPlot: if True plot temporary structure or spectrum in the meaningful range
     :return: intensity averaged over 'meaningful' slices, i.e. above 1% threshold, mainly needed for processing spiky FEL source
 
@@ -93,8 +94,7 @@ def integral_intensity(wf, bPlot=True):
     int0 = int0*(dx*dy*1.e6) # wf amplitude units sqrt(W/mm^2)
     int0_00 = wf.get_intensity()[mesh.ny/2,mesh.nx/2,:]
     int0max = max(int0)
-    threshold = int0max * 0.01
-    aw = numpy.argwhere(int0 > threshold)
+    aw = numpy.argwhere(int0 > int0max*threshold)
     #print( aw.shape)
     int0_mean = int0[min(aw):max(aw)]  # meaningful range of pulse
     if bPlot:
@@ -315,8 +315,14 @@ def plot_t_wf_a(wf, save='', range_x=None, range_y=None):
     else:
         plt.show()
 
-
 def look_at_q_space(wf, output_file=None, save='', range_x=None, range_y=None):
+    """
+    a wrapper for backward compatibility
+
+    """
+    plot_intensity_qmap(wf, output_file, save, range_x, range_y)
+
+def plot_intensity_qmap(wf, output_file=None, save='', range_x=None, range_y=None):
     """
     change wavefront representation from R- to Q-space and store it in output file.
 
