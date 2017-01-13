@@ -74,6 +74,8 @@ def averaged_intensity(wf, bPlot=False):
     :return: intensity averaged over 'meaningful' slices, i.e. above 1% threshold, mainly needed for processing spiky FEL source
 
     """
+    integral_intensity(wf, bPlot)
+
 def integral_intensity(wf, bPlot=True):
     """
     plot the slice-to-slice integral intensity averaged over a meaningful range
