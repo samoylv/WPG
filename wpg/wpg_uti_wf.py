@@ -131,7 +131,7 @@ def plot_t_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
     plot_intensity_map(wf, save, range_x, range_y,im_aspect)
 
 def plot_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
-   """
+    """
     a wrapper for backward compatibility
 
     """
