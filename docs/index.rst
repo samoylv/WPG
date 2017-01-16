@@ -16,6 +16,7 @@ Contents:
    optical_elements
    generators
    wpg_uti_wf
+   wpg_uti_oe
    tutorials
    real_beamlines
 

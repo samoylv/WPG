@@ -13,6 +13,12 @@ __author__ = 'A. Buzmakov, L. Samoylova'
 
 
 def get_opd(transmission):
+    """
+    Extract optical path difference of  transmission object
+
+    :param transmission: SRWLOptT struct, see srwlib.h
+    :return: optical path difference map of transmission object
+    """
     mesh = transmission.mesh
     nx = mesh.nx
     ny = mesh.ny
@@ -22,6 +28,12 @@ def get_opd(transmission):
 
 
 def get_absorption(transmission):
+    """
+    Extract absorption coefficient of  transmission object
+
+    :param transmission: SRWLOptT struct, see srwlib.h
+    :return: absorption(x,y) map of transmission object
+    """
     mesh = transmission.mesh
     nx = mesh.nx
     ny = mesh.ny
@@ -31,6 +43,11 @@ def get_absorption(transmission):
 
 
 def show_transmission(transmission):
+    """
+    Plot absorption and OPD maps of transmission object
+
+    :param transmission: SRWLOptT struct, see srwlib.h
+    """
     mesh = transmission.mesh
 
     plt.figure(figsize=(10, 7))
