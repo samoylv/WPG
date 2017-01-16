@@ -68,11 +68,22 @@ def calc_pulse_energy(wf):
 
 def averaged_intensity(wf, bPlot=False):
     """
-    calculate the slice-to-slice integral intensity averaged over a meaningful range, mainly needed for processing spiky FEL source
-
+    wrapper for integral_intensity for backward compatibility 
     :params: wf: wavefront structure
-    :params: bPlot: if True plot temporary pulse structure in the meaningful range
-    :return: intensity averaged over 'meaningful' slices, i.e. above 1% threshold
+    :params: bPlot: if True plot temporary structure or spectrum in the meaningful range
+    :return: intensity averaged over 'meaningful' slices, i.e. above 1% threshold, mainly needed for processing spiky FEL source
+
+    """
+    integral_intensity(wf, bPlot)
+
+def integral_intensity(wf, threshold=0.01, bPlot=True):
+    """
+    plot the slice-to-slice integral intensity averaged over a meaningful range
+    :params: wf: wavefront structure
+    :params: threshold: defined the threshold for slices, integrated_slice_intensity_max*threshold 
+    :params: bPlot: if True plot temporary structure or spectrum in the meaningful range
+    :return: intensity averaged over 'meaningful' slices, i.e. above 1% threshold, mainly needed for processing spiky FEL source
+
     """
     J2eV = 6.24150934e18
     # total0=wf.get_intensity().sum();
@@ -83,8 +94,7 @@ def averaged_intensity(wf, bPlot=False):
     int0 = int0*(dx*dy*1.e6) # wf amplitude units sqrt(W/mm^2)
     int0_00 = wf.get_intensity()[mesh.ny/2,mesh.nx/2,:]
     int0max = max(int0)
-    threshold = int0max * 0.01
-    aw = numpy.argwhere(int0 > threshold)
+    aw = numpy.argwhere(int0 > int0max*threshold)
     #print( aw.shape)
     int0_mean = int0[min(aw):max(aw)]  # meaningful range of pulse
     if bPlot:
@@ -112,28 +122,23 @@ def averaged_intensity(wf, bPlot=False):
         print('Pulse energy {:1.2g} J'.format(int0_mean.sum()*dt))
     return averaged
 
+def plot_t_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
+    """
+    a wrapper for backward compatibility
+
+    """
+    integral_intensity(wf, bPlot=True)
+    plot_intensity_map(wf, save, range_x, range_y,im_aspect)
+
 def plot_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
     """
-    wrapper to plot_t_wf() that can be applied to frequency domain WF as well
+    a wrapper for backward compatibility
 
-    :params: wf: wavefront structure
-
-    :params: save: Whether to save the figure on disk
-    :type:  string for filename. Empty string '' means don't save.
-    :default: '', do not save the figure.
-
-    :params: range_x: x-axis range.
-    :type: float
-    :default: None, take entire x range.
-
-    :params: range_y: y-ayis range.
-    :type: float
-    :default: None, take entire y range.
     """
-    plot_t_wf(wf, save, range_x, range_y,im_aspect)
+    integral_intensity(wf, bPlot=True)
+    plot_intensity_map(wf, save, range_x, range_y,im_aspect)
 
-
-def plot_t_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
+def plot_intensity_map(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
     """
     Plot wavefront in  R-space.
 
@@ -160,10 +165,13 @@ def plot_t_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
     wf_intensity = wf.get_intensity().sum(axis=-1)
 
     # Get average and time slicing.
-    average = averaged_intensity(wf, bPlot=True)
+    #average = averaged_intensity(wf, bPlot=True)
     nslices = wf.params.Mesh.nSlices
-    dt = (wf.params.Mesh.sliceMax-wf.params.Mesh.sliceMin)/(nslices-1)
-    t0 = dt*nslices/2 + wf.params.Mesh.sliceMin
+    if (nslices>1):
+        dt = (wf.params.Mesh.sliceMax-wf.params.Mesh.sliceMin)/(nslices-1)
+        t0 = dt*nslices/2 + wf.params.Mesh.sliceMin
+    else:
+        t0 = (wf.params.Mesh.sliceMax+wf.params.Mesh.sliceMin)/2
 
     # Setup a figure.
     figure = plt.figure(figsize=(10, 10), dpi=100)
@@ -307,8 +315,14 @@ def plot_t_wf_a(wf, save='', range_x=None, range_y=None):
     else:
         plt.show()
 
-
 def look_at_q_space(wf, output_file=None, save='', range_x=None, range_y=None):
+    """
+    a wrapper for backward compatibility
+
+    """
+    plot_intensity_qmap(wf, output_file, save, range_x, range_y)
+
+def plot_intensity_qmap(wf, output_file=None, save='', range_x=None, range_y=None):
     """
     change wavefront representation from R- to Q-space and store it in output file.
 
