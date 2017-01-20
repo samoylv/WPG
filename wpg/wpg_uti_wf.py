@@ -19,6 +19,8 @@ __author__ = 'A. Buzmakov, L. Samoylova, C. Fortmann-Grote'
 def print_mesh(wf):
     """
     Print out wfr wavefront mesh.
+
+    :param wf: wpg.Wavefront structure
     """
 
     wf_mesh = wf.params.Mesh
@@ -44,8 +46,9 @@ def print_mesh(wf):
 def calc_pulse_energy(wf):
     """
     calculate energy of  in time domain
-    params: wf: wavefront structure
-    return: pulse energy value in [J]
+
+    :param wf: wpg.Wavefront structure
+    :return: pulse energy value, J
     """
     J2eV = 6.24150934e18
     if wf.params.wDomain != 'time':
@@ -68,10 +71,7 @@ def calc_pulse_energy(wf):
 
 def averaged_intensity(wf, bPlot=False):
     """
-    wrapper for integral_intensity for backward compatibility 
-    :params: wf: wavefront structure
-    :params: bPlot: if True plot temporary structure or spectrum in the meaningful range
-    :return: intensity averaged over 'meaningful' slices, i.e. above 1% threshold, mainly needed for processing spiky FEL source
+    wrapper for integral_intensity() for backward compatibility 
 
     """
     integral_intensity(wf, bPlot)
@@ -79,9 +79,10 @@ def averaged_intensity(wf, bPlot=False):
 def integral_intensity(wf, threshold=0.01, bPlot=True):
     """
     plot the slice-to-slice integral intensity averaged over a meaningful range
-    :params: wf: wavefront structure
-    :params: threshold: defined the threshold for slices, integrated_slice_intensity_max*threshold 
-    :params: bPlot: if True plot temporary structure or spectrum in the meaningful range
+
+    :param wf: wavefront structure
+    :param threshold: defined the threshold for slices, integrated_slice_intensity_max*threshold 
+    :param bPlot: if True plot temporary structure or spectrum in the meaningful range
     :return: intensity averaged over 'meaningful' slices, i.e. above 1% threshold, mainly needed for processing spiky FEL source
 
     """
@@ -124,7 +125,7 @@ def integral_intensity(wf, threshold=0.01, bPlot=True):
 
 def plot_t_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
     """
-    a wrapper for backward compatibility
+    a wrapper, calls integral_intensity() and plot_intensity_map() for backward compatibility
 
     """
     integral_intensity(wf, bPlot=True)
@@ -132,7 +133,7 @@ def plot_t_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
 
 def plot_wf(wf, save='', range_x=None, range_y=None,im_aspect='equal'):
     """
-    a wrapper for backward compatibility
+    a wrapper, calls integral_intensity() and plot_intensity_map() for backward compatibility
 
     """
     integral_intensity(wf, bPlot=True)
@@ -142,23 +143,11 @@ def plot_intensity_map(wf, save='', range_x=None, range_y=None,im_aspect='equal'
     """
     Plot wavefront in  R-space.
 
-    :params: wf: wavefront structure
-
-    :params: save: Whether to save the figure on disk
-    :type:  string for filename. Empty string '' means don't save.
-    :default: '', do not save the figure.
-
-    :params: range_x: x-axis range.
-    :type: float
-    :default: None, take entire x range.
-
-    :params: range_y: y-ayis range.
-    :type: float
-    :default: None, take entire y range.
-
-    :params: im_aspect: aspect for 2D image.
-    :type: string or float number, see matplotlib set_aspect()
-    :default: 'equal'.
+    :param wf: wavefront structure
+    :param save: string for filename. Empty string '' means don't save.
+    :param range_x: x-axis range, _float_. If None, take entire x range.
+    :param range_y: y-ayis range, float. If None, take entire y range.
+    :param im_aspect: aspect for 2D image, string or float number, see matplotlib set_aspect().
     """
     import matplotlib.pyplot as plt
     # Get the wavefront and integrate over time.
@@ -246,12 +235,11 @@ def plot_intensity_map(wf, save='', range_x=None, range_y=None,im_aspect='equal'
         plt.show()
 
 
-def plot_t_wf_a(wf, save='', range_x=None, range_y=None):
+#def plot_t_wf_a(wf, save='', range_x=None, range_y=None):
     """
     Plot wavefront in Q-space.
 
-    :params: wf: wavefront structure
-
+    :param wf: wavefront structure
     :params: save: Whether to save the figure on disk
     :type:  string for filename. Empty string '' means don't save.
     :default: '', do not save the figure.
@@ -265,6 +253,42 @@ def plot_t_wf_a(wf, save='', range_x=None, range_y=None):
     :default: None, take entire y range.
 
     """
+
+def look_at_q_space(wf, output_file=None, save='', range_x=None, range_y=None):
+    """
+    a wrapper for backward compatibility
+
+    """
+    plot_intensity_qmap(wf, output_file, save, range_x, range_y)
+
+def plot_intensity_qmap(wf, output_file=None, save='', range_x=None, range_y=None):
+    """
+    change wavefront representation from R- to Q-space and plot it the resulting wavefront.
+
+    :param wf: Wavefront object in R-space representation
+    :param output_file: if parameter present - store wavefront in Q-space to the file
+    :param save: string for filename. Empty string '' means don't save.
+    :param range_x: x-axis range, _float_. If None, take entire x range.
+    :param range_y: y-ayis range, float. If None, take entire y range.
+    :return: propagated wavefront object:
+    """
+    wfr = Wavefront(srwl_wavefront=wf._srwl_wf)
+
+    if not wf.params.wSpace == 'R-space':
+        print('space should be in R-space, but not ' + wf.params.wSpace)
+        return
+    srwl_wf = wfr._srwl_wf
+    srwl_wf_a = copy.deepcopy(srwl_wf)
+    srwl.SetRepresElecField(srwl_wf_a, 'a')
+    wf_a = Wavefront(srwl_wf_a)
+    if output_file is not None:
+        print('store wavefront to HDF5 file: ' + output_file+'...')
+        wf_a.store_hdf5(output_file)
+        print('done')
+
+    print(calculate_fwhm(wf_a))
+
+    #plot_t_wf_a(wf_a, save=save, range_x=range_x, range_y=range_y)
     import matplotlib.pyplot as plt
     wf_intensity = wf.get_intensity().sum(axis=-1)
     plt.figure(figsize=(10, 10), dpi=100)
@@ -315,50 +339,6 @@ def plot_t_wf_a(wf, save='', range_x=None, range_y=None):
     else:
         plt.show()
 
-def look_at_q_space(wf, output_file=None, save='', range_x=None, range_y=None):
-    """
-    a wrapper for backward compatibility
-
-    """
-    plot_intensity_qmap(wf, output_file, save, range_x, range_y)
-
-def plot_intensity_qmap(wf, output_file=None, save='', range_x=None, range_y=None):
-    """
-    change wavefront representation from R- to Q-space and store it in output file.
-
-    :params wf: Wavefront object in R-space representation
-    :params output_file: if parameter present - store propagaed wavefront to file
-
-    :params save: Whether to save the figure on disk
-    :type:  string for filename. Empty string '' means don't save.
-    :default: '', do not save the figure.
-
-    :params range_x: x-axis range.
-    :type: float
-    :default: None, take entire x range.
-
-    :params range_y: y-ayis range.
-    :type: float
-    :default: None, take entire y range.
-
-    :return: propagated wavefront object:
-    """
-    wfr = Wavefront(srwl_wavefront=wf._srwl_wf)
-
-    if not wf.params.wSpace == 'R-space':
-        print('space should be in R-space, but not ' + wf.params.wSpace)
-        return
-    srwl_wf = wfr._srwl_wf
-    srwl_wf_a = copy.deepcopy(srwl_wf)
-    srwl.SetRepresElecField(srwl_wf_a, 'a')
-    wf_a = Wavefront(srwl_wf_a)
-    if output_file is not None:
-        print('store wavefront to HDF5 file: ' + output_file+'...')
-        wf_a.store_hdf5(output_file)
-        print('done')
-
-    print(calculate_fwhm(wf_a))
-    plot_t_wf_a(wf_a, save=save, range_x=range_x, range_y=range_y)
     return
 
 
@@ -366,10 +346,10 @@ def propagate_wavefront(wavefront, beamline, output_file=None):
     """
     Propagate wavefront and store it in output file.
 
-    :param wavefront: Wavefront object or path to HDF5 file
+    :param wavefront: wpg.Wavefront object or path to HDF5 file
     :param beamline: SRWLOptC container of beamline
     :param output_file: if parameter present - store propagaed wavefront to file
-    :return: propagated wavefront object:
+    :return: propagated wavefront object
     """
 
     if not isinstance(beamline, Beamline):
@@ -433,6 +413,7 @@ def calculate_fwhm(wfr):
 def get_intensity_on_axis(wfr):
     """
     Calculate intensity (e.g. spectrum in frequency domain) along (x=y=0)
+
     :param wfr:  wavefront
     :return: [z,s0] in [a.u.]
     """

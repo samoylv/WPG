@@ -3,7 +3,7 @@ MAINTAINER Alexey Buzmakov <buzmakov@gmail.com>
 
 ADD wpg_install.sh /opt/wpg_install.sh
 
-RUN DEBIAN_FRONTEND=noninteractive  apt-get install -y --no-install-recommends  \
+RUN DEBIAN_FRONTEND=noninteractive  apt-get update && apt-get install -y --no-install-recommends  \
 		wget \
 		build-essential \
 		unzip texlive-fonts-recommended \
