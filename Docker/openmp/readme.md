@@ -1,7 +1,7 @@
 To run jupyter notebook
 
 1) Run ```docker run -it --rm -p 8088:8888 -v ~/tmp/data:/data buzmakov/wpg3:openmp```
-where ~/tmp/data - your local folder to save data
+where ~/tmp/data - your local folder to save data. This will take some time do download wpg-docker contatiner for the fitst time (~ 2 GB)
 
 2) Open browser on http://localhost:8088
 
