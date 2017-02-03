@@ -290,7 +290,7 @@ def plot_intensity_qmap(wf, output_file=None, save='', range_x=None, range_y=Non
 
     #plot_t_wf_a(wf_a, save=save, range_x=range_x, range_y=range_y)
     import matplotlib.pyplot as plt
-    wf_intensity = wf.get_intensity().sum(axis=-1)
+    wf_intensity = wf_a.get_intensity().sum(axis=-1)
     plt.figure(figsize=(10, 10), dpi=100)
     plt.axis('tight')
     try:
@@ -299,7 +299,7 @@ def plot_intensity_qmap(wf, output_file=None, save='', range_x=None, range_y=Non
         plt.set_cmap('YlGnBu_r')
 
     profile = plt.subplot2grid((3, 3), (1, 0), colspan=2, rowspan=2)
-    xmin, xmax, ymax, ymin = wf.get_limits()
+    xmin, xmax, ymax, ymin = wf_a.get_limits()
 
     profile.imshow(
         wf_intensity, extent=[xmin*1.e6, xmax*1.e6, ymax*1.e6, ymin*1.e6])
