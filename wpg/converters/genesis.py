@@ -1,5 +1,7 @@
 from __future__ import print_function
 
+__author__=’Hector Mauricio Castaneda Cortes’
+
 import scipy.constants as const
 import numpy as np
 import h5py
