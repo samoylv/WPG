@@ -17,4 +17,8 @@ RUN DEBIAN_FRONTEND=noninteractive  apt-get install -y --no-install-recommends  
         texlive-latex-base \
         texlive-generic-recommended \
         texlive-latex-extra \
-        pandoc
+        pandoc && \
+ apt-get remove -y wget build-essential unzip &&\
+ apt-get clean && \
+ apt-get autoremove -y && apt-get autoclean -y &&\
+ rm -rf /var/lib/apt/lists/*
