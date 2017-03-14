@@ -353,7 +353,7 @@ def Mirror_plane(orient, theta, length, range_xy, filename, scale=1, delim=' ', 
 
     calculateOPD(opIPM, mdatafile=filename, ncol=2, delim=delim,
                  Orient=orient, theta=theta, scale=scale, 
-                 length = length, xscale = xscale, bPlot=bPlot)
+                 length = length, xscale = xscale, x0=x0, bPlot=bPlot)
     return opIPM
 
 
@@ -650,7 +650,7 @@ def CRL(_foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n,
                               _xc, _yc, _void_cen_rad, _e_start, _e_fin, _nx, _ny)
 
 
-def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., length=1., xscale=1., bPlot=False):
+def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., length=1., xscale=1., x0=0., bPlot=False):
     """
     Calculates optical path difference (OPD) from mirror profile and
     fills the struct wf_dist (``struct SRWLOptT``) for wavefront distortions
@@ -678,7 +678,7 @@ def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., lengt
         import pylab as plt
         plt.figure()
         plt.plot(heightProfData[0, :]*1e3, heightProfData[1, :]*scale*1.e9)
-        plt.xlim([-length*0.5e3,length*0.5e3])
+        plt.xlim([(-length+x0)*0.5e3,(length-x0)*0.5e3])
         plt.xlabel('mm'); plt.ylabel('nm')
         plt.title('Height error profile {:s}'.format(mdatafile))
         plt.show()
