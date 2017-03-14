@@ -1,0 +1,9 @@
+nomkl
+numpy >= 1.9
+scipy
+pyqt
+matplotlib
+h5py
+pytest
+jupyter
+libgcc

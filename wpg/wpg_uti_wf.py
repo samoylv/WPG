@@ -261,7 +261,7 @@ def look_at_q_space(wf, output_file=None, save='', range_x=None, range_y=None):
     """
     plot_intensity_qmap(wf, output_file, save, range_x, range_y)
 
-def plot_intensity_qmap(wf, output_file=None, save='', range_x=None, range_y=None):
+def plot_intensity_qmap(wf, output_file=None, save='', range_x=None, range_y=None,im_aspect='equal'):
     """
     change wavefront representation from R- to Q-space and plot it the resulting wavefront.
 
@@ -303,7 +303,7 @@ def plot_intensity_qmap(wf, output_file=None, save='', range_x=None, range_y=Non
 
     profile.imshow(
         wf_intensity, extent=[xmin*1.e6, xmax*1.e6, ymax*1.e6, ymin*1.e6])
-    profile.set_aspect('equal', 'datalim')
+    profile.set_aspect(im_aspect, 'datalim')
 
     # [LS:2016-03-17]
     # change shape dimension, otherwise, in case nx!=ny ,
