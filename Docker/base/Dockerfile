@@ -8,7 +8,8 @@ RUN conda install -y nomkl \
 					matplotlib \
 					h5py \
 					pytest \
-					jupyter &&\
+					jupyter \
+					libgcc &&\
 	conda clean -y --all
 
 RUN DEBIAN_FRONTEND=noninteractive  apt-get install -y --no-install-recommends  \
