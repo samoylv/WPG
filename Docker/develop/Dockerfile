@@ -8,7 +8,8 @@ RUN conda install -y nomkl \
 					matplotlib \
 					h5py \
 					pytest \
-					jupyter &&\
+					jupyter \
+					libgcc &&\
 	conda clean -y --all
 
 ADD wpg_install.sh /opt/wpg_install.sh
