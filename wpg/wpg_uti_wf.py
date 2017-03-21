@@ -71,7 +71,7 @@ def calc_pulse_energy(wf):
 
 def averaged_intensity(wf, bPlot=False):
     """
-    wrapper for integral_intensity() for backward compatibility 
+    wrapper for integral_intensity() for backward compatibility
 
     """
     integral_intensity(wf, bPlot)
@@ -81,7 +81,7 @@ def integral_intensity(wf, threshold=0.01, bPlot=True):
     plot the slice-to-slice integral intensity averaged over a meaningful range
 
     :param wf: wavefront structure
-    :param threshold: defined the threshold for slices, integrated_slice_intensity_max*threshold 
+    :param threshold: defined the threshold for slices, integrated_slice_intensity_max*threshold
     :param bPlot: if True plot temporary structure or spectrum in the meaningful range
     :return: intensity averaged over 'meaningful' slices, i.e. above 1% threshold, mainly needed for processing spiky FEL source
 
@@ -93,17 +93,22 @@ def integral_intensity(wf, threshold=0.01, bPlot=True):
     dy = (mesh.yMax - mesh.yMin)/(mesh.ny - 1)
     int0 = wf.get_intensity().sum(axis=0).sum(axis=0)  # I(slice_num)
     int0 = int0*(dx*dy*1.e6) # wf amplitude units sqrt(W/mm^2)
-    int0_00 = wf.get_intensity()[mesh.ny/2,mesh.nx/2,:]
+
+    # Get center pixel numbers.
+    center_nx = int(mesh.nx/2)
+    center_ny = int(mesh.ny/2)
+    int0_00 = wf.get_intensity()[center_ny, center_nx, :]
     int0max = max(int0)
-    aw = numpy.argwhere(int0 > int0max*threshold)
-    #print( aw.shape)
+
+    # Get meaningful slices.
+    aw = [a[0] for a in numpy.argwhere(int0 > int0max*threshold)]
     int0_mean = int0[min(aw):max(aw)]  # meaningful range of pulse
     if bPlot:
         dSlice = (mesh.sliceMax - mesh.sliceMin)/(mesh.nSlices - 1)
         pylab.figure()
         pylab.plot(numpy.arange(mesh.nSlices)*dSlice+ mesh.sliceMin,int0)
         pylab.plot(numpy.arange(min(aw), max(aw))*dSlice + mesh.sliceMin, int0_mean, 'ro')
-        if(wf.params.wDomain=='time'): 
+        if(wf.params.wDomain=='time'):
             pylab.title('Power');pylab.xlabel('s');pylab.ylabel('W')
         else: #frequency domain
             pylab.title('Spectral Energy');pylab.xlabel('eV');pylab.ylabel('J/eV')
@@ -111,7 +116,7 @@ def integral_intensity(wf, threshold=0.01, bPlot=True):
         pylab.figure()
         pylab.plot(numpy.arange(mesh.nSlices)*dSlice+ mesh.sliceMin,int0_00)
         pylab.plot(numpy.arange(min(aw), max(aw))*dSlice + mesh.sliceMin, int0_00[min(aw):max(aw)], 'ro')
-        if(wf.params.wDomain=='time'): 
+        if(wf.params.wDomain=='time'):
             pylab.title('On-Axis Power Density');pylab.xlabel('s');pylab.ylabel('W/mm^2')
         else: #frequency domain
             pylab.title('On-Axis Spectral Fluence');pylab.xlabel('eV');pylab.ylabel('J/eV/mm^2')
@@ -165,13 +170,6 @@ def plot_intensity_map(wf, save='', range_x=None, range_y=None,im_aspect='equal'
     # Setup a figure.
     figure = plt.figure(figsize=(10, 10), dpi=100)
     plt.axis('tight')
-    # Set colormap. Inferno is not available in all matplotlib versions, fall
-    # back to gnuplot.
-    try:
-        plt.set_cmap('viridis')
-    except:
-        plt.set_cmap('YlGnBu_r')
-
     # Profile plot.
     profile = plt.subplot2grid((3, 3), (1, 0), colspan=2, rowspan=2)
 
@@ -180,8 +178,9 @@ def plot_intensity_map(wf, save='', range_x=None, range_y=None,im_aspect='equal'
 
     # Plot profile as 2D colorcoded map.
     profile.imshow(
-        wf_intensity, extent=[xmin*1.e3, xmax*1.e3, ymax*1.e3, ymin*1.e3])
+        wf_intensity, extent=[xmin*1.e3, xmax*1.e3, ymax*1.e3, ymin*1.e3], cmap="YlGnBu_r")
     profile.set_aspect(im_aspect, 'datalim')
+
 
     # Get x and y ranges.
     # [LS:2016-03-17]
@@ -209,11 +208,11 @@ def plot_intensity_map(wf, save='', range_x=None, range_y=None,im_aspect='equal'
         profile.set_xlim([-range_x/2., range_x/2.])
 
     # Set title.
-    if(wf.params.wDomain=='time'): 
+    if(wf.params.wDomain=='time'):
         x_projection.set_title('t0={:03.1g} s '.format(t0))
     else: #frequency domain
         x_projection.set_title('E0={:05.2g} eV'.format(t0))
- 
+
     # y-projection plot right of main plot.
     y_projection = plt.subplot2grid((3, 3), (1, 2), rowspan=2, sharey=profile)
     y_projection.plot(wf_intensity.sum(axis=1), y, label='y projection')
@@ -293,16 +292,12 @@ def plot_intensity_qmap(wf, output_file=None, save='', range_x=None, range_y=Non
     wf_intensity = wf_a.get_intensity().sum(axis=-1)
     plt.figure(figsize=(10, 10), dpi=100)
     plt.axis('tight')
-    try:
-        plt.set_cmap('viridis')
-    except:
-        plt.set_cmap('YlGnBu_r')
 
     profile = plt.subplot2grid((3, 3), (1, 0), colspan=2, rowspan=2)
     xmin, xmax, ymax, ymin = wf_a.get_limits()
 
     profile.imshow(
-        wf_intensity, extent=[xmin*1.e6, xmax*1.e6, ymax*1.e6, ymin*1.e6])
+        wf_intensity, extent=[xmin*1.e6, xmax*1.e6, ymax*1.e6, ymin*1.e6], cmap="YlGnBu_r")
     profile.set_aspect(im_aspect, 'datalim')
 
     # [LS:2016-03-17]
