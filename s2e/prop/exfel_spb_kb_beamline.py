@@ -1,16 +1,19 @@
 # Module holding WPG beamlines at European XFEL.
 
-import wpg.optical_elements
-from wpg.optical_elements import Use_PP
 from opd import defineOPD
-import numpy as np
+from wpg import optical_elements, Beamline
+from wpg.optical_elements import Use_PP
+import numpy
 import os
+
+from propagate_s2e import MIRROR_DATA_DIR as mirror_data_dir
 
 
 def get_beamline():
     """ Setup and return the WPG.Beamline object representing the SPB/SFX nanofocus beamline (KB mirrors).
 
-    :return: beamline (type wpg.Beamline)
+    :return: beamline
+    :rtype: wpg.Beamline
     """
 
     # Distances
@@ -33,18 +36,18 @@ def get_beamline():
     kb_mirror_length = 0.9; kb_clear_ap = kb_mirror_length*theta_kb
 
     # Drifts.
-    drift0 = wpg.optical_elements.Drift(distance0)
-    drift1 = wpg.optical_elements.Drift(distance1)
-    drift_in_kb = wpg.optical_elements.Drift(distance_hfm_vfm)
-    drift_to_foc = wpg.optical_elements.Drift(distance_foc)
+    drift0 = optical_elements.Drift(distance0)
+    drift1 = optical_elements.Drift(distance1)
+    drift_in_kb = optical_elements.Drift(distance_hfm_vfm)
+    drift_to_foc = optical_elements.Drift(distance_foc)
 
     # Mirror apertures.
-    ap0   = wpg.optical_elements.Aperture('r','a', 120.e-6, 120.e-6)
-    ap1   = wpg.optical_elements.Aperture('r','a', om_clear_ap, 2*om_clear_ap)
-    ap_kb = wpg.optical_elements.Aperture('r','a', kb_clear_ap, kb_clear_ap)
+    ap0   = optical_elements.Aperture('r','a', 120.e-6, 120.e-6)
+    ap1   = optical_elements.Aperture('r','a', om_clear_ap, 2*om_clear_ap)
+    ap_kb = optical_elements.Aperture('r','a', kb_clear_ap, kb_clear_ap)
 
     # Mirror definitions.
-    hfm = wpg.optical_elements.Mirror_elliptical(
+    hfm = optical_elements.Mirror_elliptical(
                     orient='x',
                     p=distance,
                     q=(distance_hfm_vfm+distance_foc),
@@ -52,7 +55,7 @@ def get_beamline():
                     theta0=theta_kb,
                     length=0.9
                     )
-    vfm = wpg.optical_elements.Mirror_elliptical(
+    vfm = optical_elements.Mirror_elliptical(
                     orient='y',
                     p=(distance+distance_hfm_vfm),
                     q=distance_foc,
@@ -62,32 +65,30 @@ def get_beamline():
                     )
 
 
-    # Wavefront distortions due to mirror profile
-    wf_dist_om = wpg.optical_elements.WF_dist(1500, 100, om_clear_ap, 2*om_clear_ap)
-    defineOPD(wf_dist_om, os.path.join('data_common','mirror2.dat'), 2, '\t', 'x',
+    # Wavefront distortions due to mirror profile.
+    wf_dist_om = optical_elements.WF_dist(1500, 100, om_clear_ap, 2*om_clear_ap)
+    defineOPD(wf_dist_om, os.path.join(mirror_data_dir,'mirror2.dat'), 2, '\t', 'x',
               theta_kb, scale=2)
 
-    wf_dist_hfm = wpg.optical_elements.WF_dist(1500, 100, kb_clear_ap, kb_clear_ap)
+    wf_dist_hfm = optical_elements.WF_dist(1500, 100, kb_clear_ap, kb_clear_ap)
     defineOPD(wf_dist_hfm, os.path.join(mirror_data_dir,'mirror1.dat'), 2, '\t', 'x',
               theta_kb, scale=2, stretching=kb_mirror_length/0.8)
 
-    wf_dist_vfm = wpg.optical_elements.WF_dist(1100, 1500, kb_clear_ap, kb_clear_ap)
+    wf_dist_vfm = optical_elements.WF_dist(1100, 1500, kb_clear_ap, kb_clear_ap)
     defineOPD(wf_dist_vfm, os.path.join(mirror_data_dir,'mirror2.dat'), 2, ' ', 'y',
               theta_kb, scale=2, stretching=kb_mirror_length/0.8)
 
 
     # Assemble the beamline with PP parameters.
-    bl0 = wpg.Beamline()
+    bl0 = Beamline()
     bl0.append(ap0,   Use_PP(semi_analytical_treatment=0,
                              zoom=14.4,
                              sampling=1/1.6))
     bl0.append(drift0,Use_PP(semi_analytical_treatment=0))
     bl0.append(ap1, Use_PP(zoom=0.8))
-    #bl0.append(ap1,    Use_PP(zoom=1.6, sampling=1/1.5))
     bl0.append(wf_dist_om, Use_PP())
     bl0.append(drift1, Use_PP(semi_analytical_treatment=1))
     bl0.append(ap_kb,  Use_PP(zoom = 6.4, sampling = 1/16.))
-    #bl0.append(ap_kb,    Use_PP(zoom=5.4, sampling=1/6.4))
     bl0.append(hfm, Use_PP())
     bl0.append(wf_dist_hfm, Use_PP())
     bl0.append(drift_in_kb, Use_PP(semi_analytical_treatment=1))
