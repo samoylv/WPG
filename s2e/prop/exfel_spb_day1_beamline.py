@@ -5,6 +5,7 @@ from wpg.optical_elements import Use_PP, Aperture, Drift, CRL
 from opd import defineOPD
 import os
 
+from prop.propagate_s2e import MIRROR_DATA_DIR as mirror_data_dir
 
 def get_beamline():
     """ Setup and return the WPG.Beamline object representing the SPB/SFX nanofocus beamline (KB mirrors).
