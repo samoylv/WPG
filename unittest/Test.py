@@ -5,12 +5,12 @@ import unittest
 import sys
 
 # Import suites to run.
-from wpg_test.OpticalElementsTest import ScreenTest
+from wpg_test.OpticalElementsTest import EmptyTest
 
 # Define the encapsulating test suite.
 def suite():
     suites = [
-            unittest.makeSuite(ScreenTest, 'test'),
+            unittest.makeSuite(EmptyTest, 'test'),
              ]
 
     return unittest.TestSuite(suites)

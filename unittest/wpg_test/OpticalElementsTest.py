@@ -16,7 +16,7 @@ sys.path.insert(0,os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(_
 from wpg import optical_elements
 
 
-class ScreenTest(unittest.TestCase):
+class EmptyTest(unittest.TestCase):
     """
     Test class for the screen class.
     """
@@ -45,37 +45,13 @@ class ScreenTest(unittest.TestCase):
             if os.path.isdir(d): shutil.rmtree(d)
 
     def testDefaultConstruction(self):
-        """ Testing the construction of a screen instance."""
-        screen = optical_elements.Screen()
+        """ Testing the construction of an empty element."""
+        empty = optical_elements.Empty()
 
         # Check inheritance.
-        self.assertIsInstance(screen, optical_elements.Empty)
-        self.assertIsInstance(screen, optical_elements.WPGOpticalElement)
-        self.assertIsInstance(screen, object)
-
-        # Check default handling of parameters.
-        self.assertEqual(screen._Screen__filename, os.path.abspath('screen.h5'))
-
-    def testShapedConstruction(self):
-        """ Check construction of a Screen with parameters. """
-        screen = optical_elements.Screen(filename="wf_at_screen.h5")
-
-        # Check inheritance.
-        self.assertIsInstance(screen, optical_elements.Empty)
-        self.assertIsInstance(screen, optical_elements.WPGOpticalElement)
-        self.assertIsInstance(screen, object)
-
-        # Check default handling of parameters.
-        self.assertEqual(screen._Screen__filename, os.path.abspath('wf_at_screen.h5'))
-
-    def testMisshapedConstruction(self):
-        """ Check construction of a Screen with faulty parameters. """
-
-        self.assertRaises(TypeError, optical_elements.Screen, filename=['not','a', 'string'])
-        self.assertRaises(TypeError, optical_elements.Screen, filename=1.436)
-        self.assertRaises(TypeError, optical_elements.Screen, filename=1)
-        self.assertRaises(IOError, optical_elements.Screen, filename=__file__)
-        self.assertRaises(IOError, optical_elements.Screen, filename='/not/an/existing/directory/screen.h5')
+        self.assertIsInstance(empty, optical_elements.Empty)
+        self.assertIsInstance(empty, optical_elements.WPGOpticalElement)
+        self.assertIsInstance(empty, object)
 
 if __name__ == '__main__':
     unittest.main()
