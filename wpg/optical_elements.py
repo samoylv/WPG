@@ -1,5 +1,5 @@
 """
-This module contains definitions custom optical elements.
+This module contains definitions of custom optical elements.
 
 Described mapping (or aliases) of some of SRW optical elements (SRWLOpt* <-> wpg)
 
@@ -60,20 +60,32 @@ class Screen(Empty):
     class: Implements the Screen optical element
     """
 
-    def __init__(self, filename):
-        """ Constructor for the Screen class. """
+    def __init__(self, filename=None):
+        """ Constructor for the Screen class.
+
+        :param filename: Name of file to store wavefront data.
+        :type filename: str
+        :raise IOError: File exists.
+
+        """
 
         # Initialize base class.
         super(Screen, self).__init__()
 
         # Store filename for output.
+        # Handle default.
         if filename is None:
             filename="screen.h5"
-        if not isinstance(filename, str):
-            raise TypeError('The parameter "filename" must be str.')
+        # Check type.
+        if not isinstance(filename, (str, unicode)):
+            raise TypeError('The parameter "filename" must be str, received %s.' % (type(filename)))
+        # Check if parent dir exists.
         filename = os.path.abspath(filename)
         if not os.path.isdir(os.path.dirname(filename)):
             raise IOError('%s is not a directory.' % (os.path.dirname(filename)))
+        # Check if file exists. Don't overwrite.
+        if os.path.isfile(filename):
+            raise IOError('%s already exists. Cowardly refusing to overwrite.')
 
         self.__filename = filename
 
