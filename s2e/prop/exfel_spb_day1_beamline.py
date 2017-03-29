@@ -1,16 +1,16 @@
 # Module holding the SPB/SFX beamline (nanofocus, KB mirrors) at European XFEL.
 
-import wpg.optical_elements
-from wpg.optical_elements import Use_PP
+from wpg import optical_elements, Beamline
+from wpg.optical_elements import Use_PP, Aperture, Drift, CRL
 from opd import defineOPD
-import numpy as np
 import os
 
 
 def get_beamline():
     """ Setup and return the WPG.Beamline object representing the SPB/SFX nanofocus beamline (KB mirrors).
 
-    :return: beamline (type wpg.Beamline)
+    :return: beamline
+    :rtype beamline: wpg.Beamline
     """
 
     ### Geometry ###
