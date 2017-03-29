@@ -35,7 +35,6 @@ class WPGOpticalElement(object):
     def __init__(self):
         pass
 
-
 class Empty(WPGOpticalElement):
 
     """Optical element: Empty.
@@ -55,6 +54,34 @@ class Empty(WPGOpticalElement):
         """
         beamline = wpg.srwlib.SRWLOptC([], propagation_parameters)
         srwl.PropagElecField(wfr._srwl_wf, beamline)
+
+class Screen(Empty):
+    """
+    class: Implements the Screen optical element
+    """
+
+    def __init__(self, filename):
+        """ Constructor for the Screen class. """
+
+        # Initialize base class.
+        super(Screen, self).__init__()
+
+        # Store filename for output.
+        if filename is None:
+            filename="screen.h5"
+        if not isinstance(filename, str):
+            raise TypeError('The parameter "filename" must be str.')
+        filename = os.path.abspath(filename)
+        if not os.path.isdir(os.path.dirname(filename)):
+            raise IOError('%s is not a directory.' % (os.path.dirname(filename)))
+
+        self.__filename = filename
+
+    def propagate(self, wfr, propagation_parameters):
+        """ Overloaded propagation for this element. """
+
+        super(Screen, self).propagate(wfr, propagation_parameters)
+        wfr.store_hdf5(filename)
 
 
 class Use_PP(object):
@@ -273,13 +300,13 @@ class Use_PP(object):
 
 def Aperture(shape, ap_or_ob, Dx, Dy=1e23, x=0, y=0):
     """
-    Defining an aperture/obstacle propagator: A wrapper to a SRWL function SRWLOptA() 
+    Defining an aperture/obstacle propagator: A wrapper to a SRWL function SRWLOptA()
 
-    :param shape:    'r' for rectangular, 'c' for circular 
+    :param shape:    'r' for rectangular, 'c' for circular
     :param ap_or_ob:  'a' for aperture, 'o' for obstacle
     :param Dx, Dy:   transverse dimensions [m]; in case of circular aperture, only Dx is used for diameter
-    :param x, y:     transverse coordinates of center [m] 
-    :return: opAp  - aperture propagator, ``struct SRWLOptA`` 
+    :param x, y:     transverse coordinates of center [m]
+    :return: opAp  - aperture propagator, ``struct SRWLOptA``
     """
     from wpg.srwlib import SRWLOptA
 
@@ -289,7 +316,7 @@ def Aperture(shape, ap_or_ob, Dx, Dy=1e23, x=0, y=0):
 
 def Mirror_elliptical(orient, p, q, thetaE, theta0, length):
     """
-    Defining a plane elliptical focusing mirror propagator: A wrapper to a SRWL function SRWLOptMirEl() 
+    Defining a plane elliptical focusing mirror propagator: A wrapper to a SRWL function SRWLOptMirEl()
 
     :param orient:    mirror orientation, 'x' (horizontal) or 'y' (vertical)
     :param p:  distance to one ellipsis center (source), [m]
@@ -297,7 +324,7 @@ def Mirror_elliptical(orient, p, q, thetaE, theta0, length):
     :param thetaE:  design incidence angle in the center of mirror, [rad]
     :param theta0:  "real" incidence angle in the center of mirror, [rad]
     :param length:  mirror length, [m]
-    :return: opEFM  - elliptical mirror propagator, ``struct SRWLOptMirEl`` 
+    :return: opEFM  - elliptical mirror propagator, ``struct SRWLOptMirEl``
     """
     from wpg.srwlib import SRWLOptMirEl
 
@@ -318,12 +345,12 @@ def Mirror_elliptical(orient, p, q, thetaE, theta0, length):
 
 def WF_dist(nx, ny, Dx, Dy):
     """
-    Create a 'phase screen' propagator for wavefront distortions:   A wrapper to SRWL struct SRWLOptT 
+    Create a 'phase screen' propagator for wavefront distortions:   A wrapper to SRWL struct SRWLOptT
 
     :params nx: number of points in horizontal direction
     :params ny: number of points in vertical   direction
     :params Dx: size in m
-    :params Dy: size in 
+    :params Dy: size in
     """
     from wpg.srwlib import SRWLOptT
     return SRWLOptT(nx, ny, Dx, Dy)
@@ -331,18 +358,18 @@ def WF_dist(nx, ny, Dx, Dy):
 
 def Mirror_plane(orient, theta, length, range_xy, filename, scale=1, delim=' ', xscale = 1, x0 = 0., bPlot=False):
     """
-    Defining a plane mirror propagator with taking into account surface height errors 
+    Defining a plane mirror propagator with taking into account surface height errors
 
     :param orient:  mirror orientation, 'x' (horizontal) or 'y' (vertical)
     :param theta:   incidence angle [rad]
     :param length:  mirror length, [m]
     :range_xy: range in which the incident WF defined [m]
-    :filename: full file name with mirror profile of two columns, x and h(x) - heigh errors [m]  
+    :filename: full file name with mirror profile of two columns, x and h(x) - heigh errors [m]
     :scale: - height errors scale factor, optical path difference OPD = 2*h*scale*sin(theta)
     :delim: delimiter between data columns
     :param xscale: scaling factor for the mirror profile x-axis (for taking an arbitrary scaled axis, i.e. im mm)
     :x0: shift of mirror longitudinal position [m]
-    :return: opIPM  - imperfect plane mirror propagator 
+    :return: opIPM  - imperfect plane mirror propagator
     """
     if orient == 'x':  # horizontal plane mirror
         opIPM = WF_dist(1500, 100, length*theta, range_xy)
@@ -352,26 +379,26 @@ def Mirror_plane(orient, theta, length, range_xy, filename, scale=1, delim=' ', 
         raise TypeError('orient should be "x" or "y"')
 
     calculateOPD(opIPM, mdatafile=filename, ncol=2, delim=delim,
-                 Orient=orient, theta=theta, scale=scale, 
+                 Orient=orient, theta=theta, scale=scale,
                  length = length, xscale = xscale, x0=x0, bPlot=bPlot)
     return opIPM
 
 
 def Mirror_plane_2d(orient, theta, length, range_xy, filename, scale=1, x0=0., y0=0., xscale=1., yscale=1.,bPlot=False):
     """
-    Defining a plane mirror propagator with taking into account 2D surface height errors 
+    Defining a plane mirror propagator with taking into account 2D surface height errors
 
     :param orient:  mirror orientation, 'x' (horizontal) or 'y' (vertical)
     :param theta:   incidence angle [rad]
     :param length:  mirror length, [m]
     :range_xy: range in which the incident WF defined [m]
-    :filename: full file name with 2d mirror profile of three columns, x, y, and h(x, y) - heigh errors [m]  
+    :filename: full file name with 2d mirror profile of three columns, x, y, and h(x, y) - heigh errors [m]
     :scale: scale factor, optical path difference OPD = 2*h*scale*sin(theta)
     :x0: shift of mirror longitudinal position [m]
     :y0: shift of mirror transverse position [m]
     :xscale: units of 1st column of filename,  x[m]=x[nits]*xscale  [m]
     :yscale: units of 1st column of filename,  y[m]=y[nits]*yscale  [m]
-    :return: opIPM  - imperfect plane mirror propagator 
+    :return: opIPM  - imperfect plane mirror propagator
     """
     from scipy import interpolate
     from wpg.srwlib import SRWLOptT
@@ -431,7 +458,7 @@ def Mirror_plane_2d(orient, theta, length, range_xy, filename, scale=1, x0=0., y
     xnew, ynew = np.mgrid[xmin:xmax:1500j, ymin:ymax:100j]
     f = interpolate.RectBivariateSpline(xax, yax, _height_prof_data_val.T)
     h_new = f(xnew[:, 0], ynew[0, :])
-    if bPlot: 
+    if bPlot:
         import pylab as plt
         plt.figure();plt.pcolor(xnew, ynew, h_new*scale*1e9);
         plt.axis([xnew.min(), xnew.max(), ynew.min(), ynew.max()])
@@ -639,7 +666,7 @@ def CRL(_foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n,
     :param _wall_thick: min. wall thickness between "holes" [m]
     :param _xc: horizontal coordinate of center [m]
     :param _yc: vertical coordinate of center [m]
-    :param _void_cen_rad: flat array/list of void center coordinates and radii: [x1, y1, r1, x2, y2, r2,...] 
+    :param _void_cen_rad: flat array/list of void center coordinates and radii: [x1, y1, r1, x2, y2, r2,...]
     :param _e_start: initial photon energy
     :param _e_fin: final photon energy
     :return: transmission (SRWLOptT) type optical element which simulates CRL
@@ -750,7 +777,7 @@ def create_CRL(directory, voids_params,
     :param _wall_thick: min. wall thickness between "holes" [m]
     :param _xc: horizontal coordinate of center [m]
     :param _yc: vertical coordinate of center [m]
-    :param _void_cen_rad: flat array/list of void center coordinates and radii: [x1, y1, r1, x2, y2, r2,...] 
+    :param _void_cen_rad: flat array/list of void center coordinates and radii: [x1, y1, r1, x2, y2, r2,...]
     :param _e_start: initial photon energy
     :param _e_fin: final photon energy
     :return: SRWL CRL object
@@ -802,7 +829,7 @@ def create_CRL_from_file(directory, file_name,
     :param _wall_thick: min. wall thickness between "holes" [m]
     :param _xc: horizontal coordinate of center [m]
     :param _yc: vertical coordinate of center [m]
-    :param _void_cen_rad: flat array/list of void center coordinates and radii: [x1, y1, r1, x2, y2, r2,...] 
+    :param _void_cen_rad: flat array/list of void center coordinates and radii: [x1, y1, r1, x2, y2, r2,...]
     :param _e_start: initial photon energy
     :param _e_fin: final photon energy
     :return: SRWL CRL object
