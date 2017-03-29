@@ -1,21 +1,19 @@
 """ Test module for wpg.OpticalElements.
 
-    @author : Carsten Fortmann-Grote
-    @institution : European XFEL GmbH, Holzkoppel 4, 22869 Schenefeld, Germany
-    @creation 20170328
+    :author : Carsten Fortmann-Grote
+    :institution : European XFEL GmbH, Holzkoppel 4, 22869 Schenefeld, Germany
+    :creation date: 20170329
 
 """
 import os, sys, shutil
-import numpy
 import unittest
 
 
+# Add sources to global namespace.
+sys.path.insert(0,os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)),'..','..')))
+
 # Import the class to test.
-sys.path.insert(0,'../..')
-
-
 from wpg import optical_elements
-from wpg.generators import build_gauss_wavefront
 
 
 class ScreenTest(unittest.TestCase):
