@@ -35,7 +35,7 @@ import unittest
 sys.path.insert(0,'../../..')
 
 
-from s2e.prop import simple_beamline, exfel_spb_day1_beamline, exfel_spb_kb_beamline
+from s2e.prop import simple_beamline, exfel_spb_day1_beamline, exfel_spb_kb_beamline, beamline_with_screen
 from s2e.prop import propagate_s2e
 
 from wpg import Beamline, Wavefront
@@ -129,6 +129,19 @@ class BeamlinesTest(unittest.TestCase):
 
         # Check that output was generated.
         self.assertIn( output_file, os.listdir(".") )
+
+    def testStepwise(self):
+        """ Test stepwise propagation through a beamline."""
+
+        propagate_s2e.stepwise(self.__fel_source, simple_beamline.get_beamline )
+
+        # Should produce 3 files.
+        for f in range(3):
+            filename = "%04d.h5" % (f)
+            self.__files_to_remove.append(filename)
+            self.assertIn(filename, os.listdir(os.path.dirname(os.path.abspath(__file__))))
+
+
 
 def setupTestWavefront():
     """ Utility to setup a Gaussian wavefront. Geometry corresponds to SPB-SFX Day1 configuration. """
