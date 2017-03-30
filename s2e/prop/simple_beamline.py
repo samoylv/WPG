@@ -1,7 +1,7 @@
 def get_beamline():
     """
     This function will called in propagation script.
-    
+
     :return: Beamline.
     """
 
