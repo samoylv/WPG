@@ -420,6 +420,6 @@ def get_intensity_on_axis(wfr):
     sz = numpy.zeros(shape=(mesh.nSlices, 2), dtype='float64')
     sz[:, 0] = numpy.linspace(mesh.sliceMin, mesh.sliceMax, mesh.nSlices)
     # <-to avoid wrong dimension assignment
-    sz[:, 1] = wf_intensity[dim[0]/2, dim[1]/2, :] / wf_intensity.max()
+    sz[:, 1] = wf_intensity[int(dim[0]/2), int(dim[1]/2), :] / wf_intensity.max()
 
     return sz
