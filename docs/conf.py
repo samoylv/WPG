@@ -249,6 +249,7 @@ texinfo_documents = [
 
 todo_include_todos = True
 autoclass_content = 'both'
+import unittest
 sys.path.insert(1, os.path.join('..'))
 sys.path.insert(1, os.path.join('..', 'wpg'))
 
