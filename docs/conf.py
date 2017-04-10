@@ -248,14 +248,10 @@ texinfo_documents = [
 #texinfo_no_detailmenu = False
 
 todo_include_todos = True
-# autoclass_content = 'both'
+autoclass_content = 'both'
 # import unittest
 # sys.path.insert(-1, os.path.join('..'))
 # sys.path.insert(-1, os.path.join('..', 'wpg'))
-
-import imp
-wpg = imp.load_source('wpg', os.path.join('..', 'wpg', '__init__.py'))
-
 
 import mock
 MOCK_MODULES = ['wpg.srwlpy', 'srwlpy', 'numpy', 'h5py', 'pylab', 'scipy',
@@ -263,3 +259,6 @@ MOCK_MODULES = ['wpg.srwlpy', 'srwlpy', 'numpy', 'h5py', 'pylab', 'scipy',
                 'scipy.optimize']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
+
+import imp
+wpg = imp.load_source('wpg', os.path.join('..', 'wpg', '__init__.py'))
