@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Module for interface functions to wpg library. """
 
 from glob import glob
@@ -259,10 +260,10 @@ def directory_process(in_dname, out_dname, get_beamline, cpu_number):
     for name in input_files:
         in_file_name = os.path.split(name)[-1]
         out_file_name = in_file_name.replace('FELsource_out','prop_out')
-        print 'out_file_name:',out_file_name
+        print ('out_file_name: %s' % out_file_name)
         out_files.append(os.path.join(out_dname, out_file_name))
 
-    print 'Found {} HDF5 files in {}'.format(len(input_files), in_dname)
+    print('Found {} HDF5 files in {}'.format(len(input_files), in_dname))
 
     batch_params = zip(input_files, out_files, [get_beamline]*len(input_files))
 
@@ -272,18 +273,18 @@ def directory_process(in_dname, out_dname, get_beamline, cpu_number):
     p.join()
 
 def main():
-    from optparse import OptionParser
-    parser = OptionParser()
-    parser.add_option("--input-file", dest="in_fname", help="Input wavefront file")
-    parser.add_option("--output-file", dest="out_fname", help="Output wavefront file")
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    parser.add_argument("--input-file", dest="in_fname", help="Input wavefront file")
+    parser.add_argument("--output-file", dest="out_fname", help="Output wavefront file")
 
-    parser.add_option("--input-directory", dest="in_dname", help="Input directory with wavefront files")
-    parser.add_option("--output-directory", dest="out_dname", help="Output directory with wavefront files")
-    parser.add_option("-n", "--cpu-number", dest="cpu_number", default=int((multiprocessing.cpu_count()+1)/2),
-                      help="Number of cores for batch wavefronts propagation, default value NUMBER_OF_CPU/2")
-    parser.add_option("--beamline-file", dest="beamline_file", help="Python file with beamline description")
+    parser.add_argument("--input-directory", dest="in_dname", help="Input directory with wavefront files")
+    parser.add_argument("--output-directory", dest="out_dname", help="Output directory with wavefront files")
+    parser.add_argument("-n", "--cpu-number", dest="cpu_number", default=int((multiprocessing.cpu_count()+1)/2),
+               help="Number of cores for batch wavefronts propagation, default value NUMBER_OF_CPU/2")
+    parser.add_argument("--beamline-file", dest="beamline_file", help="Python file with beamline description")
 
-    (options, args) = parser.parse_args()
+    options = parser.parse_args()
 
 
     if not (options.in_fname or options.in_dname):   # if filename is not given
@@ -303,14 +304,14 @@ def main():
         get_beamline = custom_beamline.get_beamline
 
     if options.in_dname and options.out_dname:
-        print 'Input directory {}, output directory {}, number of cores {}'.format(
-            options.in_dname, options.out_dname, options.cpu_number)
-        print 'Batch propagation started'
+        print('Input directory {}, output directory {}, number of cores {}'.format(
+            options.in_dname, options.out_dname, options.cpu_number))
+        print('Batch propagation started')
         directory_process(options.in_dname, options.out_dname, get_beamline, int(options.cpu_number))
-        print 'Batch propagation finished'
+        print('Batch propagation finished')
 
     elif options.in_fname and options.out_fname:
-        print 'Input file {}, output file {}'.format(options.in_fname, options.out_fname, get_beamline)
+        print('Input file {}, output file {}'.format(options.in_fname, options.out_fname, get_beamline))
         propagate(options.in_fname, options.out_fname, get_beamline)
 
 if __name__ == '__main__':
