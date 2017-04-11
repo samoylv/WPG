@@ -198,6 +198,10 @@ def plot_intensity_map(wf, save='', range_x=None, range_y=None,im_aspect='equal'
     # x-projection plots above main plot.
     x_projection = plt.subplot2grid((3, 3), (0, 0), sharex=profile, colspan=2)
     print(x.shape, wf_intensity.sum(axis=0).shape)
+    fwhm = calculate_fwhm(wf)
+
+    print("FWHM in x = %4.3e m." % (fwhm['fwhm_x']))
+    print("FWHM in y = %4.3e m." % (fwhm['fwhm_y']))
 
     x_projection.plot(x, wf_intensity.sum(axis=0), label='x projection')
 
@@ -420,6 +424,6 @@ def get_intensity_on_axis(wfr):
     sz = numpy.zeros(shape=(mesh.nSlices, 2), dtype='float64')
     sz[:, 0] = numpy.linspace(mesh.sliceMin, mesh.sliceMax, mesh.nSlices)
     # <-to avoid wrong dimension assignment
-    sz[:, 1] = wf_intensity[int(dim[0]/2), int(dim[1]/2), :] / wf_intensity.max()
+    sz[:, 1] = wf_intensity[dim[0]/2, dim[1]/2, :] / wf_intensity.max()
 
     return sz
