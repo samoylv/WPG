@@ -68,7 +68,7 @@ def vector_grid_conversion(_hf, _npoints, _nslices, _grid_size, _wv, _lambda_un)
     fact = fact / (xkw0 * xkw0)
     print(fact)
 
-    # Cycle over all slices, converting the 1D vector into a 3D Matrix and 
+    # Cycle over all slices, converting the 1D vector into a 3D Matrix and
     # dividing by the mesh size in order to get the field in units of \sqrt{W/mm^2}
     for islice in range(1, nsl):
         print('slice No ' + str(islice))
@@ -94,7 +94,6 @@ def read_genesis_file(gen_fname):
     wf = Wavefront()
 
     ### Open the hdf5 output GENESIS file
-
     with h5py.File(gen_fname, 'r') as hf:
         grid_size = hf['gridsize'].value
         slice_count = hf['slicecount'].value
@@ -105,7 +104,7 @@ def read_genesis_file(gen_fname):
         npoints = int(np.sqrt(len(data1) / 2))
 
     ### Definition of the Electric field field arrays where the electric field from the GENESIS output file
-    ###  will be copied 
+    ###  will be copied
 
         wf.data.arrEhor = np.zeros(shape=(npoints, npoints, slice_count, 2))
         wf.data.arrEver = np.zeros(shape=(npoints, npoints, slice_count, 2))
@@ -129,7 +128,7 @@ def read_genesis_file(gen_fname):
         wf.params.Mesh.yMax = range_xy / 2.
 
     ### Extract the field data from the h5 file and fill in the data of the Electric field, by calling the
-    ### vector_grid_conversion function   
+    ### vector_grid_conversion function
         wf.data.arrEhor = vector_grid_conversion(
             hf, npoints, slice_count, range_xy, wavelength, lmb_und)
 
