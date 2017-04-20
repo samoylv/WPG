@@ -1,3 +1,10 @@
+import scipy.constants as const
+import numpy as np
+import numpy
+import h5py
+from wpg import Wavefront
+from ocelot.adaptors.genesis import read_out_file, read_dfl_file_out
+
 def vector_grid_conversion(data, _npoints, _nslices, _grid_size, _wv, _lambda_un):
     '''
     Inputs:
