@@ -14,6 +14,14 @@ The wavefronts are saved in hdf5 format for the eventual further processing and 
 
 Several application examples, specific for XFEL, will be presented.
 
+See also 
+========
+
+1. WPG paper http://journals.iucr.org/j/issues/2016/04/00/zd5006/zd5006.pdf
+2. XPD: XFEL Photon pulses Database
+  https://in.xfel.eu/xpd/ and XPD API https://in.xfel.eu/xpd/doc/Rest_API.html
+3. Simex project https://www.eucall.eu/organisation/work_packages/wp4___simex/
+
 Getting started
 ===============
 
