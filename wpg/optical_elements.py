@@ -596,7 +596,7 @@ def VLS_grating(_mirSub, _m=1, _grDen=100, _grDen1=0, _grDen2=0, _grDen3=0, _grD
 #     psi0i = x0i[idx]
 #     psiHr = -xhr[idx]
 #     psiHi = xhi[idx]
-#     thetaB = np.arcsin(12.39e-10/ekev0[idx]/(2*d))
+#     thetaB = np.arcsin(12.398e-10/ekev0[idx]/(2*d))
 #     angAs = 0.
 #     b = -1
 #     DeltaTheta = - psi0r * (1.-1./b)/(2*np.sin(2*thetaB))

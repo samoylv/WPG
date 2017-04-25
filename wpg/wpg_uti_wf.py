@@ -398,7 +398,7 @@ def calculate_fwhm(wfr):
     fwhm_y = len(y_center[y_center > y_center.max()/2])*dy
     if (wfr.params.wSpace == 'Q-space'):
         print(wfr.params.wSpace)
-        wl = 12.39*1e-10/(wfr.params.photonEnergy*1e-3)  # WaveLength
+        wl = 12.398*1e-10/(wfr.params.photonEnergy*1e-3)  # WaveLength
         fwhm_x = fwhm_x*wl
         fwhm_y = fwhm_y*wl
 
