@@ -336,7 +336,7 @@ class Wavefront(object):
                 return sr.sliceMin, sr.sliceMax, sr.xMax, sr.xMin
         elif rep == 'Q-space':
             print(rep)
-            wl = 12.39 * 1e-10 / (self.params.photonEnergy * 1e-3)  # WaveLength
+            wl = 12.398 * 1e-10 / (self.params.photonEnergy * 1e-3)  # WaveLength
             # wv = 2.*np.pi/wl
             # #WaveVector
             if axis == 'z':
