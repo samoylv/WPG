@@ -359,10 +359,10 @@ def WF_dist(nx, ny, Dx, Dy):
     """
     Create a 'phase screen' propagator for wavefront distortions:   A wrapper to SRWL struct SRWLOptT
 
-    :params nx: number of points in horizontal direction
-    :params ny: number of points in vertical   direction
-    :params Dx: size in m
-    :params Dy: size in
+    :param nx: number of points in horizontal direction
+    :param ny: number of points in vertical   direction
+    :param Dx: size in m
+    :param Dy: size in
     """
     from wpg.srwlib import SRWLOptT
     return SRWLOptT(nx, ny, Dx, Dy)
@@ -375,12 +375,12 @@ def Mirror_plane(orient, theta, length, range_xy, filename, scale=1, delim=' ', 
     :param orient:  mirror orientation, 'x' (horizontal) or 'y' (vertical)
     :param theta:   incidence angle [rad]
     :param length:  mirror length, [m]
-    :range_xy: range in which the incident WF defined [m]
-    :filename: full file name with mirror profile of two columns, x and h(x) - heigh errors [m]
-    :scale: - height errors scale factor, optical path difference OPD = 2*h*scale*sin(theta)
-    :delim: delimiter between data columns
+    :param range_xy: range in which the incident WF defined [m]
+    :param filename: full file name with mirror profile of two columns, x and h(x) - heigh errors [m]
+    :param scale: - height errors scale factor, optical path difference OPD = 2*h*scale*sin(theta)
+    :param delim: delimiter between data columns
     :param xscale: scaling factor for the mirror profile x-axis (for taking an arbitrary scaled axis, i.e. im mm)
-    :x0: shift of mirror longitudinal position [m]
+    :param x0: shift of mirror longitudinal position [m]
     :return: opIPM  - imperfect plane mirror propagator
     """
     if orient == 'x':  # horizontal plane mirror
@@ -403,13 +403,13 @@ def Mirror_plane_2d(orient, theta, length, range_xy, filename, scale=1, x0=0., y
     :param orient:  mirror orientation, 'x' (horizontal) or 'y' (vertical)
     :param theta:   incidence angle [rad]
     :param length:  mirror length, [m]
-    :range_xy: range in which the incident WF defined [m]
-    :filename: full file name with 2d mirror profile of three columns, x, y, and h(x, y) - heigh errors [m]
-    :scale: scale factor, optical path difference OPD = 2*h*scale*sin(theta)
-    :x0: shift of mirror longitudinal position [m]
-    :y0: shift of mirror transverse position [m]
-    :xscale: units of 1st column of filename,  x[m]=x[nits]*xscale  [m]
-    :yscale: units of 1st column of filename,  y[m]=y[nits]*yscale  [m]
+    :param range_xy: range in which the incident WF defined [m]
+    :param filename: full file name with 2d mirror profile of three columns, x, y, and h(x, y) - heigh errors [m]
+    :param scale: scale factor, optical path difference OPD = 2*h*scale*sin(theta)
+    :param x0: shift of mirror longitudinal position [m]
+    :param y0: shift of mirror transverse position [m]
+    :param xscale: units of 1st column of filename,  x[m]=x[nits]*xscale  [m]
+    :param yscale: units of 1st column of filename,  y[m]=y[nits]*yscale  [m]
     :return: opIPM  - imperfect plane mirror propagator
     """
     from scipy import interpolate
@@ -502,7 +502,7 @@ def VLS_grating(_mirSub, _m=1, _grDen=100, _grDen1=0, _grDen2=0, _grDen3=0, _grD
     """
     Optical Element: Grating.
 
-    param _mirSub: SRWLOptMir (or derived) type object defining substrate of the grating
+    :param _mirSub: SRWLOptMir (or derived) type object defining substrate of the grating
     :param _m: output (diffraction) order
     :param _grDen: groove density [lines/mm] (coefficient a0 in the polynomial groove density: a0 + a1*y + a2*y^2 + a3*y^3 + a4*y^4)
     :param _grDen1: groove density polynomial coefficient a1 [lines/mm^2]
@@ -510,6 +510,7 @@ def VLS_grating(_mirSub, _m=1, _grDen=100, _grDen1=0, _grDen2=0, _grDen3=0, _grD
     :param _grDen3: groove density polynomial coefficient a3 [lines/mm^4]
     :param _grDen4: groove density polynomial coefficient a4 [lines/mm^5]
     :param _grAng: angle between the grove direction and the saggital direction of the substrate [rad] (by default, groves are made along saggital direction (_grAng=0))
+    :return: SRWLOptG: VLS grating propagator, ``struct SRWLOptG``
     """
 
     from .srwlib import SRWLOptG
@@ -596,7 +597,7 @@ def VLS_grating(_mirSub, _m=1, _grDen=100, _grDen1=0, _grDen2=0, _grDen3=0, _grD
 #     psi0i = x0i[idx]
 #     psiHr = -xhr[idx]
 #     psiHi = xhi[idx]
-#     thetaB = np.arcsin(12.39e-10/ekev0[idx]/(2*d))
+#     thetaB = np.arcsin(12.398e-10/ekev0[idx]/(2*d))
 #     angAs = 0.
 #     b = -1
 #     DeltaTheta = - psi0r * (1.-1./b)/(2*np.sin(2*thetaB))
@@ -704,7 +705,7 @@ def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., lengt
     :params scale: scaling factor for the mirror profile
     :param xscale: scaling factor for the mirror profile x-axis (for taking an arbitrary scaled axis, i.e. im mm)
     :param length: mirror length, m, default value 1 m
-    :return filled
+    :return: filled ``struct SRWLOptT``
     """
     from numpy import loadtxt
     # import SRW helpers functions
