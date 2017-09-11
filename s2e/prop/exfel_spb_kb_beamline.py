@@ -1,12 +1,12 @@
 # Module holding WPG beamlines at European XFEL.
 
-from opd import defineOPD
+from prop.opd import defineOPD
 from wpg import optical_elements, Beamline
 from wpg.optical_elements import Use_PP
 import numpy
 import os
-
-from propagate_s2e import MIRROR_DATA_DIR as mirror_data_dir
+#from s2e.prop.propagate_s2e import MIRROR_DATA_DIR as mirror_data_dir
+from prop.propagate_s2e import MIRROR_DATA_DIR as mirror_data_dir
 
 
 def get_beamline():
@@ -32,8 +32,11 @@ def get_beamline():
     theta_kb = 3.5e-3       # KB mirrors incidence angle
 
     # Mirror lengths
-    om_mirror_length = 0.8; om_clear_ap = om_mirror_length*theta_om
-    kb_mirror_length = 0.9; kb_clear_ap = kb_mirror_length*theta_kb
+    om_mirror_length = 0.8;
+    om_clear_ap = om_mirror_length*theta_om
+
+    kb_mirror_length = 0.9;
+    kb_clear_ap = kb_mirror_length*theta_kb
 
     # Drifts.
     drift0 = optical_elements.Drift(distance0)
@@ -42,7 +45,7 @@ def get_beamline():
     drift_to_foc = optical_elements.Drift(distance_foc)
 
     # Mirror apertures.
-    ap0   = optical_elements.Aperture('r','a', 120.e-6, 120.e-6)
+    ap0   = optical_elements.Aperture('r','a', 5.0e-4, 5.0e-4)
     ap1   = optical_elements.Aperture('r','a', om_clear_ap, 2*om_clear_ap)
     ap_kb = optical_elements.Aperture('r','a', kb_clear_ap, kb_clear_ap)
 
@@ -65,36 +68,74 @@ def get_beamline():
                     )
 
 
-    # Wavefront distortions due to mirror profile.
-    wf_dist_om = optical_elements.WF_dist(1500, 100, om_clear_ap, 2*om_clear_ap)
-    defineOPD(wf_dist_om, os.path.join(mirror_data_dir,'mirror2.dat'), 2, '\t', 'x',
-              theta_kb, scale=2)
+    # Mirror profiles.
+    wf_dist_om = optical_elements.Mirror_plane(orient='x',
+                              theta=theta_om,
+                              length=om_mirror_length,
+                              range_xy=2*om_clear_ap,
+                              filename=os.path.join(mirror_data_dir, 'mirror2.dat'),
+                              scale=2.,
+                              bPlot=False)
 
-    wf_dist_hfm = optical_elements.WF_dist(1500, 100, kb_clear_ap, kb_clear_ap)
-    defineOPD(wf_dist_hfm, os.path.join(mirror_data_dir,'mirror1.dat'), 2, '\t', 'x',
-              theta_kb, scale=2, stretching=kb_mirror_length/0.8)
+    wf_dist_hfm = optical_elements.Mirror_plane(orient='x',
+                              theta=theta_kb,
+                              length=kb_mirror_length,
+                              range_xy=kb_clear_ap,
+                              filename=os.path.join(mirror_data_dir, 'mirror1.dat'),
+                              scale=2.,
+                              bPlot=False)
 
-    wf_dist_vfm = optical_elements.WF_dist(1100, 1500, kb_clear_ap, kb_clear_ap)
-    defineOPD(wf_dist_vfm, os.path.join(mirror_data_dir,'mirror2.dat'), 2, ' ', 'y',
-              theta_kb, scale=2, stretching=kb_mirror_length/0.8)
-
+    wf_dist_vfm = optical_elements.Mirror_plane(orient='y',
+                              theta=theta_kb,
+                              length=kb_mirror_length,
+                              range_xy=kb_clear_ap,
+                              filename=os.path.join(mirror_data_dir, 'mirror2.dat'),
+                              scale=2.,
+                              bPlot=False)
 
     # Assemble the beamline with PP parameters.
     bl0 = Beamline()
-    bl0.append(ap0,   Use_PP(semi_analytical_treatment=0,
-                             zoom=14.4,
-                             sampling=1/1.6))
-    bl0.append(drift0,Use_PP(semi_analytical_treatment=0))
-    bl0.append(ap1, Use_PP(zoom=0.8))
+    
+    ### Aperture to resample. Increase sampling frequency to get Fresnel zone between 7 and 10 px.
+    bl0.append(ap0,   Use_PP(semi_analytical_treatment=0,zoom=1.0,sampling=1./0.4))
+    #### Increase sampling again, reduce ROI => ROI ~10 fwhm, 700x700 sampling.
+    bl0.append(drift0,Use_PP(semi_analytical_treatment=1, zoom=0.5, sampling=1.5/0.28))
+
+    ####
+    bl0.append(ap1, Use_PP(zoom=1.0, sampling=1.0))
     bl0.append(wf_dist_om, Use_PP())
-    bl0.append(drift1, Use_PP(semi_analytical_treatment=1))
-    bl0.append(ap_kb,  Use_PP(zoom = 6.4, sampling = 1/16.))
+    
+    ###
+    bl0.append(drift1, Use_PP(semi_analytical_treatment=1, zoom=1.0, sampling=2.0))
+    
+    ###
+    bl0.append(ap_kb, Use_PP())
     bl0.append(hfm, Use_PP())
     bl0.append(wf_dist_hfm, Use_PP())
+    
+    ###
     bl0.append(drift_in_kb, Use_PP(semi_analytical_treatment=1))
+    
     bl0.append(vfm, Use_PP())
     bl0.append(wf_dist_vfm, Use_PP())
-    bl0.append(drift_to_foc, Use_PP(semi_analytical_treatment=1))
+    
+    ###
+    bl0.append(drift_to_foc, Use_PP(semi_analytical_treatment=1, zoom_h=0.1, sampling_h=1.2, zoom_v=0.05, sampling_v=1.2))
+
+    ###bl0.append(ap0,   Use_PP(semi_analytical_treatment=0,
+    ##                         #zoom=14.4,
+    ##                         #sampling=1/1.6))
+    ###bl0.append(drift0,Use_PP(semi_analytical_treatment=0))
+    ###bl0.append(ap1, Use_PP(zoom=0.8))
+    ###bl0.append(wf_dist_om, Use_PP())
+    ###bl0.append(drift1, Use_PP(semi_analytical_treatment=1))
+    ###bl0.append(ap_kb,  Use_PP(zoom = 6.4, sampling = 1/16.))
+    ###bl0.append(hfm, Use_PP())
+    ###bl0.append(wf_dist_hfm, Use_PP())
+    ###bl0.append(drift_in_kb, Use_PP(semi_analytical_treatment=1))
+    ###bl0.append(vfm, Use_PP())
+    ###bl0.append(wf_dist_vfm, Use_PP())
+    ###bl0.append(drift_to_foc, Use_PP(semi_analytical_treatment=1))
 
     # All done, return.
     return bl0
