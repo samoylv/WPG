@@ -1,5 +1,5 @@
 all: core modules
-	
+
 core:
 	cd build; make srw
 
@@ -14,5 +14,5 @@ clean:
 
 doc:
 	cd docs; make html
-	
+
 .PHONY: all core modules clean ipython doc

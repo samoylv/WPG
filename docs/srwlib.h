@@ -776,6 +776,8 @@ EXP int CALL srwlUtiConvWithGaussian(char* pcData, char typeData, double* arMesh
 EXP int CALL srwlUtiUndFromMagFldTab(SRWLMagFldC* pUndCnt, SRWLMagFldC* pMagCnt, double* arPrecPar);
 
 /***************************************************************************/
+EXP void CALL srwlPrintTime(const char* str, double* start);
+EXP void CALL get_walltime(double* wcTime);
 
 #ifdef __cplusplus  
 }

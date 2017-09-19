@@ -220,6 +220,10 @@ def plot_intensity_map(wf, save='', range_x=None, range_y=None,
     # x-projection plots above main plot.
     x_projection = plt.subplot2grid((3, 3), (0, 0), sharex=profile, colspan=2)
     print(x.shape, wf_intensity.sum(axis=0).shape)
+    fwhm = calculate_fwhm(wf)
+
+    print("FWHM in x = %4.3e m." % (fwhm['fwhm_x']))
+    print("FWHM in y = %4.3e m." % (fwhm['fwhm_y']))
 
     x_projection.plot(x, wf_intensity.sum(axis=0), label='x projection')
 
