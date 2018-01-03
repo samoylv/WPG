@@ -49,12 +49,23 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
             if name in group:
                 del group[name]
             try:
-                if type(value) == numpy.ndarray:
+                if isinstance(value, numpy.ndarray):
                     if numpy.allclose(value, 0):
                         group.create_dataset(name, data=value, chunks=True,
                             compression='gzip', compression_opts=1)    # compression='lzf'
                     else:
+                        if all([isinstance(a, numpy.bytes_) for a in value]):
+                            value = numpy.array([a.decode('utf-8') for a in value])
                         group.create_dataset(name, data=value)
+                elif isinstance(value, str):
+                        group.create_dataset(name, data=numpy.array(value.encode('utf-8')))
+
+                elif isinstance(value, list):
+                    if all([isinstance(a, str) for a in value]):
+                        value = numpy.array([a.encode('utf-8') for a in value])
+                    else:
+                        value = numpy.array(value)
+                    group.create_dataset(name, data=numpy.array(value))
                 else:
                     group.create_dataset(name, data=value)
             except ValueError:  # if h5py not support compression
