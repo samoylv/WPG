@@ -14,6 +14,13 @@ The wavefronts are saved in hdf5 format for the eventual further processing and 
 
 Several application examples, specific for XFEL, will be presented.
 
+References
+==========
+
+If you use the WPG for your research, we would appreciate it if you would refer to the following papers:
+
+Samoylova, L., Buzmakov, A., Chubar, O. & Sinn, H. WavePropaGator: Interactive framework for X-ray FEL optics design and simulations. // Journal of Applied Crystallography 08/2016; 49(4) pp. 1347-1355. DOI:10.1107/S160057671600995X http://journals.iucr.org/j/issues/2016/04/00/zd5006/index.html
+
 See also 
 ========
 
