@@ -13,7 +13,7 @@ RUN conda install -y nomkl \
 					libgcc &&\
 	conda clean -y --all
 
-RUN DEBIAN_FRONTEND=noninteractive  apt-get install -y --no-install-recommends  \
+RUN DEBIAN_FRONTEND=noninteractive  apt-get update && apt-get install -y --no-install-recommends  \
 		texlive-fonts-recommended \
         texlive-latex-base \
         texlive-generic-recommended \
