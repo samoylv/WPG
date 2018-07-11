@@ -43,7 +43,6 @@ def vector_grid_conversion(data, _npoints, _nslices, _grid_size, _wv, _lambda_un
     # (consistent with GENESIS v2)
     fact = dxy * eev * xkw0 / xks / numpy.sqrt(vac_imp)
     fact = fact / (xkw0 * xkw0)
-    print fact
 
     # Cycle over all slices, converting the 1D vector into a 3D Matrix and
     # dividing by the mesh size in order to get the field in units of \sqrt{W/mm^2}
@@ -124,8 +123,8 @@ def read_genesis_file(genesis_out, genesis_dfl):
     wf.params.Mesh.yMax = range_xy / 2.
 
 
-    print 'Photon energy: ', wf.params.photonEnergy, 'eV'
-    print 'Pulse length: %4.3e' % ( pulse_length )
+    print ('Photon energy: ', wf.params.photonEnergy, 'eV')
+    print ('Pulse length: %4.3e' % ( pulse_length ))
 
     # Extract the field data from the h5 file and fill in the data of the Electric field, by calling the
     # vector_grid_conversion function

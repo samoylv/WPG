@@ -1,0 +1,4 @@
+6c6
+< 	python setup.py build_ext --build-lib='../gcc'
+---
+> 	python3 setup.py build_ext --build-lib='../gcc'

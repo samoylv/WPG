@@ -25,7 +25,7 @@ srw:
 	unzip -o $(SRC_DIR)/srw.zip -d $(TMP_DIR)
 	rm -rf $(TMP_DIR)/SRW
 	mv $(TMP_DIR)/SRW-feature-srw_lite_openmp $(TMP_DIR)/SRW
-
+	patch $(TMP_DIR)/SRW/cpp/py/Makefile py3.patch
 	cd $(TMP_DIR)/SRW; make all;
 	mkdir -p $(BUILD_DIR)/lib
 	cp $(TMP_DIR)/SRW/cpp/gcc/srwlpy*.so $(BUILD_DIR)/lib/
