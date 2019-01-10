@@ -202,7 +202,7 @@ def plot_intensity_map(wf, save='', range_x=None, range_y=None,
         wf_intensity, extent=[xmin * 1.e3, xmax *
                               1.e3, ymax * 1.e3, ymin * 1.e3],
         cmap="YlGnBu_r")
-    profile.set_aspect(im_aspect, 'datalim')
+    profile.set_aspect(im_aspect)
 
     # Get x and y ranges.
     # [LS:2016-03-17]
@@ -329,7 +329,7 @@ def plot_intensity_qmap(wf, output_file=None, save='',
         wf_intensity, extent=[xmin * 1.e6, xmax *
                               1.e6, ymax * 1.e6, ymin * 1.e6],
         cmap="YlGnBu_r")
-    profile.set_aspect(im_aspect, 'datalim')
+    profile.set_aspect(im_aspect)
 
     # [LS:2016-03-17]
     # change shape dimension, otherwise, in case nx!=ny ,
