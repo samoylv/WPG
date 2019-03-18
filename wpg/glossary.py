@@ -86,11 +86,11 @@ class RadiationField(object):
         """
         Property where value stored.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     @value.setter
     def value(self, val):
-        raise NotImplemented
+        raise NotImplementedError
 
     @property
     def keys_chain(self):
