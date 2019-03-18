@@ -1,16 +1,9 @@
 FROM continuumio/miniconda3
 MAINTAINER Alexey Buzmakov <buzmakov@gmail.com>
 
-RUN conda install -y nomkl \
-					numpy \
-					scipy \
-					#bug with matplotlib
-					pyqt=4.11 python=3.5 \  
-					matplotlib \
-					h5py \
-					pytest \
-					jupyter \
-					libgcc &&\
+COPY requirements.txt .
+
+RUN conda install -y --file requirements.txt &&\
 	conda clean -y --all
 
 RUN DEBIAN_FRONTEND=noninteractive  apt-get update && apt-get install -y --no-install-recommends  \

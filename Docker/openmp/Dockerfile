@@ -1,4 +1,4 @@
-FROM buzmakov/baseimage
+FROM buzmakov/wpgbase
 MAINTAINER Alexey Buzmakov <buzmakov@gmail.com>
 
 ADD wpg_install.sh /opt/wpg_install.sh
