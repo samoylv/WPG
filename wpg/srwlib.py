@@ -3,7 +3,12 @@
 #############################################################################
 
 from __future__ import absolute_import, division, print_function #Py 2.*/3.* compatibility
-import srwlpy as srwl
+
+try:
+    from wpg import srwlpy as srwl
+except ImportError:
+    import srwlpy as srwl  #  Hack for read the docs
+    
 from array import *
 from math import *
 from copy import *
@@ -14,13 +19,14 @@ import random
 import sys
 import os
 import traceback
-import uti_math
+
 import errno
 import tempfile
 import shutil
 import time
 
-from srwl_uti_cryst import *
+from wpg import uti_math
+from wpg.srwl_uti_cryst import *
 
 #try:
 #    from uti_plot import * #universal simple plotting module distributed together with SRWLib
@@ -7591,7 +7597,7 @@ def srwl_wfr_emit_prop_multi_e(_e_beam, _mag, _mesh, _sr_meth, _sr_rel_prec, _n_
 #Import of modules requiring classes defined in this smodule
 #****************************************************************************
 #****************************************************************************
-from srwl_uti_src import *
+# from srwl_uti_src import *
 
 #****************************************************************************
 #****************************************************************************
