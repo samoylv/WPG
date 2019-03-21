@@ -17,7 +17,7 @@ import inspect
 import sys
 import wpg.utils as utils
 import warnings
-import numpy
+import numpy as np
 import array
 
 
@@ -1127,19 +1127,19 @@ class WFDataArrEhor(RadiationField):
         Horizontal polarization
         """
 
-        res = numpy.array(self._wf._srwl_wf.arEx, dtype='float32', copy=False)
+        res = np.array(self._wf._srwl_wf.arEx, dtype='float32', copy=False)
         correct_shape = (self._wf.params.Mesh.ny,
                          self._wf.params.Mesh.nx,
                          self._wf.params.Mesh.nSlices,
                          self._wf.params.nval)
         if not res.shape:
             pass
-        elif numpy.prod(res.shape) == numpy.prod(correct_shape):
+        elif np.prod(res.shape) == np.prod(correct_shape):
             res.shape = correct_shape
         else:
             print(res.shape, correct_shape)
             raise ValueError('Alarm')
-            res = numpy.zeros(shape= (correct_shape),
+            res = np.zeros(shape= (correct_shape),
                     dtype='float32')
         return res
 
@@ -1147,7 +1147,7 @@ class WFDataArrEhor(RadiationField):
     def value(self, val):
         """
 
-        :param val: complex numpy 3D array or array.array. if array.array - just copy
+        :param val: complex np 3D array or array.array. if array.array - just copy
         """
         n_total = self._wf._get_total_elements() * self._wf.params.nval
         self._wf._allocate_srw_moments()
@@ -1157,15 +1157,15 @@ class WFDataArrEhor(RadiationField):
                     'New array size not equal to wavefront size. You must set it by yourself.')
             self._wf._srwl_wf.arEx = array.array(str(u'f'), val)
         else:
-            val = numpy.array(val, dtype='float32')
-            if not numpy.prod(val.shape) == n_total:
+            val = np.array(val, dtype='float32')
+            if not np.prod(val.shape) == n_total:
                 warnings.warn(
                     'New array size not equal to wavefront size. It will set automaticaly to array size.')
                 self._wf.params.nx = val.shape[1]
                 self._wf.params.ny = val.shape[0]
                 self._wf.params.nSlices = val.shape[2]
 
-            val.shape = (numpy.prod(val.shape),)
+            val.shape = (np.prod(val.shape),)
             self._wf._srwl_wf.arEx = val
 
             # self._wf._srwl_wf.arEx = array.array(str(u'f'), val.tobytes())
@@ -1200,19 +1200,19 @@ class WFDataArrEver(RadiationField):
         Vertical polarization
         """
 
-        res = numpy.array(self._wf._srwl_wf.arEy, dtype='float32', copy=False)
+        res = np.array(self._wf._srwl_wf.arEy, dtype='float32', copy=False)
         correct_shape = (self._wf.params.Mesh.ny,
                          self._wf.params.Mesh.nx,
                          self._wf.params.Mesh.nSlices,
                          self._wf.params.nval)
         if not res.shape:
             pass
-        elif numpy.prod(res.shape) == numpy.prod(correct_shape):
+        elif np.prod(res.shape) == np.prod(correct_shape):
             res.shape = correct_shape
         else:
             print(res.shape, correct_shape)
             raise ValueError('Alarm')
-            res = numpy.zeros(shape= (correct_shape),
+            res = np.zeros(shape= (correct_shape),
                     dtype='float32')
         return res
 
@@ -1226,15 +1226,15 @@ class WFDataArrEver(RadiationField):
                     'New array size not equal to wavefront size. You must set it by yourself.')
             self._wf._srwl_wf.arEy = array.array(str(u'f'), val)
         else:
-            val = numpy.array(val, dtype='float32')
-            if not numpy.prod(val.shape) == n_total:
+            val = np.array(val, dtype='float32')
+            if not np.prod(val.shape) == n_total:
                 warnings.warn(
                     'New array size not equal to wavefront size. It will set automaticaly to array size.')
                 self._wf.params.nx = val.shape[1]
                 self._wf.params.ny = val.shape[0]
                 self._wf.params.nSlices = val.shape[2]
 
-            val.shape = (numpy.prod(val.shape),)
+            val.shape = (np.prod(val.shape),)
             self._wf._srwl_wf.arEy = val
             # self._wf._srwl_wf.arEy = array.array(str(u'f'), val.tobytes())
             # self._wf._srwl_wf.arEy = array.array(str(u'f'))
