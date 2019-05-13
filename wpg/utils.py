@@ -30,10 +30,7 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
 
         for (k, v) in list(group.items()):
             if isinstance(v, dict):
-                if k not in pearent_goup:
-                    tmp_group = pearent_goup.create_group(k)
-                else:
-                    tmp_group = pearent_goup[k]
+                tmp_group = pearent_goup.create_group(k)
                 store_group(v, tmp_group)
             else:
                 store_value(k, v, pearent_goup)
@@ -50,7 +47,8 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
                 del group[name]
             try:
                 group.create_dataset(name, data=value, chunks=True,
-                                     compression='gzip', compression_opts=1)    # compression='lzf'
+                                     compression='gzip', compression_opts=3
+                                     )
             except ValueError:  # if h5py not support compression
                 group.create_dataset(name, data=value, chunks=True)
             except TypeError:

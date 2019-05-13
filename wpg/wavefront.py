@@ -12,18 +12,36 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import sys
+
+sys.path.append(r"C:\Users\twguest\OneDrive - LA TROBE UNIVERSITY\code\WPG_Wavefront_Simulations")
+sys.path.append(r"C:\Users\twguest\OneDrive - LA TROBE UNIVERSITY\code\WPG_Wavefront_Simulations/root")
+sys.path.append(r"C:\Users\twguest\OneDrive - LA TROBE UNIVERSITY\code\WPG_Wavefront_Simulations/utils")
+
+sys.path.append(r"C:\Users\daemo\OneDrive - LA TROBE UNIVERSITY\code\WPG_Wavefront_Simulations")
+sys.path.append(r"C:\Users\daemo\OneDrive - LA TROBE UNIVERSITY\code\WPG_Wavefront_Simulations/root")
+sys.path.append(r"C:\Users\daemo\OneDrive - LA TROBE UNIVERSITY\code\WPG_Wavefront_Simulations/utils")
+
 import array
 import warnings
 
 import numpy as np
 import h5py
-
+import pylab as plt
 import wpg.srwlib as srwlib
 
 import wpg.utils as utils
 import wpg.glossary as glossary
 
 from wpg.utils import srw_obj2str
+import imageio
+from wpg.beamline import *
+
+from wpg.srwlib import srwl,SRWLOptD,SRWLOptA,SRWLOptC,SRWLOptT,SRWLOptL,SRWLOptMirEl
+
+from coherence_1d import calc_1D_coherent_fraction as calc_coherence
+from coherence_1d import plot_1D_degree_of_coherence as plot_coherence
+from coherence_1d import calc_degree_of_transverse_coherence_PCA as TDOC
 
 warnings.filterwarnings('ignore', category=Warning)
 
@@ -56,6 +74,10 @@ class Wavefront(object):
         for wf_field in glossary.get_wf_fields():
             wf = wf_field(self)
             self._add_field(wf)
+            
+        J2EV = 6.24150934e18
+        
+        self.II = None
 
     def _get_total_elements(self):
         """
@@ -204,7 +226,7 @@ class Wavefront(object):
             raise ValueError(
                 'unknown polarization value, should be "total" or "horizontal" or "vertical"')
 
-        res = array.array(str(u'f'), np.zeros(self._get_total_elements(), 'float32').tobytes())
+        res = array.array(str(u'f'), [0] * self._get_total_elements())
         res = srwlib.srwl.CalcIntFromElecField(
             res, self._srwl_wf, pol, 0, 6, self.params.photonEnergy, 0, 0)
         res = np.array(res, dtype='float32', copy=False)
@@ -273,7 +295,7 @@ class Wavefront(object):
             raise ValueError(
                 'unknown polarization value, should be "total" or "horizontal" or "vertical"')
 
-        res = array.array(str(u'f'), np.zeros(self._get_total_elements(), 'float32').tobytes())
+        res = array.array(str(u'f'), [0] * self._get_total_elements())
         res = srwlib.srwl.CalcIntFromElecField(
             res, self._srwl_wf, pol, 5, 6, self.params.photonEnergy, 0, 0)
         res = np.array(res, dtype='float32')
@@ -303,7 +325,7 @@ class Wavefront(object):
             raise ValueError(
                 'unknown polarization value, should be "total" or "horizontal" or "vertical"')
 
-        res = array.array(str(u'f'), np.zeros(self._get_total_elements(), 'float32').tobytes())
+        res = array.array(str(u'f'), [0] * self._get_total_elements())
         res = srwlib.srwl.CalcIntFromElecField(
             res, self._srwl_wf, pol, 6, 6, self.params.photonEnergy, 0, 0)
         res = np.array(res, dtype='float32')
@@ -336,7 +358,7 @@ class Wavefront(object):
                 return sr.sliceMin, sr.sliceMax, sr.xMax, sr.xMin
         elif rep == 'Q-space':
             print(rep)
-            wl = 12.398 * 1e-10 / (self.params.photonEnergy * 1e-3)  # WaveLength
+            wl = 12.39 * 1e-10 / (self.params.photonEnergy * 1e-3)  # WaveLength
             # wv = 2.*np.pi/wl
             # #WaveVector
             if axis == 'z':
@@ -377,3 +399,4 @@ class Wavefront(object):
         :return: string
         """
         return srw_obj2str(self._srwl_wf)
+ 

@@ -13,18 +13,25 @@ This module contains  wrapper for SRWLOptC (optical container) and propagetion p
 .. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
 """
 
+import sys
+sys.path.append(r"C:\Users\twguest\OneDrive - LA TROBE UNIVERSITY\code\WPG_Wavefront_Simulations/utils")
+sys.path.append(r"C:\Users\twguest\OneDrive - LA TROBE UNIVERSITY\code\WPG_Wavefront_Simulations/root")
+
 import wpg.srwlib as srwlib
 from wpg.srwlib import srwl
 from wpg.utils import srw_obj2str
 import wpg.optical_elements
 
 
+
+#%%
 class Beamline(object):
     """
     Set of optical elements and propagation parameters.
     """
 
-    def __init__(self, srwl_beamline=None):
+    def __init__(self, description, srwl_beamline=None):
+        self.description = description
         """
         Init beamline.
 
@@ -138,10 +145,15 @@ class Beamline(object):
                     if isinstance(opt_element, srwlib.SRWLOptD):
                         wfr.params.Mesh.zCoord = wfr.params.Mesh.zCoord + \
                             opt_element.L
+                    if isinstance (opt_element, srwlib.SRWLOptA):
+                        d = 100e-9/(10)
+                        wfr.params.Mesh.zCoord+=d # Multi-Slice Fix
             else:
                 raise ValueError('Unknown type of propagators')
+                
 
-
+            
+            
 def _check_srw_pp(pp):
     """
     Check is propagation parameters valid SRW propagation parameters

@@ -1,8 +1,9 @@
+    
 #############################################################################
 # Basic Input/Output Utility Functions
 # v 0.01
 #############################################################################
-
+import copy
 #**********************Auxiliary function to write auxiliary/debugging information to an ASCII file:
 def write_text(_text, _file_path):
     f = open(_file_path, 'w')
@@ -105,3 +106,44 @@ def write_ascii_data_cols(_file_path, _cols, _str_sep, _str_head=None, _i_col_st
         
     f.write(strTot)
     f.close()
+
+#********************** Read data from an image file:
+def read_array(array_path):  # MR26102017
+    """Read data from an image file.
+    :param image_path: full path to the image.
+    :return: dict with the processed data.
+    """
+
+    msg = '{0} library is not installed. Use "pip install {0}" to install it.'
+    try:
+        import numpy as np
+    except:
+        raise ImportError(msg.format('numpy'))
+    try:
+        from PIL import Image
+    except:
+        raise ImportError(msg.format('pillow'))
+
+    #OC11112018 (as suggested by Rafael Celestre, to walk around image size limit)
+    Image.MAX_IMAGE_PIXELS = None
+
+    # Read the image:
+    raw_image = np.load(array_path)
+    image_format = 'TIFF'
+    data = copy.copy(raw_image)
+    raw_image = raw_image.astype(np.int8)
+
+    # Convert it to NumPy array:
+    
+    if image_format not in ('TIFF', 'PNG', 'BMP', 'GIF', 'JPEG'):
+        raise ValueError('"{}" format is not supported at the moment.'.format(raw_image.format))
+
+    # Get bits per point:
+    mode_to_bpp = {'1': 1, 'L': 8, 'P': 8, 'I;16': 16, 'RGB': 24, 'RGBA': 32, 'CMYK': 32, 'YCbCr': 24, 'I': 32, 'F': 32}
+    limit_value = float(2 ** 8 - 1)
+
+    return {
+        'data': data,
+        'raw_image': raw_image,
+        'limit_value': limit_value,
+    }

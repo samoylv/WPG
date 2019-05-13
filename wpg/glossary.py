@@ -762,8 +762,6 @@ class WFRadiationMeshQxMin(RadiationField):
         if self._wf.params.wSpace == 'Q-space':
             return self._wf._srwl_wf.mesh.xStart
         else:
-            warnings.warn(
-                'params/Mesh/qxMin not defined if NOT params/wSpace==Q-space')
             return None
 
     @value.setter
@@ -793,16 +791,10 @@ class WFRadiationMeshQxMax(RadiationField):
         if self._wf.params.wSpace == 'Q-space':
             return self._wf._srwl_wf.mesh.xFin
         else:
-            warnings.warn(
-                'params/Mesh/qxMax not defined if NOT params/wSpace==Q-space')
             return None
 
     @value.setter
     def value(self, val):
-        if not self._wf.params.wSpace == 'Q-space':
-            warnings.warn(
-                'params/Mesh/qxMax not defined if NOT params/wSpace==Q-space')
-
         self._wf._srwl_wf.mesh.xFin = float(val)
 
 
@@ -824,16 +816,10 @@ class WFRadiationMeshQyMin(RadiationField):
         if self._wf.params.wSpace == 'Q-space':
             return self._wf._srwl_wf.mesh.yStart
         else:
-            warnings.warn(
-                'params/Mesh/qyMin not defined if NOT params/wSpace==Q-space')
             return None
 
     @value.setter
     def value(self, val):
-        if not self._wf.params.wSpace == 'Q-space':
-            warnings.warn(
-                'params/Mesh/qyMin not defined if NOT params/wSpace==Q-space')
-
         self._wf._srwl_wf.mesh.yStart = float(val)
 
 
@@ -855,8 +841,6 @@ class WFRadiationMeshQyMax(RadiationField):
         if self._wf.params.wSpace == 'Q-space':
             return self._wf._srwl_wf.mesh.yFin
         else:
-            warnings.warn(
-                'params/Mesh/qyMax not defined if NOT params/wSpace==Q-space')
             return None
 
     @value.setter
@@ -1149,8 +1133,7 @@ class WFDataArrEhor(RadiationField):
         else:
             val = numpy.array(val, dtype='float32')
             if not numpy.prod(val.shape) == n_total:
-                warnings.warn(
-                    'New array size not equal to wavefront size. It will set automaticaly to array size.')
+
                 self._wf.params.nx = val.shape[1]
                 self._wf.params.ny = val.shape[0]
                 self._wf.params.nSlices = val.shape[2]
@@ -1197,15 +1180,10 @@ class WFDataArrEver(RadiationField):
         n_total = self._wf._get_total_elements() * self._wf.params.nval
         self._wf._allocate_srw_moments()
         if type(val) == array.array:
-            if not val.count() == n_total:
-                warnings.warn(
-                    'New array size not equal to wavefront size. You must set it by yourself.')
             self._wf._srwl_wf.arEy = array.array(str(u'f'), val)
         else:
             val = numpy.array(val, dtype='float32')
             if not numpy.prod(val.shape) == n_total:
-                warnings.warn(
-                    'New array size not equal to wavefront size. It will set automaticaly to array size.')
                 self._wf.params.nx = val.shape[1]
                 self._wf.params.ny = val.shape[0]
                 self._wf.params.nSlices = val.shape[2]
