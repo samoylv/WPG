@@ -93,7 +93,7 @@ class Screen(Empty):
         """ Overloaded propagation for this element. """
 
         super(Screen, self).propagate(wfr, propagation_parameters)
-        wfr.store_hdf5(filename)
+        wfr.store_hdf5(self.__filename)
 
 
 class Use_PP(object):
