@@ -94,3 +94,14 @@ ENV/
 
 #pycharm files
 .idea
+
+#VSCode files
+.vscode
+
+# TMP fiels files
+build/lib
+build/sources
+build/tmp
+samples/Tutorials/*.test.ipynb
+samples/Tutorials/*.test.html
+samples/Tutorials/Tutorial_case_1/*.eps
