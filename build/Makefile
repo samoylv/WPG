@@ -21,12 +21,12 @@ clean:
 srw:
 	mkdir -p $(TMP_DIR)
 	mkdir -p $(BUILD_DIR)/sources
-	wget --no-check-certificate -nc -O $(SRC_DIR)/srw.zip https://github.com/buzmakov/SRW/archive/feature/srw_lite_update.zip; echo 'Done'
-	unzip -o $(SRC_DIR)/srw.zip -d $(TMP_DIR)
-	rm -rf $(TMP_DIR)/SRW
-	mv $(TMP_DIR)/SRW-feature-srw_lite_update $(TMP_DIR)/SRW
-
-	cd $(TMP_DIR)/SRW; make all;
+	# SRW commit. Switch from FFTW-2.1.5 to FFTW-3.3.8 (for 64-bit versions)
+	wget --no-check-certificate -nc -O $(SRC_DIR)/srw.zip https://github.com/ochubar/SRW/archive/d6c5f7ebfea3954e0863755209b4b249355c59c3.zip; echo 'Done'
+	unzip -o $(SRC_DIR)/srw.zip -d $(TMP_DIR)/
+	mv $(TMP_DIR)/SRW-d6c5f7ebfea3954e0863755209b4b249355c59c3 $(TMP_DIR)/SRW
+	patch $(TMP_DIR)/SRW/cpp/py/Makefile py3.patch
+	cd $(TMP_DIR)/SRW; MODE=omp make all;
 	mkdir -p $(BUILD_DIR)/lib
 	cp $(TMP_DIR)/SRW/cpp/gcc/srwlpy*.so $(BUILD_DIR)/lib/
 	cp $(TMP_DIR)/SRW/cpp/gcc/srwlpy*.so $(TMP_DIR)/SRW/env/work/srw_python

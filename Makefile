@@ -1,9 +1,9 @@
 all: core modules
-	
+
 core:
 	cd build; make srw
 
-modules: core
+modules:
 	cp build/lib/srwlpy*.so wpg/
 	cp build/tmp/SRW/cpp/src/lib/srwlib.h docs/
 
@@ -14,5 +14,5 @@ clean:
 
 doc:
 	cd docs; make html
-	
+
 .PHONY: all core modules clean ipython doc

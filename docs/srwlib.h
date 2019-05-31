@@ -222,6 +222,17 @@ struct SRWLStructGaussianBeam {
 typedef struct SRWLStructGaussianBeam SRWLGsnBm;
 
 /**
+ * Coherent Gaussian Beam
+ */
+struct SRWLStructPointSource {
+	double x, y, z; /* coordinates [m] */
+	double flux; /* spectral flux */
+	char unitFlux; /* spectral flux units: 1- ph/s/.1%bw, 2- W/eV */
+	char polar; /* polarization: 1- lin. hor., 2- lin. vert., 3- lin. 45 deg., 4- lin.135 deg., 5- circ. right, 6- circ. left, 7- radial */
+};
+typedef struct SRWLStructPointSource SRWLPtSrc;
+
+/**
  * Radiation Mesh (for Electric Field, Stokes params, etc.)
  * TENTATIVE VERSION !
  */
@@ -230,6 +241,7 @@ struct SRWLStructRadMesh {
 	long ne, nx, ny; /* numbers of points vs photon energy, horizontal and vertical positions */
 	double nvx, nvy, nvz, hvx, hvy, hvz; /* lab-frame coordinate of the inner normal to observation plane (/ surface in its center) and horizontal base vector of the observation plane (/ surface in its center) */
 	double *arSurf; /* array defining the observation surface (as function of 2 variables - x & y - on the mesh given by _xStart, _xFin, _nx, _yStart, _yFin, _ny; to be used in case this surface differs from plane) */
+	char type; /* type of data: 0- standard intensity, 'm'- mutual intensity //OC13112018 */
 };
 typedef struct SRWLStructRadMesh SRWLRadMesh;
 
@@ -254,6 +266,7 @@ struct SRWLStructWaveFront {
 	char presFT; /* presentation/domain: 0- frequency (photon energy), 1- time */
 	char numTypeElFld; /* electric field numerical type: 'f' (float) or 'd' (double) */
 	char unitElFld; /* electric field units: 0- arbitrary, 1- sqrt(Phot/s/0.1%bw/mm^2), 2- sqrt(J/eV/mm^2) or sqrt(W/mm^2), depending on representation (freq. or time) ? */
+	char unitElFldAng; /* electric field units in angular representation: 0- sqrt(Wavelength[m]*Phot/s/0.1%bw/mrad^2) vs rad/Wavelength[m], 1- sqrt(Phot/s/0.1%bw/mrad^2) vs rad; [Phot/s/0.1%bw] can be replaced by [J/eV] or [W], depending on unitElFld, presFT and presCA */
 
 	SRWLPartBeam partBeam; /* particle beam source; strictly speaking, it should be just SRWLParticle; however, "multi-electron" information can appear useful for those cases when "multi-electron intensity" can be deduced from the "single-electron" one by convolution */
 	double *arElecPropMatr; /* effective 1st order "propagation matrix" for electron beam parameters */
@@ -502,6 +515,13 @@ typedef struct SRWLStructOpticsContainer SRWLOptC;
 EXP void CALL srwlUtiSetWfrModifFunc(int (*pExtFunc)(int action, SRWLWfr* pWfrIn, char pol));
 
 /** 
+ * Sets pointer to external function which allocates an array (continious memory block) in client environment.  
+ * @param [in] pExtFunc pointer to the external function
+ * @see ... 
+ */
+EXP void CALL srwlUtiSetAllocArrayFunc(char* (*pExtFunc)(char type, long long len)); //OC15082018
+
+/** 
  * Sets pointer to external function to show progress of computation process
  * @param [in] pExtFunc pointer to the external function
  * @see ... 
@@ -534,7 +554,9 @@ EXP int CALL srwlUtiGetErrText(char* t, int erNo);
  *             precPar[0] defines the type of calculation: =0 -standard calculation, =1 -interpolation vs one parameter, =2 -interpolation vs two parameters
  *             [1]: first parameter value the field has to be interpolated for
  *             [2]: second parameter value the field has to be interpolated for
- *             [3]: specifies type of interpolation: =1 -(bi-)linear, =2 -(bi-)quadratic, =3 -(bi-)cubic 
+ *             [3]: specifies type (order) of interpolation: =1 -(bi-)linear, =2 -(bi-)quadratic, =3 -(bi-)cubic 
+ *             [4]: specifies whether mesh for the interpolation is rectangular (1) or not (0)
+ *             [5]: specifies whether pMagFld contains just the field required for the interpolation (1) or the required fields have to be found from the general list (0)
  * @return	integer error (>0) or warnig (<0) code
  * @see ...
  */
@@ -576,13 +598,13 @@ EXP int CALL srwlCalcPartTrajFromKickMatr(SRWLPrtTrj* pTrj, SRWLKickM* arKickM, 
  * @param [in] pMagFld optional pointer to input magnetic field (container) structure; to be taken into account only if particle trajectroy arrays (pTrj->arX, pTrj->arXp, pTrj->arY, pTrj->arYp) are not supplied
  * @param [in] precPar precision parameters: 
  *	   precPar[0]: method ID (0- "manual", 1- "auto-undulator", 2- "auto-wiggler")
- *			  [1]: step size or relative precision
- *			  [2]: longitudinal position to start integration
- *			  [3]: longitudinal position to finish integration
- *			  [4]: number of points to use for trajectory calculation 
- *			  [5]: calculate terminating terms or not: 0- don't calculate two terms, 1- do calculate two terms, 2- calculate only upstream term, 3- calculate only downstream term 
- *			  [6]: sampling factor (for propagation, effective if > 0)
- *			  [7]: ... 
+ *            [1]: step size or relative precision
+ *            [2]: longitudinal position to start integration
+ *            [3]: longitudinal position to finish integration
+ *            [4]: number of points to use for trajectory calculation 
+ *            [5]: calculate terminating terms or not: 0- don't calculate two terms, 1- do calculate two terms, 2- calculate only upstream term, 3- calculate only downstream term 
+ *            [6]: sampling factor (for propagation, effective if > 0)
+ *            [7]: ... 
  * @param [in] nPrecPar number of precision parameters 
  * @return	integer error (>0) or warnig (<0) code
  * @see ...
@@ -598,6 +620,16 @@ EXP int CALL srwlCalcElecFieldSR(SRWLWfr* pWfr, SRWLPrtTrj* pTrj, SRWLMagFldC* p
  * @see ...
  */
 EXP int CALL srwlCalcElecFieldGaussian(SRWLWfr* pWfr, SRWLGsnBm* pGsnBm, double* precPar =0);
+
+/** 
+ * Calculates Electric Field (Wavefront) of a Pont Source (i.e. spherical wave)
+ * @param [in, out] pWfr pointer to resulting Wavefront structure; all data arrays should be allocated in a calling function/application; the mesh, presentation, etc., should be specified in this structure at input
+ * @param [in] pPtSrc pointer to a Point Source parameters structure
+ * @param [in] precPar precision parameters: [0]- sampling factor (for propagation, effective if > 0), 
+ * @return	integer error (>0) or warnig (<0) code
+ * @see ...
+ */
+EXP int CALL srwlCalcElecFieldPointSrc(SRWLWfr* pWfr, SRWLPtSrc* pPtSrc, double* precPar =0);
 
 /** 
  * Calculates Spectral Flux (Stokes components) of Synchrotron Radiation by a relativistic finite-emittance electron beam traveling in periodic magnetic field of an Undulator
@@ -708,7 +740,8 @@ EXP int CALL srwlSetRepresElecField(SRWLWfr* pWfr, char repr);
  * @return	integer error (>0) or warnig (<0) code
  * @see ...
  */
-EXP int CALL srwlPropagElecField(SRWLWfr* pWfr, SRWLOptC* pOpt);
+EXP int CALL srwlPropagElecField(SRWLWfr* pWfr, SRWLOptC* pOpt, int nInt=0, char** arID=0, SRWLRadMesh* arIM=0, char** arI=0); //OC15082018
+//EXP int CALL srwlPropagElecField(SRWLWfr* pWfr, SRWLOptC* pOpt);
 
 /** TEST
  * "Propagates" multple Electric Field Wavefronts from different electrons through Optical Elements and free spaces
@@ -763,6 +796,48 @@ EXP int CALL srwlUtiFFT(char* pcData, char typeData, double* arMesh, int nMesh, 
 EXP int CALL srwlUtiConvWithGaussian(char* pcData, char typeData, double* arMesh, int nMesh, double* arSig);
 
 /** 
+ * Calculates basic statistical characteristics of an intensity distribution
+ * @param [in, out] arInf (double) array of characteristics to be extracted:
+ *                  arInf[0]: peak (max.) intensity
+ *                  arInf[1]: position of peak intensity vs 1st dimension
+ *                  arInf[2]: position of peak intensity vs 2nd dimension
+ *                  arInf[3]: position of peak intensity vs 3rd dimension (reserved for future use)
+ *                  arInf[4]: FWHM value of intensity distribution vs 1st dimension
+ *                  arInf[5]: FWHM value of intensity distribution vs 2nd dimension
+ *                  arInf[6]: FWHM value of intensity distribution vs 3rd dimension (reserved for future use)
+ *                  arInf[7]: (optional) additional Full Width at a Fraction of Maximum value of intensity distribution over 1st dimension (the fraction is defined by arPar[1])
+ *                  arInf[8]: (optional) additional Full Width at a Fraction of Maximum value of intensity distribution over 2nd dimension (the fraction is defined by arPar[2])
+ *                  arInf[9]: (optional) additional Full Width at a Fraction of Maximum value of intensity distribution over 3rd dimension (the fraction is defined by arPar[3])
+ * @param [in] pcData (char) pointer to intensity distribution data to be analyzed
+ * @param [in] typeData character specifying data type ('f' for float, 'd' for double)
+ * @param [in] pMesh (pointer to SRWLRadMesh) mesh of intensity data to be analyzed
+ * @param [in] arPar optional array of parameters defining type / precision of data processing
+ *             arPar[0]: method to be used for determining FWHM values: =0 means start intensity scan from extremities of the distribution, =1 means start intensity scan from the peak of the distribution
+ *             arPar[1]: (optional) fraction of maximum for determining additional Full Width at a Fraction of Maximum value over 1st dimension
+ *             arPar[2]: (optional) fraction of maximum for determining additional Full Width at a Fraction of Maximum value over 2nd dimension
+ *             arPar[3]: (optional) fraction of maximum for determining additional Full Width at a Fraction of Maximum value over 3rd dimension
+ * @param [in] nPar optional length of array of parameters defining type / precision of data processing
+ * @return	integer error (>0) or warnig (<0) code
+ * @see ...
+ */
+EXP int CALL srwlUtiIntInf(double* arInf, char* pcData, char typeData, SRWLRadMesh* pMesh, double* arPar=0, int nPar=0);
+
+/** 
+ * Performs misc. operations on intensity distribution (or similar C-aligned) arrays
+ * @param [in, out] pcI1 (char) pointer to intensity distribution data #1
+ * @param [in] typeI1 character specifying intensity #1 data type ('f' for float, 'd' for double)
+ * @param [in] pMesh1 (pointer to SRWLRadMesh) mesh of intensity data #1
+ * @param [in] pcI2 (char) pointer to intensity distribution data #2
+ * @param [in] typeI2 character specifying intensity #2 data type ('f' for float, 'd' for double)
+ * @param [in] pMesh2 (pointer to SRWLRadMesh) mesh of intensity data #2
+ * @param [in] arPar array of parameters defining operation to be performed:
+ *			   arPar[0] defines type of the operation and the meaning of other elements dependent on it
+ * @return	integer error (>0) or warnig (<0) code
+ * @see ...
+ */
+EXP int CALL srwlUtiIntProc(char* pcI1, char typeI1, SRWLRadMesh* pMesh1, char* pcI2, char typeI2, SRWLRadMesh* pMesh2, double* arPar);
+
+/** 
  * Attempts to deduce parameters of peridic undulator magnetic field from tabulated field and set up Undulator structure
  * @param [in, out] pUndCnt pointer to magnetic field container structure with undulator structure to be set up
  * @param [in] pMagCnt pointer to magnetic field container structure with tabulated field structure to be analyzed
@@ -774,6 +849,30 @@ EXP int CALL srwlUtiConvWithGaussian(char* pcData, char typeData, double* arMesh
  * @see ...
  */
 EXP int CALL srwlUtiUndFromMagFldTab(SRWLMagFldC* pUndCnt, SRWLMagFldC* pMagCnt, double* arPrecPar);
+
+/** 
+ * Attempts to find indexes of undulator gap and phase values and associated magnetic fields requiired to be used in field interpolation based on gap and phase
+ * @param [in, out] arResInds array of indexes to be found
+ * @param [in, out] pnResInds pointer to number of indexes found
+ * @param [in] arGaps array of undulator gap values
+ * @param [in] arPhases array of undulator phase values
+ * @param [in] nVals number of undulator gap and phase values
+ * @param [in] arPrecPar array of precision parameters:
+ *             arPrecPar[0]: number of dimensions (1 if only gaps should be considered; 2 if both gaps and phases should be considered)
+ *             arPrecPar[1]: gap value for which interpolation should be done
+ *             arPrecPar[2]: phase value for which interpolation should be done
+ *             arPrecPar[3]: order of interpolation (1 to 3)
+ *             arPrecPar[4]: mesh is rectangular (0 for no, 1 for yes)
+ * @return	integer error (>0) or warnig (<0) code
+ * @see ...
+ */
+EXP int CALL srwlUtiUndFindMagFldInterpInds(int* arResInds, int* pnResInds, double* arGaps, double* arPhases, int nVals, double arPrecPar[5]);
+
+/**
+ * These functions were added by S.Yakubov (for profiling?) at parallelizing SRW via OpenMP
+EXP void CALL srwlPrintTime(const char* str, double* start);
+EXP void CALL get_walltime(double* wcTime);
+ */
 
 /***************************************************************************/
 

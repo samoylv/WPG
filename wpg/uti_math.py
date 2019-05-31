@@ -1,6 +1,6 @@
-#############################################################################
+﻿#############################################################################
 # uti_math module: misc. mathematical utilities / functions
-# v 0.02
+# v 0.03
 # Authors: O.C., Maksim Rakitin
 #############################################################################
 
@@ -366,16 +366,19 @@ def find_ar_max(_ar, _ib=0, _ie=-1, _min=False):
     :param _min: switch specifying that minimum (rather than maximum) has to be searched
     """
 
-    if((_ar == None) or (len(_ar) <= 0)): raise Exception('Incorrect input array.')
-    if(_ie < _ib): raise Exception('Incorrect definition of start and end indexes.')
-
+    strErIncorArray = 'Incorrect input array.'
+    
+    if(_ar is None): raise Exception(strErIncorArray)
     nTot = len(_ar)
+    if(nTot <= 0): raise Exception(strErIncorArray)
 
     iBeg = _ib
     if(_ib < 0): iBeg = 0
-    
+
     iEnd = _ie
-    if(_ie >= nTot): iEnd = nTot - 1
+    if((iEnd == -1) or (_ie >= nTot)): iEnd = nTot - 1
+
+    if(iEnd < iBeg): raise Exception('Incorrect definition of start and end indexes.')
 
     curExtr = _ar[0]
     curInd = 0
@@ -422,11 +425,11 @@ def integ_ar_2d(_ar, _ar_align, _x_grid, _y_grid, _x_lim=None, _y_lim=None):
     :param _y_lim: list/array specifying inegration limits vs another dimensions (_y_lim[0] is start, _y_lim[1] is end)
     """
 
-    if(_x_lim != None):
+    if(_x_lim is not None):
         #print(_x_lim[0], _x_lim[1])
         if(_x_lim[0] >= _x_lim[1]): return 0.
 
-    if(_y_lim != None):
+    if(_y_lim is not None):
         #print(_y_lim[0], _y_lim[1])
         if(_y_lim[0] >= _y_lim[1]): return 0.
 
@@ -441,13 +444,13 @@ def integ_ar_2d(_ar, _ar_align, _x_grid, _y_grid, _x_lim=None, _y_lim=None):
     if((xStep == 0) or (yStep == 0)): return 0.
 
     x_min = xStart; x_max = xEnd; nxInteg = 0
-    if(_x_lim != None):
+    if(_x_lim is not None):
         x_min = _x_lim[0]
         x_max = _x_lim[1]
         if(len(_x_lim) > 2): nxInteg = int(round(_x_lim[2]))
 
     y_min = yStart; y_max = yEnd; nyInteg = 0
-    if(_y_lim != None):
+    if(_y_lim is not None):
         y_min = _y_lim[0]
         y_max = _y_lim[1]
         if(len(_y_lim) > 2): nyInteg = int(round(_y_lim[2]))
@@ -576,17 +579,31 @@ def matr_print(_A):
     """
     for i in range(len(_A)):
         print(_A[i])
- 
+
+#****************************************************************************
+def matr_3x3_det(_M):
+    S0 = _M[0]; S1 = _M[1]; S2 = _M[2]
+    return S0[0]*S1[1]*S2[2] + S0[1]*S1[2]*S2[0] + S0[2]*S1[0]*S2[1] - S0[2]*S1[1]*S2[0] - S0[0]*S1[2]*S2[1] - S0[1]*S1[0]*S2[2]
+
+#****************************************************************************
+def matr_3x3_inv(_M):
+    S0 = _M[0]; S1 = _M[1]; S2 = _M[2]
+    invDet = 1./(S0[0]*S1[1]*S2[2] + S0[1]*S1[2]*S2[0] + S0[2]*S1[0]*S2[1] - S0[2]*S1[1]*S2[0] - S0[0]*S1[2]*S2[1] - S0[1]*S1[0]*S2[2])
+    S0i = [invDet*(S1[1]*S2[2] - S1[2]*S2[1]), invDet*(-S0[1]*S2[2] + S0[2]*S2[1]), invDet*(S0[1]*S1[2] - S0[2]*S1[1])]
+    S1i = [invDet*(-S1[0]*S2[2] + S1[2]*S2[0]), invDet*(S0[0]*S2[2] - S0[2]*S2[0]), invDet*(-S0[0]*S1[2] + S0[2]*S1[0])]
+    S2i = [invDet*(S1[0]*S2[1] - S1[1]*S2[0]), invDet*(-S0[0]*S2[1] + S0[1]*S2[0]), invDet*(S0[0]*S1[1] - S0[1]*S1[0])]
+    return [S0i, S1i, S2i]
+
 #****************************************************************************
 def trf_rotation(_V, _ang, _P):
     """
     Sets up matrix and vector describing rotation about axis _V passing through a point _P about an angle _ang
-    :param _V: vector (array of 3 Cartesian coordinates) rdefining rotation axis
+    :param _V: vector (array of 3 Cartesian coordinates) defining rotation axis
     :param _ang: rotation angle [rad]
     :param _P: point (array of 3 Cartesian coordinates) rotation axis passes through
     :returns list containing the 3x3 matrix and 3-element vector
     """
-    normFact = 1./sqrt(_V[0]*_V[0] + _V[1]*_V[1] + _V[2]*_V[2]);
+    normFact = 1./sqrt(_V[0]*_V[0] + _V[1]*_V[1] + _V[2]*_V[2])
     axVect = [normFact*_V[0], normFact*_V[1], normFact*_V[2]]
     VxVx = axVect[0]*axVect[0]
     VyVy = axVect[1]*axVect[1]
@@ -612,31 +629,57 @@ def trf_rotation(_V, _ang, _P):
     return [M, V]
 
 #****************************************************************************
-def fwhm(x, y): #MR27092016
-    """The function searches x-values (roots) where y=0 based on linear interpolation, and calculates FWHM"""
+def fwhm(x, y, shift=0.5, return_as_dict=False):  # MR21032017
+    """The function searches x-values (roots) where y=0 (after normalization to values between 0 and 1 and shifting the
+    values down by 0.5 (default value)) based on linear interpolation, and calculates full width at half maximum (FWHM).
+
+    :param x: an array of x values.
+    :param y: an array of y values.
+    :param shift: an optional shift to be used in the process of normalization (between 0 and 1).
+    :param return_as_dict: if to return a dict with 'fwhm' and 'x_range'
+    :return: a value of the FWHM or dictionary consisting of 'fwhm' and 'x_range'
+    """
 
     def is_positive(num):
         return True if num > 0 else False
 
+    # Normalize values first:
+    #y = (y - min(y)) / (max(y) - min(y)) - shift  # roots are at Y=0
+
+    #OC18112017 (making it work with standard Python lists / arrays)
+    minY = min(y)
+    maxY = max(y)
+    if(maxY == minY): raise Exception('FWHM can not be calculated')
+    mult = 1./(maxY - minY)
+    lenY = len(y)
+    for i in range(lenY): y[i] = (y[i] - minY)*mult - shift
+
     positive = is_positive(y[0])
     list_of_roots = []
-    for i in range(len(y)):
+    #for i in range(len(y)):
+    for i in range(lenY):
         current_positive = is_positive(y[i])
         if current_positive != positive:
             list_of_roots.append(x[i - 1] + (x[i] - x[i - 1]) / (abs(y[i]) + abs(y[i - 1])) * abs(y[i - 1]))
             positive = not positive
     if len(list_of_roots) >= 2:
-        return abs(list_of_roots[-1] - list_of_roots[0])
+        if not return_as_dict:
+            return abs(list_of_roots[-1] - list_of_roots[0])
+        else:
+            return {
+                'fwhm': abs(list_of_roots[-1] - list_of_roots[0]),
+                'x_range': list_of_roots,
+            }
     else:
         raise Exception('Number of roots is less than 2!')
 
 #****************************************************************************
-def fwhm_scipy(x, y): #MR27092016
-    """Computing FWHM (Full width at half maximum)"""
-    try:
-        from scipy.interpolate import UnivariateSpline
-        spline = UnivariateSpline(x, y, s=0)
-        r1, r2 = spline.roots()  # find the roots
-        return r2 - r1  # return the difference (full width)
-    except ImportError:
-        return fwhm(x, y)
+#def fwhm_scipy(x, y): #MR27092016
+#    """Computing FWHM (Full width at half maximum)"""
+#    try:
+#        from scipy.interpolate import UnivariateSpline
+#        spline = UnivariateSpline(x, y, s=0)
+#        r1, r2 = spline.roots()  # find the roots
+#        return r2 - r1  # return the difference (full width)
+#    except ImportError:
+#        return fwhm(x, y)

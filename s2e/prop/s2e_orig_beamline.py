@@ -1,12 +1,12 @@
 # Module holding WPG beamlines at European XFEL.
 
-from prop.opd import defineOPD
+from opd import defineOPD
 from wpg import optical_elements, Beamline
 from wpg.optical_elements import Use_PP
 import numpy
 import os
 #from s2e.prop.propagate_s2e import MIRROR_DATA_DIR as mirror_data_dir
-from prop.propagate_s2e import MIRROR_DATA_DIR as mirror_data_dir
+mirror_data_dir = 'data_common'
 
 
 def get_beamline():
@@ -17,8 +17,8 @@ def get_beamline():
     """
 
     # Distances
-    distance0 = 246.5
-    distance1 = 683.5
+    distance0 = 300.0
+    distance1 = 630.0
     distance = distance0 + distance1
 
     # Focal lengths.
@@ -45,7 +45,7 @@ def get_beamline():
     drift_to_foc = optical_elements.Drift(distance_foc)
 
     # Mirror apertures.
-    ap0   = optical_elements.Aperture('r','a', 5.0e-4, 5.0e-4)
+    ap0   = optical_elements.Aperture('r','a', 120.e-6, 120.e-6)
     ap1   = optical_elements.Aperture('r','a', om_clear_ap, 2*om_clear_ap)
     ap_kb = optical_elements.Aperture('r','a', kb_clear_ap, kb_clear_ap)
 
@@ -56,7 +56,7 @@ def get_beamline():
                     q=(distance_hfm_vfm+distance_foc),
                     thetaE=theta_kb,
                     theta0=theta_kb,
-                    length=0.9
+                    length=kb_mirror_length,
                     )
     vfm = optical_elements.Mirror_elliptical(
                     orient='y',
@@ -64,7 +64,7 @@ def get_beamline():
                     q=distance_foc,
                     thetaE=theta_kb,
                     theta0=theta_kb,
-                    length=0.9
+                    length=kb_mirror_length,
                     )
 
 
@@ -95,47 +95,20 @@ def get_beamline():
 
     # Assemble the beamline with PP parameters.
     bl0 = Beamline()
-    
-    ### Aperture to resample. Increase sampling frequency to get Fresnel zone between 7 and 10 px.
-    bl0.append(ap0,   Use_PP(semi_analytical_treatment=0,zoom=1.0,sampling=1./0.4))
-    #### Increase sampling again, reduce ROI => ROI ~10 fwhm, 700x700 sampling.
-    bl0.append(drift0,Use_PP(semi_analytical_treatment=1, zoom=0.5, sampling=1.5/0.28))
-
-    ####
-    bl0.append(ap1, Use_PP(zoom=1.0, sampling=1.0))
+    bl0.append(ap0,   Use_PP(semi_analytical_treatment=0,
+                            zoom=14.4,
+                            sampling=1/1.6))
+    bl0.append(drift0,Use_PP(semi_analytical_treatment=0))
+    bl0.append(ap1, Use_PP(zoom=0.8))
     bl0.append(wf_dist_om, Use_PP())
-    
-    ###
-    bl0.append(drift1, Use_PP(semi_analytical_treatment=1, zoom=1.0, sampling=2.0))
-    
-    ###
-    bl0.append(ap_kb, Use_PP())
+    bl0.append(drift1, Use_PP(semi_analytical_treatment=1))
+    bl0.append(ap_kb,  Use_PP(zoom = 6.4, sampling = 1/16.))
     bl0.append(hfm, Use_PP())
     bl0.append(wf_dist_hfm, Use_PP())
-    
-    ###
     bl0.append(drift_in_kb, Use_PP(semi_analytical_treatment=1))
-    
     bl0.append(vfm, Use_PP())
     bl0.append(wf_dist_vfm, Use_PP())
-    
-    ###
-    bl0.append(drift_to_foc, Use_PP(semi_analytical_treatment=1, zoom_h=0.1, sampling_h=1.2, zoom_v=0.05, sampling_v=1.2))
-
-    ###bl0.append(ap0,   Use_PP(semi_analytical_treatment=0,
-    ##                         #zoom=14.4,
-    ##                         #sampling=1/1.6))
-    ###bl0.append(drift0,Use_PP(semi_analytical_treatment=0))
-    ###bl0.append(ap1, Use_PP(zoom=0.8))
-    ###bl0.append(wf_dist_om, Use_PP())
-    ###bl0.append(drift1, Use_PP(semi_analytical_treatment=1))
-    ###bl0.append(ap_kb,  Use_PP(zoom = 6.4, sampling = 1/16.))
-    ###bl0.append(hfm, Use_PP())
-    ###bl0.append(wf_dist_hfm, Use_PP())
-    ###bl0.append(drift_in_kb, Use_PP(semi_analytical_treatment=1))
-    ###bl0.append(vfm, Use_PP())
-    ###bl0.append(wf_dist_vfm, Use_PP())
-    ###bl0.append(drift_to_foc, Use_PP(semi_analytical_treatment=1))
+    bl0.append(drift_to_foc, Use_PP(semi_analytical_treatment=1))
 
     # All done, return.
     return bl0

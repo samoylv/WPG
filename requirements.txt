@@ -9,3 +9,4 @@ jupyter
 libgcc
 mock
 sphinx
+python=3.5
