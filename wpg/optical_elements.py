@@ -326,9 +326,9 @@ def Aperture(shape, ap_or_ob, Dx, Dy=1e23, x=0, y=0):
     return opAp
 
 
-def Mirror_elliptical(orient, p, q, thetaE, theta0, length):
+def Mirror_elliptical(orient, p, q, thetaE, theta0, length, roll=0., yaw=0., distance=0.):
     """
-    Defining a plane elliptical focusing mirror propagator: A wrapper to a SRWL function SRWLOptMirEl()
+    Defining a plane elliptical focusing mirror propagator: A wrapper to a SRWL function SRWLOptMirEl() 
 
     :param orient:    mirror orientation, 'x' (horizontal) or 'y' (vertical)
     :param p:  distance to one ellipsis center (source), [m]
@@ -336,24 +336,25 @@ def Mirror_elliptical(orient, p, q, thetaE, theta0, length):
     :param thetaE:  design incidence angle in the center of mirror, [rad]
     :param theta0:  "real" incidence angle in the center of mirror, [rad]
     :param length:  mirror length, [m]
-    :return: opEFM  - elliptical mirror propagator, ``struct SRWLOptMirEl``
+	:param roll: misaligned roll axis
+	:param yaw: misaligned yaw axis
+    :return: opEFM  - elliptical mirror propagator, ``struct SRWLOptMirEl`` 
     """
     from wpg.srwlib import SRWLOptMirEl
 
     if orient == 'x':  # horizontal plane ellipsoidal mirror
-        opEFM = SRWLOptMirEl(_p=p, _q=q, _ang_graz=thetaE,
+        opEFM = SRWLOptMirEl(_p=p, _q=q, _ang_graz=thetaE, 
                              _r_sag=1.e+40, _size_tang=length,
-                             _nvx=np.cos(theta0), _nvy=0, _nvz=-np.sin(theta0),
-                             _tvx=-np.sin(theta0), _tvy=0, _x=0, _y=0, _treat_in_out=1)
+                             _nvx=np.cos(theta0), _nvy=np.sin(roll), _nvz=-np.sin(theta0),
+                             _tvx=-np.sin(theta0), _tvy=0, _x=np.tan(yaw)*distance, _y=0, _treat_in_out=1)
     elif orient == 'y':  # vertical plane ellipsoidal mirror
         opEFM = SRWLOptMirEl(_p=p, _q=q, _ang_graz=thetaE,
                              _r_sag=1.e+40, _size_tang=length,
-                             _nvx=0, _nvy=np.cos(theta0), _nvz=-np.sin(theta0),
-                             _tvx=0, _tvy=-np.sin(theta0), _x=0, _y=0, _treat_in_out=1)
+                             _nvx=np.sin(roll), _nvy=np.cos(theta0), _nvz=-np.sin(theta0),
+                             _tvx=0, _tvy=-np.sin(theta0), _x=0, _y=np.tan(yaw)*distance, _treat_in_out=1)
     else:
         raise TypeError('orient should be "x" or "y"')
     return opEFM
-
 
 def WF_dist(nx, ny, Dx, Dy):
     """
