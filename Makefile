@@ -15,4 +15,7 @@ clean:
 doc:
 	cd docs; make html
 
-.PHONY: all core modules clean ipython doc
+test:
+	pytest
+
+.PHONY: all core modules clean doc pytest

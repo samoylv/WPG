@@ -14,16 +14,19 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-import warnings
 
 # This deprecate warnings form SRWLib visualization module
 
+# import warnings
 # warnings.filterwarnings("ignore")
 # import srwlpy as srwlpy
 # import srwlib as srwlib
 # warnings.resetwarnings()
 
-# Create aliases for simple importing
+# fix segmentation fault using fftw from numpy mkl 
+from . import srwlpy
+
+# Create aliases for simple importing 
 
 from .wavefront import Wavefront
 from .beamline import Beamline
