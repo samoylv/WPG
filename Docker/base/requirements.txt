@@ -9,5 +9,5 @@ jupyter
 libgcc
 mock
 sphinx
-python=3
+python
 tini
