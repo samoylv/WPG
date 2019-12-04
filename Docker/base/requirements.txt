@@ -1,4 +1,3 @@
-nomkl
 numpy >= 1.9
 scipy
 pyqt
@@ -9,5 +8,5 @@ jupyter
 libgcc
 mock
 sphinx
-python=3
+python
 tini

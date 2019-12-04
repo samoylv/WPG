@@ -1,4 +1,4 @@
-FROM buzmakov/baseimage
+FROM buzmakov/wpgbase:20191204
 MAINTAINER Alexey Buzmakov <buzmakov@gmail.com>
 
 ADD wpg_install.sh /opt/wpg_install.sh
@@ -7,12 +7,11 @@ RUN DEBIAN_FRONTEND=noninteractive  apt-get update && apt-get install -y --no-in
 		wget \
 		build-essential \
 		unzip &&\
-		
- bash /opt/wpg_install.sh &&\
- apt-get remove -y wget build-essential unzip &&\
- apt-get clean && \
- apt-get autoremove -y && apt-get autoclean -y &&\
- rm -rf /var/lib/apt/lists/*
+		bash /opt/wpg_install.sh &&\
+		apt-get remove -y wget build-essential unzip &&\
+		apt-get clean && \
+		apt-get autoremove -y && apt-get autoclean -y &&\
+		rm -rf /var/lib/apt/lists/*
 
 VOLUME /data
 WORKDIR /data
