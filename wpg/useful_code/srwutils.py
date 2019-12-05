@@ -51,28 +51,28 @@ def AuxSaveIntData(arI, wfr, filePath):
 # NEEDED??
 # Write tabulated resulting Wavefront  data to HDF5 file:
 
-
-def AuxSaveWfrData(arI, wfr, filePath):
-# wavefront structure based on reduced glossary:
-    wf_struct = {'Version': (0.1, 'f')}
-    wf_struct['header'] = {
-        'photonEnergy': ((wfr.avgPhotEn), 'f'),
-        'nx': ((wfr.mesh.nx), 'i'),
-        'ny': ((wfr.mesh.ny), 'i'),
-        'xMin': ((wfr.mesh.xStart), 'f'),
-        'xMax': ((wfr.mesh.xFin), 'f'),
-        'yMin': ((wfr.mesh.yStart), 'f'),
-        'yMax': ((wfr.mesh.yFin), 'f'),
-        'nSlices': (wf_data.shape[0], 'i'),
-        'sliceMin': (slMin, 'f'),
-        'sliceMax': (slMax, 'f'),
-    }
-    wf_struct['data'] = {
-        'arrEver': (wf_data, 'f'),
-        'arrEhor': (numpy.zeros(shape=wf_data.shape, dtype='float32'), 'f')
-    }
-    wf_struct['misc'] = {
-    }
+#TODO: delete ?
+# def AuxSaveWfrData(arI, wfr, filePath):
+# # wavefront structure based on reduced glossary:
+#     wf_struct = {'Version': (0.1, 'f')}
+#     wf_struct['header'] = {
+#         'photonEnergy': ((wfr.avgPhotEn), 'f'),
+#         'nx': ((wfr.mesh.nx), 'i'),
+#         'ny': ((wfr.mesh.ny), 'i'),
+#         'xMin': ((wfr.mesh.xStart), 'f'),
+#         'xMax': ((wfr.mesh.xFin), 'f'),
+#         'yMin': ((wfr.mesh.yStart), 'f'),
+#         'yMax': ((wfr.mesh.yFin), 'f'),
+#         'nSlices': (wf_data.shape[0], 'i'),
+#         'sliceMin': (slMin, 'f'),
+#         'sliceMax': (slMax, 'f'),
+#     }
+#     wf_struct['data'] = {
+#         'arrEver': (wf_data, 'f'),
+#         'arrEhor': (numpy.zeros(shape=wf_data.shape, dtype='float32'), 'f')
+#     }
+#     wf_struct['misc'] = {
+#     }
 
 
 # Write Optical Transmission characteristic data to ASCII file:

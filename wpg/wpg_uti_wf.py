@@ -457,14 +457,14 @@ def get_intensity_on_axis(wfr):
 
 def check_sampling(wavefront):
     """ Utility to check the wavefront sampling. """
-    xMin = wavefront.params.Mesh.xMin;xMax = wavefront.params.Mesh.xMax;nx = wavefront.params.Mesh.nx;
-    yMin = wavefront.params.Mesh.yMin;yMax = wavefront.params.Mesh.yMax;ny = wavefront.params.Mesh.ny;
+    xMin = wavefront.params.Mesh.xMin;xMax = wavefront.params.Mesh.xMax;nx = wavefront.params.Mesh.nx
+    yMin = wavefront.params.Mesh.yMin;yMax = wavefront.params.Mesh.yMax;ny = wavefront.params.Mesh.ny
     dx = (xMax-xMin)/(nx-1); dy = (yMax-yMin)/(ny-1)
-    xx=calculate_fwhm(wavefront); fwhm_x = xx[u'fwhm_x']; fwhm_y = xx[u'fwhm_y'];
-    Rx =  wavefront.params.Rx; Ry =  wavefront.params.Ry;
+    xx=calculate_fwhm(wavefront); fwhm_x = xx[u'fwhm_x']; fwhm_y = xx[u'fwhm_y']
+    Rx =  wavefront.params.Rx; Ry =  wavefront.params.Ry
     ekev = wavefront.params.photonEnergy*1e-3
-    dr_ext_x = 12.39e-10/ekev*Rx/(2*fwhm_x);
-    dr_ext_y = 12.39e-10/ekev*Ry/(2*fwhm_y);
+    dr_ext_x = 12.39e-10/ekev*Rx/(2*fwhm_x)
+    dr_ext_y = 12.39e-10/ekev*Ry/(2*fwhm_y)
 
     format_string = '|{:4.3e}|{:4.3e}|{:4.3e}|{:4.3e}|{:4.3e}|{:4.3e}|{:4.3e}|'
 

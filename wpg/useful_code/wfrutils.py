@@ -109,13 +109,14 @@ def show_slices_hsv(wf, slice_numbers=None, pretitle=''):
 
     from matplotlib.colors import hsv_to_rgb
     from wpg.useful_code.backpropagation import fit_gaussian, gaussian
+    from wpg.wpg_uti_wf import calc_pulse_energy
 
     J2eV = 6.24150934e18
     wf_intensity = wf.get_intensity(polarization='horizontal')
     wf_phase = wf.get_phase(polarization='horizontal')
     if wf.params.wSpace == 'R-space':
         pulse_energy = wf.get_intensity().sum(axis=0).sum(axis=0).sum(axis=0)
-        energyJ = calc_pulse_energy(wf)
+        energyJ = calc_pulse_energy(wf)  
         dx = (wf.params.Mesh.xMax - wf.params.Mesh.xMin) / \
             (wf.params.Mesh.nx - 1)
         dy = (wf.params.Mesh.yMax - wf.params.Mesh.yMin) / \
