@@ -254,7 +254,7 @@ autoclass_content = 'both'
 # sys.path.insert(-1, os.path.join('..', 'wpg'))
 
 import mock
-MOCK_MODULES = ['wpg.srwlpy', 'wpg.srwlib','srw','wpg.srw.srwlib','srwlpy', 'wpg.srw.srwlpy',
+MOCK_MODULES = ['wpg.srwlpy', 'wpg.srwlib','srw','srwlpy', 'wpg.srw.srwlpy',
                 'wpg.srwlib.srwl',
                 'uti_plot', 'uti_math', 'srwl_uti_cryst', 'srwl_uti_src',
                 'numpy', 'h5py', 'pylab', 'scipy', 'scipy.optimize']
