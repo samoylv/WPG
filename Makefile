@@ -4,7 +4,7 @@ core:
 	cd build; make srw
 
 modules:
-	cp build/lib/srwlpy*.so wpg/
+	cp build/lib/srwlpy*.so wpg/srw/
 	cp build/tmp/SRW/cpp/src/lib/srwlib.h docs/
 
 clean:
@@ -18,4 +18,4 @@ doc:
 test:
 	pytest
 
-.PHONY: all core modules clean doc pytest
+.PHONY: all core modules clean doc test
