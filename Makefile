@@ -9,7 +9,7 @@ modules:
 
 clean:
 	cd build; make clean
-	rm wpg/srwlpy*.so
+	rm wpg/srw/srwlpy*.so
 	rm docs/srwlib.h
 
 doc:
