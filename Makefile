@@ -16,6 +16,6 @@ doc:
 	cd docs; make html
 
 test:
-	pytest
+	pytest --profile-svg
 
 .PHONY: all core modules clean doc test

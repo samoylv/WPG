@@ -13,7 +13,7 @@ Contents:
    wpg
    wavefront
    glossary
-   srwlib
+   srw.srwlib
    beamline
    optical_elements
    generators

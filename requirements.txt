@@ -10,3 +10,4 @@ libgcc
 mock
 sphinx
 python=3.5
+pytest-profiling

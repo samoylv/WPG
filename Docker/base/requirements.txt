@@ -11,3 +11,4 @@ mock
 sphinx
 python
 tini
+pytest-profiling
