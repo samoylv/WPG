@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 # warnings.resetwarnings()
 
 # fix segmentation fault using fftw from numpy mkl 
-from . import srwlpy
+from .srw import srwlpy
 
 # Create aliases for simple importing 
 
