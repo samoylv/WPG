@@ -13,7 +13,7 @@ def test_import_wpg_members():
     import wpg.generators
     import wpg.optical_elements
     import wpg.srwlib
-    import wpg.srwlpy
+#     import wpg.srwlpy
     import wpg.utils
     import wpg.wpg_uti_exfl
     import wpg.wpg_uti_oe
