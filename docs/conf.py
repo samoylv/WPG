@@ -255,6 +255,7 @@ autoclass_content = 'both'
 
 import mock
 MOCK_MODULES = ['wpg.srwlpy', 'wpg.srwlpy','srw','wpg.srw.srwlib','srwlpy', 'wpg.srw.srwlpy',
+                'wpg.srwlib.srwl',
                 'uti_plot', 'uti_math', 'srwl_uti_cryst', 'srwl_uti_src',
                 'numpy', 'h5py', 'pylab', 'scipy', 'scipy.optimize']
 for mod_name in MOCK_MODULES:
