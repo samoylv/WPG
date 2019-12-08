@@ -9,7 +9,7 @@ of propagation of a gaussian beam through a drift with an analytical estimation.
 # v. 0.03
 
 from __future__ import print_function
-import .uti_plot
+import wpg.srw.uti_plot as uti_plot
 from .srwlib import *
 from .uti_math import matr_prod, fwhm
 
