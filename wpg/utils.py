@@ -48,13 +48,17 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
         if value is not None:
             if name in group:
                 del group[name]
-            try:                
+            try:
+                if isinstance(name, bytes):
+                    name = name.decode()
                 if isinstance(value, str):
                     group[name] = value
                 elif isinstance(value, numpy.ndarray):
                     group.create_dataset(name, data=value, chunks=True,
                             compression='gzip', compression_opts=1)    # compression='lzf'
-                    
+                elif isinstance(value, array):
+                    group.create_dataset(name, data=np.asarray(value), chunks=True,
+                            compression='gzip', compression_opts=1)    # compression='lzf'
 #                     if numpy.allclose(value, 0):
 #                         group.create_dataset(name, data=value, chunks=True,
 #                             compression='gzip', compression_opts=1)    # compression='lzf'
