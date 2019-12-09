@@ -24,6 +24,15 @@ from wpg.srwlib import srwl
 
 J2EV = 6.24150934e18
 
+def find_nearest_index(array, value):
+    array = numpy.asarray(array)
+    idx = (numpy.abs(array - value)).argmin().min()
+    return idx
+
+def find_nearest_value(array, value):
+    return array[find_nearest_index(array, value)]
+
+
 
 def print_beamline(bl):
     if isinstance(bl, Beamline):
@@ -79,11 +88,14 @@ def calculate_peak_pos(mwf):
     [nx, ny, xmin, xmax, ymin, ymax] = get_mesh(mwf)
     x_axis = numpy.linspace(xmin, xmax, nx)
     y_axis = numpy.linspace(ymin, ymax, ny)
-    nc = numpy.where(irr == irr_max)
-    irr_x = irr[ny // 2, :]
-    irr_y = irr[:, nx // 2]
-    x0 = numpy.max(x_axis[numpy.where(irr_x == numpy.max(irr_x))])
-    y0 = numpy.max(y_axis[numpy.where(irr_y == numpy.max(irr_y))])
+    nc = numpy.where(irr == irr_max)[0]
+    x0 = x_axis[nc[0]]
+    y0 = x_axis[nc[1]]
+#     irr_x = irr[ny // 2, :]
+#     irr_y = irr[:, nx // 2]
+    
+#     x0 = numpy.max(x_axis[numpy.where(irr_x == numpy.max(irr_x))])
+#     y0 = numpy.max(y_axis[numpy.where(irr_y == numpy.max(irr_y))])
     return [x0, y0]
 
 
@@ -356,11 +368,11 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
     pylab.xlabel('x (mm)')
     pylab.ylabel('y (mm)')
     pylab.title(title_fig)
-
-    irr_y = ii[:, numpy.max(numpy.where(xa == xc))]
-    irr_x = ii[numpy.max(numpy.where(ya == yc)), :]
-    pha_y = ph[:, numpy.max(numpy.where(xa == xc))]
-    pha_x = ph[numpy.max(numpy.where(ya == yc)), :]
+    
+    irr_y = ii[:, find_nearest_index(xa, xc)]
+    irr_x = ii[find_nearest_index(ya, yc), :]
+    pha_y = ph[:, find_nearest_index(xa, xc)]
+    pha_x = ph[find_nearest_index(ya, yc), :]
 
     if onePlot:
         pylab.subplot(132)
@@ -479,7 +491,8 @@ def calculate_fwhm_x(mwf):
     [xc, yc] = calculate_peak_pos(mwf)
     x_axis = numpy.linspace(xmin, xmax, nx)
     y_axis = numpy.linspace(ymin, ymax, ny)
-    irr_x = irr[numpy.max(numpy.where(y_axis == yc)), :]
+    irr_x = irr[numpy.argmin(numpy.abs(y_axis-yc)), :]
+#     irr_x = irr[numpy.max(numpy.where(y_axis == yc)), :]
     fwhm = 0.
     idx = numpy.where(irr_x >= irr_max / 2)
     if numpy.size(idx) > 0:
