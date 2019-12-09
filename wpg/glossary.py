@@ -355,7 +355,7 @@ class WFRadiationWEFieldUnit(RadiationField):
         else:
             raise ValueError(
                 'value must be "arbitrary" or "sqrt(J/eV/mm^2)"' +
-                'or "sqrt(W/mm^2)" or "sqrt(Phot/s/0.1%bw/mm^2)"')
+                'or "sqrt(W/mm^2)" or "sqrt(Phot/s/0.1%bw/mm^2)" given: {}'.format(val))
 
 
 class WFRadiationMeshNx(RadiationField):
