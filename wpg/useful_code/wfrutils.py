@@ -49,9 +49,9 @@ def print_beamline(bl):
 
 def create_numpy_array_from_rows(rows, slices=None):
     # slice size (Re, Im)
-    N = len(rows[0]) / 2
+    N = len(rows[0]) // 2
     if slices is None:
-        slices = list(range(len(rows) / N))
+        slices = list(range(len(rows) // N))
     slice_count = len(slices)
     # 3d array
     y = numpy.zeros(shape=(N, 2 * N, slice_count), dtype='float32')
@@ -130,19 +130,19 @@ def show_slices_hsv(wf, slice_numbers=None, pretitle=''):
     if wf.params.wSpace == 'R-space':
         pulse_energy = wf.get_intensity().sum(axis=0).sum(axis=0).sum(axis=0)
         energyJ = calc_pulse_energy(wf)  
-        dx = (wf.params.Mesh.xMax - wf.params.Mesh.xMin) / \
+        dx = (wf.params.Mesh.xMax - wf.params.Mesh.xMin) // \
             (wf.params.Mesh.nx - 1)
-        dy = (wf.params.Mesh.yMax - wf.params.Mesh.yMin) / \
+        dy = (wf.params.Mesh.yMax - wf.params.Mesh.yMin) // \
             (wf.params.Mesh.ny - 1)
     elif wf.params.wSpace == 'Q-space':
-        dx = (wf.params.Mesh.qxMax - wf.params.Mesh.qxMin) / \
+        dx = (wf.params.Mesh.qxMax - wf.params.Mesh.qxMin) // \
             (wf.params.Mesh.nx - 1)
-        dy = (wf.params.Mesh.qyMax - wf.params.Mesh.qyMin) / \
+        dy = (wf.params.Mesh.qyMax - wf.params.Mesh.qyMin) // \
             (wf.params.Mesh.ny - 1)
     else:
         raise TypeError('wSpace should be "R-space" or "Q-space"')
 
-    dt = (wf.params.Mesh.sliceMax - wf.params.Mesh.sliceMin) / \
+    dt = (wf.params.Mesh.sliceMax - wf.params.Mesh.sliceMin) // \
         (wf.params.Mesh.nSlices - 1)
     print('dt', dt)
 
@@ -218,12 +218,12 @@ def show_slices_hsv(wf, slice_numbers=None, pretitle=''):
                     'x'+str(numpy.floor(dx*1e6))+' $\mu m ^2$ pixel')
 
     pylab.subplot(122)
-    pylab.plot(y_axis*1e6,     data[:, int(center_x)]*1e3, 'b', label='Y-cut')
+    pylab.plot(y_axis*1e6, data[:, int(center_x)]*1e3, 'b', label='Y-cut')
     pylab.hold(True)
     pylab.plot(
         y_axis*1e6, fit_data[:, int(center_x)]*1e3, 'b:', label='Gaussian fit')
     pylab.hold(True)
-    pylab.plot(x_axis*1e6,     data[int(center_y), :]*1e3,  'g', label='X-cut')
+    pylab.plot(x_axis*1e6, data[int(center_y), :]*1e3,  'g', label='X-cut')
     pylab.hold(True)
     pylab.plot(
         x_axis*1e6, fit_data[int(center_y), :]*1e3,  'g--', label='Gaussian fit')
@@ -383,14 +383,20 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
         #ya = ya*1e6
         pylab.semilogy(ya * 1e6, irr_y, '-vk')
         pylab.xlabel('(um)')
-        pylab.xlim(numpy.min(ya[numpy.where(irr_y >= imax * i_y_min)])
-                   * 1e6, numpy.max(ya[numpy.where(irr_y >= imax * i_y_min)]) * 1e6)
+        try:
+            pylab.xlim(numpy.min(ya[numpy.where(irr_y >= imax * i_y_min)])
+                * 1e6, numpy.max(ya[numpy.where(irr_y >= imax * i_y_min)]) * 1e6)
+        except ValueError:
+            pass
     else:
         #ya = ya*1e3
         pylab.plot(ya * 1e3, irr_y)
         pylab.xlabel('y (mm)')
-        pylab.xlim(numpy.min(ya[numpy.where(irr_y >= imax * i_y_min)])
+        try:
+            pylab.xlim(numpy.min(ya[numpy.where(irr_y >= imax * i_y_min)])
                    * 1e3, numpy.max(ya[numpy.where(irr_y >= imax * i_y_min)]) * 1e3)
+        except ValueError:
+            pass
     pylab.ylim(0,numpy.max(ii)*1.1)
     pylab.ylabel(label4irradiance)
     pylab.title('Vertical cut,  xc = ' + str(int(xc * 1e6)) + ' um')
@@ -403,14 +409,22 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
         #xa = xa*1e6
         pylab.semilogy(xa * 1e6, irr_x, '-vr')
         pylab.xlabel('x, (um)')
-        pylab.xlim(numpy.min(xa[numpy.where(irr_x >= imax * i_x_min)])
+        try:
+            pylab.xlim(numpy.min(xa[numpy.where(irr_x >= imax * i_x_min)])
                    * 1e6, numpy.max(xa[numpy.where(irr_x >= imax * i_x_min)]) * 1e6)
+        except ValueError:
+            pass
     else:
         #xa = xa*1e3
         pylab.plot(xa * 1e3, irr_x)
         pylab.xlabel('x (mm)')
-        pylab.xlim(numpy.min(xa[numpy.where(irr_x >= imax * i_x_min)])
+        
+        try:
+            pylab.xlim(numpy.min(xa[numpy.where(irr_x >= imax * i_x_min)])
                    * 1e3, numpy.max(xa[numpy.where(irr_x >= imax * i_x_min)]) * 1e3)
+        except ValueError:
+            pass
+
     pylab.ylim(0,numpy.max(ii)*1.1)
     pylab.ylabel(label4irradiance)
     pylab.title('Horizontal cut, yc = ' + str(int(yc * 1e6)) + ' um')
