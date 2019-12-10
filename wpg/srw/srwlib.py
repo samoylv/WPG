@@ -3728,7 +3728,7 @@ class SRWLOptCryst(SRWLOpt):
         :param _nvz: longitudinal coordinate of outward normal to crystal surface (John's angles: thdg, chidg, phidg)
         :param _tvx: horizontal coordinate of central tangential vector (John's angles: thdg, chidg, phidg)
         :param _tvy: vertical coordinate of central tangential vector (John's angles: thdg, chidg, phidg)
-        :param _uc: crystal use case: 1- Bragg Reflection, 2- Bragg Transmission (Laue cases to be added)
+        :param _uc: crystal use case: 1- Bragg Reflection, 2- Bragg Transmission, 3- Laue  reflection, 4- Laue Transmission. #AR15052019
         """
         #"""
         #The Miller Inices are removed from this input (after discussion with A. Suvorov), because _d_sp already incorporates this information:
@@ -3736,7 +3736,7 @@ class SRWLOptCryst(SRWLOpt):
         #:param _h2: 2nd index of diffraction vector (John's kMilND)
         #:param _h3: 3rd index of diffraction vector (John's lMilND)
         #However, a member-function may be added here to calculate _d_sp from teh Miller Indices and material constant(s)
-        
+
         #Moved to Propagation Parameters
         #:param _sx: horizontal coordinate of optical axis after crystal [m] (John's)
         #:param _sy: vertical coordinate of optical axis after crystal [m] (John's)
@@ -3747,11 +3747,6 @@ class SRWLOptCryst(SRWLOpt):
         #:param _aPsi: crystal yaw angle (John's)
         #:param _aThe: crystal theta angle (John's)
         #"""
-
-        #DEBUG
-        #print(_d_sp, _psi0r, _psi0i, _psi_hr, _psi_hi, _psi_hbr, _psi_hbi, _tc, _ang_as, _nvx, _nvy, _nvz, _tvx, _tvy, _uc)
-        #END DEBUG
-        
         self.dSp = _d_sp
         self.psi0r = _psi0r
         self.psi0i = _psi0i
@@ -3771,9 +3766,10 @@ class SRWLOptCryst(SRWLOpt):
         self.tvy = _tvy
 
         self.aux_energy = None  #MR01082016: renamed self.energy to self.aux_energy.
-        self.aux_ang_dif_pl = None  #MR01082016: renamed self.ang_dif_pl to self.aux_ang_dif_pl. 
-        
+        self.aux_ang_dif_pl = None  #MR01082016: renamed self.ang_dif_pl to self.aux_ang_dif_pl.
+
         self.uc = _uc #OC04092016
+        
 
     def set_orient(self, _nvx=0, _nvy=0, _nvz=-1, _tvx=1, _tvy=0):
         """Defines Crystal Orientation in the frame of the Incident Photon beam
@@ -3788,11 +3784,90 @@ class SRWLOptCryst(SRWLOpt):
         self.nvz = _nvz
         self.tvx = _tvx
         self.tvy = _tvy
+        
+        
+    def find_orient_and_rotate_faceLeftRight(self,en_kev,LeftRight=0):
+        """
+        :param LeftRight: 0 - face left, 1 - face right
+        """
+        orientDataCr = self.find_orient(en_kev*1000.0 , 0.0)
+      
+        orientCr = orientDataCr[0]
+        if (LeftRight==0):
+            RotationAngle = -np.pi/2 
+        else:
+            RotationAngle = np.pi/2
+            
+        #Rotate around ez axis
+        crot = cos(RotationAngle)
+        srot = sin(RotationAngle)
+        
+        temp1 = orientCr[0][0]
+        temp2 = orientCr[0][1]
+        
+        orientCr[0][0]=crot*temp1-srot*temp2
+        orientCr[0][1]=srot*temp1+crot*temp2
+        
+        
+        temp1 = orientCr[2][0]
+        temp2 = orientCr[2][1]
+       
+        orientCr[2][0]=crot*temp1-srot*temp2
+        orientCr[2][1]=srot*temp1+crot*temp2
+        
+        tCr = orientCr[0]; nCr = orientCr[2]
+        
+        self.set_orient(nCr[0], nCr[1], nCr[2], tCr[0], tCr[1])
+        
+    def find_orient_and_rotate_faceUpDown(self,en_kev,UpDown=0,_ang_dev=0):
+        """
+        :param UpDown: 0 - face up, 1 - face down
+        """
+        if (UpDown==1):
+            orientDataCr = self.find_orient(en_kev*1000.0 , 0.0,_flag_down=1,_ang_dev=_ang_dev)
+        else:
+            orientDataCr = self.find_orient(en_kev*1000.0 , 0.0, _ang_dev = _ang_dev)
+      
+        orientCr = orientDataCr[0]
+        if (UpDown==0):
+            RotationAngle=0
+        else:
+            if (self.uc<=2):
+                RotationAngle = -np.pi+2.0*self.Bragg_angle(en_kev)-2*_ang_dev
+            else:
+                RotationAngle =  np.pi-2.0*self.Bragg_angle(en_kev)+2*_ang_dev
 
-    def find_orient(self, _en, _ang_dif_pl=0):
+            #rotate around ex
+            crot = cos(RotationAngle)
+            srot = sin(RotationAngle)
+
+            temp1 = orientCr[0][1]
+            temp2 = orientCr[0][2]
+
+            orientCr[0][1]=crot*temp1-srot*temp2
+            orientCr[0][2]=srot*temp1+crot*temp2
+
+            temp1 = orientCr[2][1]
+            temp2 = orientCr[2][2]
+
+            orientCr[2][1]=crot*temp1-srot*temp2
+            orientCr[2][2]=srot*temp1+crot*temp2
+
+        tCr = orientCr[0]; nCr = orientCr[2]
+
+        self.set_orient(nCr[0], nCr[1], nCr[2], tCr[0], tCr[1])
+        
+            
+    def Bragg_angle(self,en_kev):
+        eV2wA = 12398.4193009
+        wA = eV2wA/en_kev/1e3
+        return asin(wA/2/self.dSp)
+
+    def find_orient(self, _en, _ang_dif_pl=0,_flag_down=0,_ang_dev=0):
         """Finds optimal crystal orientation in the input beam frame (i.e. surface normal and tangential vectors) and the orientation of the output beam frame (i.e. coordinates of the longitudinal and horizontal vectors in the input beam frame)
         :param _en: photon energy [eV]
         :param _ang_dif_pl: diffraction plane angle (0 corresponds to the vertical deflection; pi/2 to the horizontal deflection; any value in between is allowed)
+        :param _ang_dev: deviation from exact Bragg condition, rad
         :return: list of two triplets of vectors:
                 out[0] is the list of 3 base vectors [tangential, saggital, normal] defining the crystal orientation
                 out[1] is the list of 3 base vectors [ex, ey, ez] defining orientation of the output beam frame
@@ -3800,31 +3875,59 @@ class SRWLOptCryst(SRWLOpt):
         """
 
         self.aux_energy = _en #MR01082016: renamed self.energy to self.aux_energy.
-        self.aux_ang_dif_pl = _ang_dif_pl #MR01082016: renamed self.ang_dif_pl to self.aux_ang_dif_pl. 
-   
+        self.aux_ang_dif_pl = _ang_dif_pl #MR01082016: renamed self.ang_dif_pl to self.aux_ang_dif_pl.
+        
+        ang_dev = _ang_dev
         #dSi = 5.43096890 # Si lattice constant (A)
         eV2wA = 12398.4193009 # energy to wavelength conversion factor 12398.41930092394
+        
+        #Wavelenght
         wA = eV2wA/_en
         #Tar = math.pi*Ta/180.
         #Kh = norm(Hr)/dSi # reflection vector modulus
+        
+        #Incident vector components
         kh = 1./self.dSp # because self.dSp = dSi/norm(Hr)
+        #define reciprocal lattice vector in the frame of crystal surface
         hv = [0, kh*cos(self.angAs), -kh*sin(self.angAs)]
+        
+        #Bragg angle
         tBr = asin(wA*kh/2)
-        tKin = tBr - self.angAs # TKin = Tbr - Tar
-        tKou = tBr + self.angAs # TKou = Tbr + Tar
-        abs_c0 = sqrt(self.psi0r*self.psi0r + self.psi0i*self.psi0i)
+        
+        if self.uc <= 2:
+            #Incident Angle
+            tKin = tBr + ang_dev - self.angAs # TKin = Tbr - Tar
+            #Out Angle
+            tKou = tBr + ang_dev + self.angAs # TKou = Tbr + Tar
+        else: #Laue ARF 06062019
+            #Incident Angle
+            tKin = np.pi/2 + ang_dev - tBr - self.angAs # TKin = Tbr - Tar
+            #Out Angle
+            tKou = np.pi/2 - ang_dev + tBr + self.angAs # TKou = Tbr + Tar
+                
+               
+        #No idea, related to a change in angle, IP06122019 change of angle due to refraction
+        abs_c0 = sqrt(self.psi0r*self.psi0r + self.psi0i*self.psi0i)        
         #dTref = abs(c0)*(1+math.sin(TKou)/math.sin(TKin))/2/math.sin(2*Tbr)
         dTref = 0.5*abs_c0*(1 + sin(tKou)/sin(tKin))/sin(2*tBr)
-        tIn = tKin + dTref
-
+        
+        #Final angle with correction.
+        if (self.uc<=2):
+            if (_flag_down==1):
+                tIn = tKin - dTref
+            else:
+                tIn = tKin + dTref
+        else:
+            tIn = tKin
+        
         def prodV(_a, _b):
             return [_a[1]*_b[2] - _a[2]*_b[1], _a[2]*_b[0] - _a[0]*_b[2], _a[0]*_b[1] - _a[1]*_b[0]]
-        
+
         def prodMV(_m, _v):
             return [_m[0][0]*_v[0] + _m[0][1]*_v[1] + _m[0][2]*_v[2],
                 _m[1][0]*_v[0] + _m[1][1]*_v[1] + _m[1][2]*_v[2],
                 _m[2][0]*_v[0] + _m[2][1]*_v[1] + _m[2][2]*_v[2]]
-        
+
         def normV(_a):
             return sqrt(sum(n**2 for n in _a))
 
@@ -3838,37 +3941,39 @@ class SRWLOptCryst(SRWLOpt):
               [sv[2], nv[2], tv[2]]]
 
         #Diffracted beam frame vectors
+        #define z output field direction in axes relative to crystal surface
+        #Bragg:
         z1c = [sv[2], sqrt(1. - sv[2]**2 - (tv[2] + wA*hv[2])**2), tv[2] + wA*hv[2]]
+
         #rz = [sv[0]*z1c[0] + nv[0]*z1c[1] + tv[0]*z1c[2],
         #      sv[1]*z1c[0] + nv[1]*z1c[1] + tv[1]*z1c[2],
         #      sv[2]*z1c[0] + nv[2]*z1c[1] + tv[2]*z1c[2]]
         rz = prodMV(mc, z1c)
-        
+
         x1c = prodV(hv, z1c)
         if sum(n**2 for n in x1c) == 0:
             x1c = prodV(nv, z1c)
         if sum(n**2 for n in x1c) == 0:
             x1c = sv
         x1c = [n/normV(x1c) for n in x1c]
-        
+
         #rx = [sv[0]*x1c[0] + nv[0]*x1c[1] + tv[0]*x1c[2],
         #      sv[1]*x1c[0] + nv[1]*x1c[1] + tv[1]*x1c[2],
         #      sv[2]*x1c[0] + nv[2]*x1c[1] + tv[2]*x1c[2]]
         rx = prodMV(mc, x1c)
         ry = prodV(rz, rx)
-        #print('ex0=',rx, 'ey0=',ry, 'ez0=',rz)
 
         #OC06092016
         tvNew = None; svNew = None; nvNew = None
         ex = None; ey = None; ez = None
 
         #The following corresponds to Bragg case (Reflection and Transmission)
-        tolAng = 1.e-06
+        tolAng = 1.e-6
         if(abs(_ang_dif_pl) < tolAng): #case of the vertical deflection plane
             #return [[tv, sv, nv], [rx, ry, rz]]
             tvNew = tv; svNew = sv; nvNew = nv
             ex = rx; ey = ry; ez = rz
-        
+
         else: #case of a tilted deflection plane
             cosA = cos(_ang_dif_pl)
             sinA = sin(_ang_dif_pl)
@@ -3877,7 +3982,7 @@ class SRWLOptCryst(SRWLOpt):
                   [0, 0, 1]]
 
             ez = prodMV(mr, rz)
-            
+
             #Selecting "Horizontal" and "Vertical" directions of the Output beam frame
             #trying to use "minimum deviation" from the corresponding "Horizontal" and "Vertical" directions of the Input beam frame
             ezIn = [0, 0, 1]
@@ -3902,12 +4007,13 @@ class SRWLOptCryst(SRWLOpt):
             nvNew = prodMV(mr, nv)
 
         #OC06092016
-        if(self.uc == 2): #Bragg Transmission
+        if((self.uc == 2) or (self.uc == 4)) : #Bragg or Laue Transmission
             ex = [1, 0, 0]
             ey = [0, 1, 0]
-            ez = [0, 0, 1]  
+            ez = [0, 0, 1]
+            
         #To check this and implement other self.uc cases!
-
+#         print([ex,ey,ez])
         return [[tvNew, svNew, nvNew], [ex, ey, ez]]
 
 class SRWLOptC(SRWLOpt):
