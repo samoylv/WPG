@@ -12,3 +12,4 @@ sphinx
 python
 tini
 pytest-profiling
+autopep8
