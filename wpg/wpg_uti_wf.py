@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 import copy
 import numpy
-import pylab
+import pylab as plt
 
 from wpg.beamline import Beamline
 from wpg.srwlib import srwl
@@ -109,33 +109,33 @@ def integral_intensity(wf, threshold=0.01, bPlot=True):
             dSlice = (mesh.sliceMax - mesh.sliceMin) / (mesh.nSlices - 1)
         else:
             dSlice = 0
-        pylab.figure()
-        pylab.plot(numpy.arange(mesh.nSlices) * dSlice + mesh.sliceMin, int0)
-        pylab.plot(numpy.arange(min(aw), max(aw)) *
+        plt.figure()
+        plt.plot(numpy.arange(mesh.nSlices) * dSlice + mesh.sliceMin, int0)
+        plt.plot(numpy.arange(min(aw), max(aw)) *
                    dSlice + mesh.sliceMin, int0_mean, 'ro')
         if(wf.params.wDomain == 'time'):
-            pylab.title('Power')
-            pylab.xlabel('s')
-            pylab.ylabel('W')
+            plt.title('Power')
+            plt.xlabel('s')
+            plt.ylabel('W')
         else:  # frequency domain
-            pylab.title('Spectral Energy')
-            pylab.xlabel('eV')
-            pylab.ylabel('J/eV')
-        pylab.show()
-        pylab.figure()
-        pylab.plot(numpy.arange(mesh.nSlices) *
+            plt.title('Spectral Energy')
+            plt.xlabel('eV')
+            plt.ylabel('J/eV')
+        plt.show()
+        plt.figure()
+        plt.plot(numpy.arange(mesh.nSlices) *
                    dSlice + mesh.sliceMin, int0_00)
-        pylab.plot(numpy.arange(min(aw), max(aw)) * dSlice +
+        plt.plot(numpy.arange(min(aw), max(aw)) * dSlice +
                    mesh.sliceMin, int0_00[min(aw):max(aw)], 'ro')
         if(wf.params.wDomain == 'time'):
-            pylab.title('On-Axis Power Density')
-            pylab.xlabel('s')
-            pylab.ylabel('W/mm^2')
+            plt.title('On-Axis Power Density')
+            plt.xlabel('s')
+            plt.ylabel('W/mm^2')
         else:  # frequency domain
-            pylab.title('On-Axis Spectral Fluence')
-            pylab.xlabel('eV')
-            pylab.ylabel('J/eV/mm^2')
-        pylab.show()
+            plt.title('On-Axis Spectral Fluence')
+            plt.xlabel('eV')
+            plt.ylabel('J/eV/mm^2')
+        plt.show()
     averaged = int0_mean.sum() / len(int0_mean)
     print('number of meaningful slices:', len(int0_mean))
     if(wf.params.wDomain == 'time'):
@@ -501,3 +501,74 @@ def check_sampling(wavefront):
     ret += 'END OF REPORT'
 
     return ret
+
+#Ploting the Wave front
+def time_en_int(wfr,area=0.5,max_rel=0.01,log_Scaley = False,log_Scalex = False):
+    
+    mesh = wfr.params.Mesh
+    dSlice = (mesh.sliceMax - mesh.sliceMin) / (mesh.nSlices - 1)
+    
+    centr_en = 0.5 * (mesh.sliceMax - mesh.sliceMin) + mesh.sliceMin    
+    energies_ar = numpy.arange(mesh.sliceMin,mesh.sliceMax,dSlice)
+    energy_ind = numpy.arange(0,mesh.nSlices,1)    
+    en_fwhm = area*(mesh.sliceMax - mesh.sliceMin) #in eV's for selected reflection, 7 for Si111
+    
+    energy_roi = energy_ind[numpy.where(numpy.abs(energies_ar-centr_en)<en_fwhm)]
+    
+    if (wfr.params.wDomain == 'time'):
+        fs_lim = 1e15
+        xtitle_wf = 'time, fs'
+        
+    else:
+        fs_lim=1
+        xtitle_wf = 'energy, eV' 
+    
+    wf_intensity = wfr.get_intensity()
+    dim = numpy.shape(wf_intensity)   
+    wf_int = wf_intensity[dim[0] // 2, dim[1] // 2, :][energy_roi]
+    
+    if log_Scaley and log_Scalex:
+        plt.loglog(energies_ar[energy_roi] * fs_lim,wf_int,'b-')
+        
+        plt.loglog(energies_ar[energy_roi][numpy.where(wf_int>numpy.amax(wf_int) * max_rel)] * fs_lim,wf_int[numpy.where(wf_int > numpy.amax(wf_int) * max_rel)],'ro')
+    elif log_Scaley: 
+        plt.semilogy(energies_ar[energy_roi] * fs_lim,wf_int,'b-')
+        
+        plt.semilogy(energies_ar[energy_roi][numpy.where(wf_int>numpy.amax(wf_int) * max_rel)] * fs_lim,wf_int[numpy.where(wf_int > numpy.amax(wf_int) * max_rel)],'ro')
+        
+    elif log_Scalex:
+        plt.semilogx(energies_ar[energy_roi] * fs_lim,wf_int,'b-')
+        
+        plt.semilogx(energies_ar[energy_roi][numpy.where(wf_int>numpy.amax(wf_int) * max_rel)] * fs_lim,wf_int[numpy.where(wf_int > numpy.amax(wf_int) * max_rel)],'ro')
+        
+    else:
+        plt.plot(energies_ar[energy_roi] * fs_lim,wf_int,'b-')
+        
+        plt.plot(energies_ar[energy_roi][numpy.where(wf_int>numpy.amax(wf_int) * max_rel)] * fs_lim,wf_int[numpy.where(wf_int > numpy.amax(wf_int) * max_rel)],'ro')
+        
+            
+    
+    if (wfr.params.wDomain=='time'):
+        plt.xlabel('Time (fs)')
+    else:
+        plt.xlabel('Enrgy (eV)')
+
+    plt.ylabel('Intensity (arb units)')        
+    #plt.legend()
+    
+    plt.show()
+    
+def show_profile(wf):
+    wfr = Wavefront(srwl_wavefront=wf._srwl_wf)
+    
+    print(calculate_fwhm(wfr))
+    
+    wf_intensity = wfr.get_intensity()
+    
+    plt.imshow(wf_intensity.sum(axis=2))
+    
+    plt.xlabel('x (um)')    
+    plt.ylabel('y (um)')        
+    
+    
+    plt.show()

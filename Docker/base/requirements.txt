@@ -13,3 +13,4 @@ python
 tini
 pytest-profiling
 autopep8
+requests

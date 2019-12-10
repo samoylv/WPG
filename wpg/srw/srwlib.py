@@ -3794,9 +3794,9 @@ class SRWLOptCryst(SRWLOpt):
       
         orientCr = orientDataCr[0]
         if (LeftRight==0):
-            RotationAngle = -np.pi/2 
+            RotationAngle = -pi/2 
         else:
-            RotationAngle = np.pi/2
+            RotationAngle = pi/2
             
         #Rotate around ez axis
         crot = cos(RotationAngle)
@@ -3833,9 +3833,9 @@ class SRWLOptCryst(SRWLOpt):
             RotationAngle=0
         else:
             if (self.uc<=2):
-                RotationAngle = -np.pi+2.0*self.Bragg_angle(en_kev)-2*_ang_dev
+                RotationAngle = -pi+2.0*self.Bragg_angle(en_kev)-2*_ang_dev
             else:
-                RotationAngle =  np.pi-2.0*self.Bragg_angle(en_kev)+2*_ang_dev
+                RotationAngle =  pi-2.0*self.Bragg_angle(en_kev)+2*_ang_dev
 
             #rotate around ex
             crot = cos(RotationAngle)
@@ -3901,9 +3901,9 @@ class SRWLOptCryst(SRWLOpt):
             tKou = tBr + ang_dev + self.angAs # TKou = Tbr + Tar
         else: #Laue ARF 06062019
             #Incident Angle
-            tKin = np.pi/2 + ang_dev - tBr - self.angAs # TKin = Tbr - Tar
+            tKin = pi/2 + ang_dev - tBr - self.angAs # TKin = Tbr - Tar
             #Out Angle
-            tKou = np.pi/2 - ang_dev + tBr + self.angAs # TKou = Tbr + Tar
+            tKou = pi/2 - ang_dev + tBr + self.angAs # TKou = Tbr + Tar
                 
                
         #No idea, related to a change in angle, IP06122019 change of angle due to refraction

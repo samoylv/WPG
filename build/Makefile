@@ -4,7 +4,7 @@ BIN_DIR = $(BUILD_DIR)/bin
 TMP_DIR = $(ORIGDIR)/tmp
 SRC_DIR = $(ORIGDIR)/sources
 PYTHON_TOMO = $(BIN_DIR)/python
-GIT_COMMIT = 5d3d4cff1e64f6c6587a5731fb94efdb4612c06
+GIT_COMMIT = 5d3d4cff1e64f6c6587a5731fb94efdb4612c06e
 .PHONY: all srw
 
 all: srw
@@ -24,8 +24,8 @@ srw:
 	# SRW commit. Switch from FFTW-2.1.5 to FFTW-3.3.8 (for 64-bit versions)
 	wget --no-check-certificate -nc -O $(SRC_DIR)/srw.zip https://github.com/ochubar/SRW/archive/$(GIT_COMMIT).zip; echo 'Done'
 	unzip -o $(SRC_DIR)/srw.zip -d $(TMP_DIR)/
-	mv $(TMP_DIR)/$(GIT_COMMIT) $(TMP_DIR)/SRW
-	cp -f xtal_patch/sroptcryst.h $(TMP_DIR)/SRW/cpp/core
+	mv $(TMP_DIR)/SRW-$(GIT_COMMIT) $(TMP_DIR)/SRW
+	cp -f xtal_patch/sroptcryst.h $(TMP_DIR)/SRW/cpp/src/core
 	patch $(TMP_DIR)/SRW/cpp/py/Makefile py3.patch
 	cd $(TMP_DIR)/SRW; MODE=omp make all;
 	mkdir -p $(BUILD_DIR)/lib

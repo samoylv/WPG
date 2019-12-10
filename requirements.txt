@@ -12,3 +12,4 @@ sphinx
 python
 pytest-profiling
 autopep8
+requests
