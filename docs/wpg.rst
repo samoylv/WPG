@@ -44,7 +44,29 @@ Installation
 On Ubuntu Desktop
 +++++++++++++++++
 
-Install dependencies
+New method
+..........
+Install using Conda: 
+
+Download conda installer from https://www.anaconda.com/distribution/
+or install using pip
+
+	.. code:: sh
+
+		pip install conda
+
+after that in WPG root folder: 
+
+	.. code:: sh
+
+		conda create -n wpg3 -y  --file requirements.txt
+		conda activate wpg3
+		make
+
+Depricated method
+.................
+
+Install dependencies:
 
 	.. code:: sh
 
