@@ -17,7 +17,7 @@ import inspect
 import sys
 import wpg.utils as utils
 import warnings
-import numpy
+import numpy as np
 import array
 
 
@@ -86,11 +86,11 @@ class RadiationField(object):
         """
         Property where value stored.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     @value.setter
     def value(self, val):
-        raise NotImplemented
+        raise NotImplementedError
 
     @property
     def keys_chain(self):
@@ -355,7 +355,7 @@ class WFRadiationWEFieldUnit(RadiationField):
         else:
             raise ValueError(
                 'value must be "arbitrary" or "sqrt(J/eV/mm^2)"' +
-                'or "sqrt(W/mm^2)" or "sqrt(Phot/s/0.1%bw/mm^2)"')
+                'or "sqrt(W/mm^2)" or "sqrt(Phot/s/0.1%bw/mm^2)" given: {}'.format(val))
 
 
 class WFRadiationMeshNx(RadiationField):
@@ -1127,17 +1127,32 @@ class WFDataArrEhor(RadiationField):
         Horizontal polarization
         """
 
-        res = numpy.array(self._wf._srwl_wf.arEx, dtype='float32', copy=False)
-        if res.shape:
-            res.shape = (self._wf.params.Mesh.ny, self._wf.params.Mesh.nx,
-                         self._wf.params.Mesh.nSlices, self._wf.params.nval)
+        res = np.array(self._wf._srwl_wf.arEx, dtype='float32', copy=False)
+        
+        correct_shape = (self._wf.params.Mesh.ny,
+                         self._wf.params.Mesh.nx,
+                         self._wf.params.Mesh.nSlices,
+                         self._wf.params.nval)
+        if not res.shape:
+            pass
+        elif np.prod(res.shape) == np.prod(correct_shape):
+            res.shape = correct_shape
+        else:
+            print(res.shape, correct_shape)
+            raise ValueError('Alarm')
+            res = np.zeros(shape= (correct_shape),
+                    dtype='float32')
+        
+        if not res.flags['C_CONTIGUOUS']:
+            res = np.ascontiguousarray(res)
+        
         return res
 
     @value.setter
     def value(self, val):
         """
 
-        :param val: complex numpy 3D array or array.array. if array.array - just copy
+        :param val: complex np 3D array or array.array. if array.array - just copy
         """
         n_total = self._wf._get_total_elements() * self._wf.params.nval
         self._wf._allocate_srw_moments()
@@ -1145,19 +1160,21 @@ class WFDataArrEhor(RadiationField):
             if not val.count() == n_total:
                 warnings.warn(
                     'New array size not equal to wavefront size. You must set it by yourself.')
-            self._wf._srwl_wf.arEx = array.array(str(u'f'), val)
-        else:
-            val = numpy.array(val, dtype='float32')
-            if not numpy.prod(val.shape) == n_total:
-                warnings.warn(
-                    'New array size not equal to wavefront size. It will set automaticaly to array size.')
-                self._wf.params.nx = val.shape[1]
-                self._wf.params.ny = val.shape[0]
-                self._wf.params.nSlices = val.shape[2]
-            self._wf._srwl_wf.arEx = array.array(str(u'f'), val.tobytes())
-            # self._wf._srwl_wf.arEx = array.array(str(u'f'))
-            # val_s = val.tostring()
-            # self._wf._srwl_wf.arEx.fromstring(val_s)
+
+        val = np.array(val, dtype='float32')
+        
+        if not val.flags['C_CONTIGUOUS']:
+            val = np.ascontiguousarray(val)
+
+        if not np.prod(val.shape) == n_total:
+            warnings.warn(
+                'New array size not equal to wavefront size. It will set automaticaly to array size.')
+            self._wf.params.nx = val.shape[1]
+            self._wf.params.ny = val.shape[0]
+            self._wf.params.nSlices = val.shape[2]
+
+        val.shape = (np.prod(val.shape),)
+        self._wf._srwl_wf.arEx = val
 
 
 class WFDataArrEver(RadiationField):
@@ -1186,10 +1203,24 @@ class WFDataArrEver(RadiationField):
         Vertical polarization
         """
 
-        res = numpy.array(self._wf._srwl_wf.arEy, dtype='float32', copy=False)
-        if res.shape:
-            res.shape = (self._wf.params.Mesh.ny, self._wf.params.Mesh.nx,
-                         self._wf.params.Mesh.nSlices, self._wf.params.nval)
+        res = np.array(self._wf._srwl_wf.arEy, dtype='float32', copy=False)
+        correct_shape = (self._wf.params.Mesh.ny,
+                         self._wf.params.Mesh.nx,
+                         self._wf.params.Mesh.nSlices,
+                         self._wf.params.nval)
+        if not res.shape:
+            pass
+        elif np.prod(res.shape) == np.prod(correct_shape):
+            res.shape = correct_shape
+        else:
+            print(res.shape, correct_shape)
+            raise ValueError('Alarm')
+            res = np.zeros(shape= (correct_shape),
+                    dtype='float32')
+        
+        if not res.flags['C_CONTIGUOUS']:
+            res = np.ascontiguousarray(res)
+        
         return res
 
     @value.setter
@@ -1200,19 +1231,24 @@ class WFDataArrEver(RadiationField):
             if not val.count() == n_total:
                 warnings.warn(
                     'New array size not equal to wavefront size. You must set it by yourself.')
-            self._wf._srwl_wf.arEy = array.array(str(u'f'), val)
-        else:
-            val = numpy.array(val, dtype='float32')
-            if not numpy.prod(val.shape) == n_total:
-                warnings.warn(
-                    'New array size not equal to wavefront size. It will set automaticaly to array size.')
-                self._wf.params.nx = val.shape[1]
-                self._wf.params.ny = val.shape[0]
-                self._wf.params.nSlices = val.shape[2]
-            self._wf._srwl_wf.arEy = array.array(str(u'f'), val.tobytes())
-            # self._wf._srwl_wf.arEy = array.array(str(u'f'))
-            # val_s = val.tostring()
-            # self._wf._srwl_wf.arEy.fromstring(val_s)
+            # self._wf._srwl_wf.arEy = array.array(str(u'f'), val)
+        # else:
+        val = np.array(val, dtype='float32')
+        
+        if not val.flags['C_CONTIGUOUS']:
+            val = np.ascontiguousarray(val)
+        
+        if not np.prod(val.shape) == n_total:
+            warnings.warn(
+                'New array size not equal to wavefront size. It will set automaticaly to array size.')
+            self._wf.params.nx = val.shape[1]
+            self._wf.params.ny = val.shape[0]
+            self._wf.params.nSlices = val.shape[2]
+
+        val.shape = (np.prod(val.shape),)
+        
+        self._wf._srwl_wf.arEy = val
+
 
 
 # TODO: fix allocation in N(x,y,z)

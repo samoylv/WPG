@@ -9,7 +9,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 env/
-build/
+#build/
 develop-eggs/
 dist/
 downloads/
@@ -91,3 +91,17 @@ ENV/
 # binary files
 *.h5
 *.pkl
+
+#pycharm files
+.idea
+
+#VSCode files
+.vscode
+
+# TMP fiels files
+build/lib
+build/sources
+build/tmp
+samples/Tutorials/*.test.ipynb
+samples/Tutorials/*.test.html
+samples/Tutorials/Tutorial_case_1/*.eps

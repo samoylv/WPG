@@ -204,7 +204,11 @@ class Wavefront(object):
             raise ValueError(
                 'unknown polarization value, should be "total" or "horizontal" or "vertical"')
 
-        res = array.array(str(u'f'), [0] * self._get_total_elements())
+        res = np.zeros(self._get_total_elements(), dtype='float32')
+
+        if not res.flags['C_CONTIGUOUS']:
+            res = np.ascontiguousarray(res)
+
         res = srwlib.srwl.CalcIntFromElecField(
             res, self._srwl_wf, pol, 0, 6, self.params.photonEnergy, 0, 0)
         res = np.array(res, dtype='float32', copy=False)
@@ -273,10 +277,14 @@ class Wavefront(object):
             raise ValueError(
                 'unknown polarization value, should be "total" or "horizontal" or "vertical"')
 
-        res = array.array(str(u'f'), [0] * self._get_total_elements())
+        res = np.zeros(self._get_total_elements(), dtype='float32')
+        
+        if not res.flags['C_CONTIGUOUS']:
+            res = np.ascontiguousarray(res)
+        
         res = srwlib.srwl.CalcIntFromElecField(
             res, self._srwl_wf, pol, 5, 6, self.params.photonEnergy, 0, 0)
-        res = np.array(res, dtype='float32')
+        res = np.array(res, dtype='float32', copy=False)
         res.shape = (
             self.params.Mesh.ny, self.params.Mesh.nx, self.params.Mesh.nSlices)
         if slice_number is not None:
@@ -303,10 +311,14 @@ class Wavefront(object):
             raise ValueError(
                 'unknown polarization value, should be "total" or "horizontal" or "vertical"')
 
-        res = array.array(str(u'f'), [0] * self._get_total_elements())
+        res = np.zeros(self._get_total_elements(), dtype='float32')
+        
+        if not res.flags['C_CONTIGUOUS']:
+            res = np.ascontiguousarray(res)
+        
         res = srwlib.srwl.CalcIntFromElecField(
             res, self._srwl_wf, pol, 6, 6, self.params.photonEnergy, 0, 0)
-        res = np.array(res, dtype='float32')
+        res = np.array(res, dtype='float32', copy=False)
         res.shape = (
             self.params.Mesh.ny, self.params.Mesh.nx, self.params.Mesh.nSlices)
         if slice_number is not None:
@@ -336,7 +348,7 @@ class Wavefront(object):
                 return sr.sliceMin, sr.sliceMax, sr.xMax, sr.xMin
         elif rep == 'Q-space':
             print(rep)
-            wl = 12.39 * 1e-10 / (self.params.photonEnergy * 1e-3)  # WaveLength
+            wl = 12.398 * 1e-10 / (self.params.photonEnergy * 1e-3)  # WaveLength
             # wv = 2.*np.pi/wl
             # #WaveVector
             if axis == 'z':

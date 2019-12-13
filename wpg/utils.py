@@ -30,7 +30,10 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
 
         for (k, v) in list(group.items()):
             if isinstance(v, dict):
-                tmp_group = pearent_goup.create_group(k)
+                if k not in pearent_goup:
+                    tmp_group = pearent_goup.create_group(k)
+                else:
+                    tmp_group = pearent_goup[k]
                 store_group(v, tmp_group)
             else:
                 store_value(k, v, pearent_goup)
@@ -46,11 +49,36 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
             if name in group:
                 del group[name]
             try:
-                group.create_dataset(name, data=value, chunks=True,
-                                     compression='gzip', compression_opts=3
-                                     )
+                if isinstance(name, bytes):
+                    name = name.decode()
+                if isinstance(value, str):
+                    group[name] = value
+                elif isinstance(value, numpy.ndarray):
+                    group.create_dataset(name, data=value, chunks=True,
+                            compression='gzip', compression_opts=1)    # compression='lzf'
+                elif isinstance(value, array):
+                    group.create_dataset(name, data=np.asarray(value), chunks=True,
+                            compression='gzip', compression_opts=1)    # compression='lzf'
+#                     if numpy.allclose(value, 0):
+#                         group.create_dataset(name, data=value, chunks=True,
+#                             compression='gzip', compression_opts=1)    # compression='lzf'
+#                     else:
+#                         if all([isinstance(a, numpy.bytes_) for a in value]):
+#                             value = numpy.array([a.decode('utf-8') for a in value])
+#                         group.create_dataset(name, data=value)
+#                 elif isinstance(value, str):
+#                         group.create_dataset(name, data=numpy.array(value.encode('utf-8')))
+
+#                 elif isinstance(value, list):
+#                     if all([isinstance(a, str) for a in value]):
+#                         value = numpy.array([a.encode('utf-8') for a in value])
+#                     else:
+#                         value = numpy.array(value)
+#                     group.create_dataset(name, data=numpy.array(value))
+                else:
+                    group.create_dataset(name, data=value)
             except ValueError:  # if h5py not support compression
-                group.create_dataset(name, data=value, chunks=True)
+                group.create_dataset(name, data=value)
             except TypeError:
                 group.create_dataset(name, data=value)
             except Exception:
@@ -70,7 +98,6 @@ def load_dict_slash_hdf5(hdf5_file_name):
     def add_item(name, obj):
         if not isinstance(obj, h5py.Group):
             out_dict.update({name.encode(): obj.value})
-
     with h5py.File(hdf5_file_name, 'r') as h5_file:
         h5_file.visititems(add_item)
 
@@ -201,12 +228,12 @@ def print_hdf5(hdf5_file_name):
         def format(self, *args, **kwargs):
             repr, readable, recursive = PrettyPrinter.format(
                 self, *args, **kwargs)
-            if repr:
-                if repr[0] in ('"', "'"):
-                    repr = repr.decode('string_escape')
-                elif repr[0:2] in ("u'", 'u"'):
-                    repr = repr.decode('unicode_escape').encode(
-                        sys.stdout.encoding)
+#             if repr:
+#                 if repr[0] in ('"', "'"):
+#                     repr = repr.decode('string_escape')
+#                 elif repr[0:2] in ("u'", 'u"'):
+#                     repr = repr.decode('unicode_escape').encode(
+#                         sys.stdout.encoding)
             return repr, readable, recursive
 
     def pprint(obj, stream=None, indent=1, width=80, depth=None):

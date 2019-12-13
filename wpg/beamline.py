@@ -5,7 +5,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 """
-This module contains  wrapper for SRWLOptC (optical container) and propagetion parameters.
+This module contains  wrapper for SRWLOptC (optical container) and propagation parameters.
 
 .. module:: wpg.beamline
    :platform: Linux, Mac OSX, Windows
