@@ -1,5 +1,6 @@
-#conda create --prefix /gpfs/exfel/data/user/buzmakov/conda_env/wpg3 --file requirements.txt -c conda-forge -y
-#nomkl
+# Requirements file for WPG.
+# Use with: `conda create --name wpg3 --file requirements.txt -c conda-forge`
+
 numpy >= 1.9
 scipy
 matplotlib
@@ -12,3 +13,5 @@ python >= 3.6.10
 pytest
 autopep8
 requests
+cPickle
+pip
