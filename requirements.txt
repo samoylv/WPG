@@ -1,19 +1,15 @@
 # Requirements file for WPG.
-# Use with: `conda create --name wpg3 --file requirements.txt -c conda-forge`
+# Use with pip3: pip3 install [--user] -r requirements.txt
+# For conda, use the environment file: conda create env -n wpg --file environment.yml
 
-nomkl
-numpy >= 1.9
+numpy>=1.9
 scipy
 matplotlib
 h5py
 pytest
 jupyter
-libgcc
 mock
 sphinx
-python=3.7
 pytest-profiling
 autopep8
 requests
-cPickle
-pip
