@@ -4,6 +4,61 @@ WPG, WavePropaGator, is an interactive simulation framework for X-ray wavefront 
 
 WPG provides intuitive interface to the [SRW library](https://github.com/ochubar/SRW). The [application examples](http://wpg.readthedocs.org/en/latest/tutorials.html) are  mainly oriented on [European XFEL](http://www.xfel.eu) design parameters. To learn more details, see [online documentation pages](http://wpg.readthedocs.org/en/latest/index.html).
 
+# Fast installation
+## Python requiements
+
+From relese 2019.12 we drop support of python2. Please use python 3.6 or 3.7.
+
+## Get sources
+Download sources https://github.com/samoylv/WPG/archive/develop.zip or clone git repository 
+```bash
+git clone https://github.com/samoylv/WPG.git
+```
+
+## Install python environment
+
+Install conda from https://docs.conda.io/en/latest/miniconda.html or https://www.anaconda.com/distribution/ or from command line on Linux
+```bash
+wget -c https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+```
+
+Install dependencies
+```bash
+conda create -n wpg36 --file requirements.txt -c conda-forge -y
+conda activate wpg36
+```
+
+## For Maxwell server users
+
+For DESY Maxwell server you usually should install conda env to your GPSF partition, for example
+```bash
+conda create --prefix /gpfs/exfel/data/user/buzmakov/conda_env/wpg36 --file requirements.txt -c conda-forge -y
+```
+
+## Build Linux version
+```bash
+cd WPG
+make
+```
+
+## Get Windows binaries
+
+WPG contain original SRW binaries for python 3.6 x64 with OpenMP support.
+Other windows binaries of SRW may be copied from original SRW repository (https://github.com/ochubar/SRW/tree/master/env/work/srw_python/lib) and placed in WPG/wpg/srw folder
+
+## Run smaples
+
+Run
+````bash
+cd WPG
+jupyter notebook
+````
+Try run samples from WPG/samples/Tutorials
+
+
+
+
+
 # References
 
 If you use the WPG for your research, we would appreciate it if you would refer to the following papers:
