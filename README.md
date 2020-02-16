@@ -41,6 +41,14 @@ cd WPG
 make
 ```
 
+if you need SRW with OpenMP support (currently crashed on Maxwell in some cases)
+
+
+```bash
+cd WPG
+OPENMP_MODE=omp make
+```
+
 ## Get Windows binaries
 
 WPG contain original SRW binaries for python 3.6 x64 with OpenMP support.

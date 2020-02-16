@@ -2,15 +2,13 @@
 #nomkl
 numpy >= 1.9
 scipy
-#pyqt
 matplotlib
 h5py
 pytest
 jupyter
-#libgcc
 mock
 sphinx
-python==3.6.10
-pytest-profiling
+python >= 3.6.10
+pytest
 autopep8
 requests
