@@ -4,7 +4,12 @@ BIN_DIR = $(BUILD_DIR)/bin
 TMP_DIR = $(ORIGDIR)/tmp
 SRC_DIR = $(ORIGDIR)/sources
 PYTHON_TOMO = $(BIN_DIR)/python
+
+OPENMP_MODE ?= 0
+#OPENMP_MODE = omp   #uncoment here for openmp with fftw2 (crashed on maxwell)
+
 GIT_COMMIT = 5d3d4cff1e64f6c6587a5731fb94efdb4612c06e
+
 .PHONY: all srw
 
 all: srw
@@ -27,7 +32,7 @@ srw:
 	mv $(TMP_DIR)/SRW-$(GIT_COMMIT) $(TMP_DIR)/SRW
 	cp -f xtal_patch/sroptcryst.h $(TMP_DIR)/SRW/cpp/src/core
 	patch $(TMP_DIR)/SRW/cpp/py/Makefile py3.patch
-	cd $(TMP_DIR)/SRW; MODE=omp make all;
+	cd $(TMP_DIR)/SRW; MODE=$(OPENMP_MODE) make all;
 	mkdir -p $(BUILD_DIR)/lib
 	cp $(TMP_DIR)/SRW/cpp/gcc/srwlpy*.so $(BUILD_DIR)/lib/
 	cp $(TMP_DIR)/SRW/cpp/gcc/srwlpy*.so $(TMP_DIR)/SRW/env/work/srw_python

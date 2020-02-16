@@ -1,7 +1,8 @@
 all: core modules
+OPENMP_MODE ?= 0
 
 core:
-	cd build; make srw
+	cd build; OPENMP_MODE=$(OPENMP_MODE) make srw
 
 modules:
 	cp build/lib/srwlpy*.so wpg/srw/
@@ -16,6 +17,6 @@ doc:
 	cd docs; make html
 
 test:
-	pytest --profile-svg
+	pytest
 
 .PHONY: all core modules clean doc test
