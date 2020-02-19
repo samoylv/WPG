@@ -1,5 +1,5 @@
 all: core modules
-OPENMP_MODE ?= 0
+OPENMP_MODE ?= omp
 
 core:
 	cd build; OPENMP_MODE=$(OPENMP_MODE) make srw
