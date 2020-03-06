@@ -1,0 +1,14 @@
+#conda create --prefix /gpfs/exfel/data/user/buzmakov/conda_env/wpg3 --file requirements.txt -c conda-forge -y
+#nomkl
+numpy>=1.9
+scipy
+matplotlib
+h5py
+pytest
+jupyter
+mock
+sphinx
+python=3.6
+pytest
+autopep8
+requests
