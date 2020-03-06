@@ -52,6 +52,12 @@ OPENMP_MODE=omp make
 ## Get Windows binaries
 
 WPG contain original SRW binaries for python 3.6 x64 with OpenMP support.
+
+```bash
+conda create -n wpg36 --file requirements_win.txt -c conda-forge -y
+conda activate wpg36
+```
+
 Other windows binaries of SRW may be copied from original SRW repository (https://github.com/ochubar/SRW/tree/master/env/work/srw_python/lib) and placed in WPG/wpg/srw folder
 
 ## Run smaples
