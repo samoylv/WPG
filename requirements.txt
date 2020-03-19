@@ -1,5 +1,7 @@
-#conda create --prefix /gpfs/exfel/data/user/buzmakov/conda_env/wpg3 --file requirements.txt -c conda-forge -y
-#nomkl
+# Requirements file for WPG.
+# Use with pip3: pip3 install [--user] -r requirements.txt
+# For conda, use the environment file: conda create env -n wpg --file environment.yml
+
 numpy >= 1.9
 scipy
 matplotlib
@@ -10,5 +12,6 @@ mock
 sphinx
 python >= 3.6.10
 pytest
+pytest-profiling
 autopep8
 requests
