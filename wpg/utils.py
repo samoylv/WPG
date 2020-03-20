@@ -57,8 +57,20 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
                     group.create_dataset(name, data=value, chunks=True,
                             compression='gzip', compression_opts=1)    # compression='lzf'
                 elif isinstance(value, (list, tuple)):
-                    group.create_dataset(name, data=np.asarray(value), chunks=True,
-                            compression='gzip', compression_opts=1)    # compression='lzf'
+                    # Convert to numpy array.
+                    value = numpy.array(value)
+
+                    # Handle unicode as hdf does not like unicode arrays.
+                    if value.dtype == numpy.dtype('<U31'):
+                        value = [v.encode('utf8') for v in value]
+
+                    # Create the dataset.
+                    group.create_dataset(name,
+                                         data=value,
+                                         chunks=True,
+                                         compression='gzip',
+                                         compression_opts=1,
+                                         )    # compression='lzf'
 #                     if numpy.allclose(value, 0):
 #                         group.create_dataset(name, data=value, chunks=True,
 #                             compression='gzip', compression_opts=1)    # compression='lzf'
