@@ -21,7 +21,7 @@ if __name__=="__main__":
     result = unittest.TextTestRunner(verbosity=2).run(suite())
 
     if result.wasSuccessful():
-        print '---> OK <---'
+        print('---> OK <---')
         sys.exit(0)
 
     sys.exit(1)

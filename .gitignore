@@ -105,3 +105,7 @@ build/tmp
 samples/Tutorials/*.test.ipynb
 samples/Tutorials/*.test.html
 samples/Tutorials/Tutorial_case_1/*.eps
+
+# SRW stuff
+wpg/srw/__srwl_logs__/
+wpg/srw/data_example_01
