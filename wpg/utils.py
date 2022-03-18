@@ -109,7 +109,7 @@ def load_dict_slash_hdf5(hdf5_file_name):
 
     def add_item(name, obj):
         if not isinstance(obj, h5py.Group):
-            out_dict.update({name.encode(): obj.value})
+            out_dict.update({name.encode(): obj[()]})
     with h5py.File(hdf5_file_name, 'r') as h5_file:
         h5_file.visititems(add_item)
 

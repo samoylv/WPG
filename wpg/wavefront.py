@@ -155,7 +155,7 @@ class Wavefront(object):
         :param file_name: output HDF5 file name
         :type  file_name: string
         """
-        with h5py.File(file_name) as h5f:
+        with h5py.File(file_name, 'r+') as h5f:
             for (key, wff) in self._wf_fields.items():
                 try:
                     if wff.glossary_name in h5f:
