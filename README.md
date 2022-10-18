@@ -75,10 +75,9 @@ Try run samples from WPG/samples/Tutorials
 
 # References
 
-If you use the WPG for your research, we would appreciate it if you would refer to the following papers:
+If you use the WPG for your research, we would appreciate it if you would refer to the following paper:
 
 * Samoylova, L., Buzmakov, A., Chubar, O. & Sinn, H. WavePropaGator: Interactive framework for X-ray FEL optics design and simulations. // Journal of Applied Crystallography 08/2016; 49(4) pp. 1347-1355. DOI:10.1107/S160057671600995X http://journals.iucr.org/j/issues/2016/04/00/zd5006/index.html
-* Samoylova, Liubov, et al. "WavePropaGator: interactive framework for X-ray free-electron laser optics design and simulations." Journal of applied crystallography 49.4 (2016): 1347-1355. DOI:10.1107/S160057671600995X
 
 
 # Primary works that use WPG 
