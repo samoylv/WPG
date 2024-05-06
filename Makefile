@@ -2,16 +2,15 @@ all: core modules
 OPENMP_MODE ?= omp
 
 core:
-	cd build; OPENMP_MODE=$(OPENMP_MODE) make srw
+	#cd build; OPENMP_MODE=$(OPENMP_MODE) make srw
 
 modules:
-	cp build/lib/srwlpy*.so wpg/srw/
-	cp build/tmp/SRW/cpp/src/lib/srwlib.h docs/
+	cp /Users/twguest/miniconda3/pkgs/srwpy-4.1.0-py312hede676d_0/lib/python3.12/site-packages/srwpy/srwlpy*.so wpg/srw/
+
 
 clean:
 	cd build; make clean
 	rm wpg/srw/srwlpy*.so
-	rm docs/srwlib.h
 
 doc:
 	cd docs; make html

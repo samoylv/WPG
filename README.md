@@ -1,4 +1,4 @@
-# WPG 
+# TREYs WPG 
 
 WPG, WavePropaGator, is an interactive simulation framework for X-ray wavefront propagation. 
 
