@@ -1,4 +1,4 @@
-# TREYs WPG 
+# WPG 
 
 WPG, WavePropaGator, is an interactive simulation framework for X-ray wavefront propagation. 
 
@@ -70,9 +70,6 @@ jupyter notebook
 Try run samples from WPG/samples/Tutorials
 
 
-
-
-
 # References
 
 If you use the WPG for your research, we would appreciate it if you would refer to the following paper:
@@ -91,5 +88,6 @@ If you use the WPG for your research, we would appreciate it if you would refer 
 * Ruiz-Lopez, Mabel, et al. "Wavefront-propagation simulations supporting the design of a time-delay compensating monochromator beamline at FLASH2." Journal of synchrotron radiation 26.3 (2019).
 * Roling, S., et al. "Time-dependent wave front propagation simulation of a hard x-ray split-and-delay unit: Towards a measurement of the temporal coherence properties of x-ray free electron lasers." Physical Review Special Topics-Accelerators and Beams 17.11 (2014): 110705.
 * V. Kärcher, S. Roling, L. Samoylova, A. Buzmakov, U. Zastrau, K. Appel, M.V. Yurkov, E. Schneidmiller, F. Siewert, and H. Zacharias "Simulating wavefront propagation for a beam line with split-and-delay unit and compund refractive lenses at the European X-ray Free Electron Laser" // In press
+* Guest, Trey. W., R. Bean, R. Kammering, G. van Riessen, A. P. Mancuso, and B. Abbey. “A Phenomenological Model of the X-Ray Pulse Statistics of a High-Repetition-Rate X-Ray Free-Electron Laser.” IUCrJ 10, no. 6 (November 1, 2023). https://doi.org/10.1107/S2052252523008242.
 
 

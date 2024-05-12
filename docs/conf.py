@@ -260,6 +260,6 @@ MOCK_MODULES = ['wpg.srwlpy', 'wpg.srwlib','srw','srwlpy', 'wpg.srw.srwlpy',
                 'numpy', 'h5py', 'pylab', 'scipy', 'scipy.optimize']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
-
-import imp
-wpg = imp.load_source('wpg', os.path.join('..', 'wpg', '__init__.py'))
+    
+from importlib.machinery import SourceFileLoader
+wpg = SourceFileLoader('wpg', os.path.join('..', 'wpg', '__init__.py')).load_module()
