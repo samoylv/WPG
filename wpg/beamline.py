@@ -142,6 +142,77 @@ class Beamline(object):
                 raise ValueError('Unknown type of propagators')
 
 
+    @property
+    def index(self):
+        index = {}
+        
+        for itr, a in enumerate(self.propagation_options[0]['optical_elements']):
+            
+            try:
+                index[a.name] = itr
+            except(AttributeError):
+                index['Element {}'.format(itr)] = itr
+            
+        return index
+    
+    def get_element_properties(self, oe_name):
+       return(self.propagation_options[0]['optical_elements'][self.index[oe_name]].__dict__)
+    
+    def get_propagation_paramters(self, oe_name):
+        print(self.propagation_options[0]['propagation_parameters'][self.index[oe_name]])
+        
+    def replace_element(self,oe_name, el):
+        """ 
+        replace an optical element labelled oe_name w/ a pre-defined element oe.
+        """
+        self.propagation_options[0]['optical_elements'][self.index[oe_name]] = el
+    
+    def remove_element(self, oe_name):
+        """
+        remove an optical element from a beamline        
+        """
+        del self.propagation_options[0]['propagation_parameters'][self.index[oe_name]]
+        del self.propagation_options[0]['optical_elements'][self.index[oe_name]]
+
+    def edit_element_property(self, oe_name, prop, value):
+        self.propagation_options[0]['optical_elements'][self.index[oe_name]].__dict__[prop] = value
+    
+    def edit_propagation_parameters(self, oe_name, new_parameters):
+        """
+        edit the propagation parameters of an element by name
+        """
+        try:
+            self.params[oe_name]["pp"] = new_parameters
+        except(KeyError):
+            pass
+        
+        self.bl.propagation_options[0]['propagation_parameters'][self.index(oe_name)] = new_parameters
+
+
+    def crop_beamline(self, element1 = None, element2 = None):
+        """
+        crop the beamline to some position as defined by the name of the optical element
+        
+        :param bl: beamline object
+        :param position: position to be cropped to
+        """
+        
+        if element1 is not None:
+            names = [el.name for el in self.bl.propagation_options[0]['optical_elements']]
+            idx1 = names.index(element1)
+    
+        if element2 is not None:
+            names = [el.name for el in self.bl.propagation_options[0]['optical_elements']]
+            idx2 = names.index(element2)
+            
+            
+        if element1 not in names:
+            pass 
+        else:
+            self.bl.propagation_options[0]['optical_elements'] = self.bl.propagation_options[0]['optical_elements'][:idx1+1]
+            self.bl.propagation_options[0]['propagation_parameters'] = self.bl.propagation_options[0]['propagation_parameters'][:idx1+1]
+
+
 def _check_srw_pp(pp):
     """
     Check is propagation parameters valid SRW propagation parameters
