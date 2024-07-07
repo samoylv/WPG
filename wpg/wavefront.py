@@ -553,8 +553,8 @@ class Wavefront(object):
         
         intensity = self.get_intensity()
         axis_dict = {
-            'x': (0, 'R-space', 'c', self.nx // 2, (1, 2)),
-            'y': (1, 'R-space', 'c', self.ny // 2, (0, 2)),
+            'x': (0, 'R-space', 'c', self.nx // 2, (0, 2)),
+            'y': (1, 'R-space', 'c', self.ny // 2, (1, 2)),
             't': (2, 'time', 't', self.nSlices // 2, (0, 1)),
             'f': (2, 'frequency', 'f', self.nSlices // 2, (0, 1)),
             'qx': (0, 'Q-space', 'a', self.nx // 2, (1, 2)),
