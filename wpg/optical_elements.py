@@ -470,7 +470,9 @@ def Mirror_plane_2d(orient, theta, length, range_xy, filename, scale=1, x0=0., y
         raise TypeError('orient should be "x" or "y"')
     xnew, ynew = np.mgrid[xmin:xmax:1500j, ymin:ymax:100j]
     f = interpolate.RectBivariateSpline(xax, yax, _height_prof_data_val.T)
+ 
     h_new = f(xnew[:, 0], ynew[0, :])
+   
     if bPlot:
         import pylab as plt
         plt.figure();plt.pcolor(xnew, ynew, h_new*scale*1e9);

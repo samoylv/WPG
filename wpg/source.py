@@ -80,7 +80,7 @@ def sase_pulse(x=None, y=None, t=None, photon_energy=10e3, pulse_energy=1e-03,
                     t0=t0[i],
                     theta_x=theta_x[i],
                     theta_y=theta_y[i],
-                    domain=domain[i])
+                    domain=domain)
             
         nx, ny, nt = efield.shape
 
