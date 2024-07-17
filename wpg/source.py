@@ -12,6 +12,60 @@ from wpg.wavefront import Wavefront
 
 from phenom.source import sase_pulse as sp
 
+import scipy.constants
+
+h = scipy.constants.physical_constants['Planck constant in eV s'][0]
+
+def analytical_pulse_energy(q, photon_energy):
+    """
+    Estimate of analytical_pulse_energy from electron bunch charge and radiation energy
+
+    :param q: electron bunch charge [nC]
+    :param photon_energy: radiation energy [eV]
+
+    :return P: pulse energy [J]
+    """
+
+    P = 19*q/photon_energy
+    return P
+
+def analytical_pulse_duration(q):
+    """
+    Estimate analytical_pulse_duration from electron bunch charge
+
+    :param q: electron bunch charge [nC]
+
+    :return t: Duration of pulse [s]
+    """
+
+    t = (q*1e3)/9.8
+    return t*1e-15
+
+
+def analytical_pulse_width(photon_energy):
+    """
+    Estimate analytical_pulse_width (FWHM) from radiation energy (assumes symmetrical beam)
+
+    :param photon_energy: radiation energy [eV]
+
+    :return sig: Radiation pulse width [m]
+    """
+
+    sig = np.log((7.4e03/(photon_energy/1e03)))*6
+    return sig/1e6
+
+
+def analytical_pulse_divergence(photon_energy):
+
+    """
+    Estimate of analytical_pulse_divergence (half-angle) from electron bunch charge and radiation energy
+
+    :param q: electron bunch charge [nC]
+    :param photon_energy: radiation energy [eV]
+
+    :return dtheta: pulse divergence [rad]
+    """
+    return ((14.1)/((photon_energy/1e03)**0.75)) / 1e06
 
 def sase_pulse(x=None, y=None, t=None, photon_energy=10e3, pulse_energy=1e-03,
                pulse_duration=15e-15, bandwidth=1e-12, sigma=None, div=None,
