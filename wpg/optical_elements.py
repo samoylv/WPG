@@ -17,9 +17,12 @@ import os
 import errno
 from wpg.srwlib import SRWLOptD as Drift
 from wpg.srwlib import SRWLOptL as Lens
+from wpg.srwlib import SRWLOptT
+
 from wpg.srwlib import srwl, srwl_opt_setup_CRL
 import wpg.srwlib
 import numpy as np
+from scipy.interpolate import griddata
 
 import sys
 if sys.version_info[0] == 3:
@@ -397,7 +400,7 @@ def Mirror_plane(orient, theta, length, range_xy, filename, scale=1, delim=' ', 
     return opIPM
 
 
-def Mirror_plane_2d(orient, theta, length, range_xy, filename, scale=1, x0=0., y0=0., xscale=1., yscale=1.,bPlot=False):
+def Mirror_plane_2d(orient, theta, length, range_xy, filename, nx=1500, ny=100, scale=1, x0=0., y0=0., xscale=1., yscale=1., bPlot=False, delimiter = None):
     """
     Defining a plane mirror propagator with taking into account 2D surface height errors
 
@@ -405,7 +408,7 @@ def Mirror_plane_2d(orient, theta, length, range_xy, filename, scale=1, x0=0., y
     :param theta:   incidence angle [rad]
     :param length:  mirror length, [m]
     :param range_xy: range in which the incident WF defined [m]
-    :param filename: full file name with 2d mirror profile of three columns, x, y, and h(x, y) - heigh errors [m]
+    :param filename: full file name with 2d mirror profile of three columns, x, y, and h(x, y) - height errors [m]
     :param scale: scale factor, optical path difference OPD = 2*h*scale*sin(theta)
     :param x0: shift of mirror longitudinal position [m]
     :param y0: shift of mirror transverse position [m]
@@ -413,35 +416,24 @@ def Mirror_plane_2d(orient, theta, length, range_xy, filename, scale=1, x0=0., y
     :param yscale: units of 1st column of filename,  y[m]=y[nits]*yscale  [m]
     :return: opIPM  - imperfect plane mirror propagator
     """
-    from scipy import interpolate
-    from wpg.srwlib import SRWLOptT
-    import os
 
     sinTheta = np.sin(theta)
-    _height_prof_data = np.loadtxt(filename)
-    dim = np.shape(_height_prof_data)
-    ntotal = dim[0]
-    nx = np.size(np.where(_height_prof_data[:, 1] == _height_prof_data[0, 1]))
-    ny = int(ntotal/nx)
-    print('nx,ny:', nx, ny)
+    _height_prof_data = np.loadtxt(filename, delimiter=delimiter)
+    
+    # Assuming _height_prof_data has columns x, y, h
+    x = _height_prof_data[:, 0] * xscale
+    y = _height_prof_data[:, 1] * yscale
+    h = _height_prof_data[:, 2]
 
-    xax = _height_prof_data[0:nx, 0]*xscale
-    xmin = min(xax)
-    xmax = max(xax)
-    xc = (xmin+xmax)/2
-    yax = _height_prof_data[0:ntotal:nx, 1]*yscale
-    ymin = min(yax)
-    ymax = max(yax)
-    yc = (ymin+ymax)/2
-    xax = xax - x0 - xc
-    xmin = min(xax)
-    xmax = max(xax)
-    yax = yax - y0 - yc
-    ymin = min(yax)
-    ymax = max(yax)
+    # Centering data around x0 and y0
+    x = x - x0 - np.mean(x)
+    y = y - y0 - np.mean(y)
 
-    print('length: {:.1f} mm, width: {:.1f} mm'.format(
-        (xmax-xmin)*1e3, (ymax-ymin)*1e3))
+    xmin, xmax = x.min(), x.max()
+    ymin, ymax = y.min(), y.max()
+
+    # print('length: {:.1f} mm, width: {:.1f} mm'.format((xmax-xmin)*1e3, (ymax-ymin)*1e3))
+    
     if (xmin <= -length/2.) and (xmax >= length/2):
         xmin = -length/2
         xmax = length/2
@@ -459,44 +451,41 @@ def Mirror_plane_2d(orient, theta, length, range_xy, filename, scale=1, x0=0., y
                 range_xy*1e3/2, os.path.basename(filename), ymin*1e3, ymax*1e3)
         )
 
-    # plt.figure();plt.plot(xax,'bx');plt.plot(yax,'ro');plt.title('xax(blue) yax(red)');
-    _height_prof_data_val = np.reshape(_height_prof_data[:, 2], (ny, nx))
-    # plt.figure();plt.imshow(_height_prof_data_val);plt.colorbar(orientation='horizontal')
+    # Create the optical element
     if orient == 'y':
-        opIPM = SRWLOptT(100, 1500, (ymax-ymin), (xmax-xmin)*sinTheta)
+        opIPM = SRWLOptT(nx, ny, (ymax-ymin), (xmax-xmin)*sinTheta)
     elif orient == 'x':
-        opIPM = SRWLOptT(1500, 100, (xmax-xmin)*sinTheta, (ymax-ymin))
+        opIPM = SRWLOptT(nx, ny, (xmax-xmin)*sinTheta, (ymax-ymin))
     else:
         raise TypeError('orient should be "x" or "y"')
-    xnew, ynew = np.mgrid[xmin:xmax:1500j, ymin:ymax:100j]
-    f = interpolate.RectBivariateSpline(xax, yax, _height_prof_data_val.T)
-    h_new = f(xnew[:, 0], ynew[0, :])
+
+    # Create the mesh grid for x and y coordinates
+    xnew, ynew = np.mgrid[xmin:xmax:nx*1j, ymin:ymax:ny*1j]
+
+    # Perform 2D interpolation
+    points = np.column_stack((x, y))
+    h_new = griddata(points, h, (xnew, ynew), method='linear', fill_value=0)
+
     if bPlot:
-        import pylab as plt
-        plt.figure();plt.pcolor(xnew, ynew, h_new*scale*1e9);
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.pcolor(xnew, ynew, h_new*scale*1e9)
         plt.axis([xnew.min(), xnew.max(), ynew.min(), ynew.max()])
-        plt.colorbar(orientation='horizontal');
-        plt.title('surface height errors map, nm');plt.show()
-    # print('len:',len(_height_prof_data[2,:]))
+        plt.colorbar(orientation='horizontal')
+        plt.title('surface height errors map, nm')
+        plt.show()
 
     auxMesh = opIPM.mesh
     from array import array
-    foo = array(str(u'd'), [])
-    # for i in range(150000):
-    #     foo.append(1.)
-    foo = array(str(u'd'), [1.]*150000)
+    foo = array('d', [1.]*nx*ny)
     opIPM.arTr[::2] = foo  # Amplitude Transmission
-    foo = array(str(u'd'), [])
-    if orient == 'y':
-        for ix in range(1500):
-            for iy in range(100):
-                foo.append(-2 * sinTheta * h_new[ix, iy] * scale)
-    elif orient == 'x':
-        for iy in range(100):
-            for ix in range(1500):
-                foo.append(-2 * sinTheta * h_new[ix, iy] * scale)
-    opIPM.arTr[1::2] = foo    # Optical Path Difference (to check sign!)
+
+    # Vectorized calculation of Optical Path Difference
+    opd = -2 * sinTheta * h_new.flatten() * scale
+    opIPM.arTr[1::2] = array('d', opd)  # Optical Path Difference (to check sign!)
+
     return opIPM
+
 
 
 def VLS_grating(_mirSub, _m=1, _grDen=100, _grDen1=0, _grDen2=0, _grDen3=0, _grDen4=0, _grAng=0):

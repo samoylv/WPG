@@ -10,7 +10,7 @@ import sys
 import numpy
 from collections import defaultdict
 import array
-import collections
+from collections.abc import Callable
 
 __author__ = 'A. Buzmakov'
 
@@ -263,7 +263,7 @@ def print_hdf5(hdf5_file_name):
 
 def srw_obj2str(obj, start_str=''):
     fields = [field for field in dir(obj) if not field.startswith(
-        '__') if not isinstance(getattr(obj, field), collections.Callable)]
+        '__') if not isinstance(getattr(obj, field), Callable)]
     res = ''
     for f in fields:
         val = getattr(obj, f)

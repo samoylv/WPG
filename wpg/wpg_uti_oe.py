@@ -66,3 +66,31 @@ def show_transmission(transmission):
     plt.colorbar(orientation='horizontal')
     plt.title('OPD [m]');plt.xlabel('mm')
     plt.show()
+
+
+def propagation_parameters(sx, zx, sy, zy, mode = "fresnel"):
+    """
+    wrapper for propagation parameters
+    
+    :param sx: horizontal scaling factor 
+    :param zx: horizontal zoom factor
+    :param sy: vertical scaling factor
+    :param zy: vertical zoom factor
+    :param mode: normal, semi-analytical, converge or diverge
+    
+    :return propagation parameters:
+    """
+    
+    if mode == "fresnel":
+        m = 0
+    elif mode == "quadratic":
+        m = 1
+    elif mode == "fraunhofer":
+        m = 2
+    elif mode == "diverge":
+        m = 3
+    elif mode == "converge":
+        m = 4
+    
+    return [0,0,1,m,0,sx,zx/sx,sy,zy/sy,0,0,0]
+
