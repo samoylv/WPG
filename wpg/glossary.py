@@ -346,7 +346,7 @@ class WFRadiationWEFieldUnit(RadiationField):
 
     @value.setter
     def value(self, val):
-        if val == 'arbitrary':
+        if val in ['arbitrary', b'arbitrary']:
             self._wf._srwl_wf.unitElFld = 0
         elif val in ['sqrt(Phot/s/0.1%bw/mm^2)', b'sqrt(Phot/s/0.1%bw/mm^2)']:
             self._wf._srwl_wf.unitElFld = 1
