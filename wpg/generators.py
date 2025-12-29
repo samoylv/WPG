@@ -1,18 +1,15 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-# from __future__ import unicode_literals
 
 __author__ = 'A. Buzmakov'
 
 import warnings
-from wpg import srwlib
+from srwpy import srwlib
+from srwpy.srwlib import srwl
 
-try:
-    from wpg import srwlpy
-except ImportError:
-    import srwlpy  #  Hack for read the docs
+# try:
+#     from wpg import srwlpy
+# except ImportError:
+#     import srwlpy  #  Hack for read the docs
 
 
 def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, sigY, d2waist, 
@@ -112,7 +109,7 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
     sampFactNxNyForProp = -1  # 5 #sampling factor for adjusting nx, ny (effective if > 0)
     arPrecPar = [sampFactNxNyForProp]
     #**********************Calculating Initial Wavefront
-    srwlpy.CalcElecFieldGaussian(wfr, GsnBm, arPrecPar)
+    srwl.CalcElecFieldGaussian(wfr, GsnBm, arPrecPar)
 
     return wfr
 
@@ -205,7 +202,7 @@ def build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d
 
     sampFactNxNyForProp = -1  # sampling factor for adjusting nx, ny (effective if > 0)
     arPrecPar = [sampFactNxNyForProp]
-    srwlpy.CalcElecFieldGaussian(wfr, GsnBm, arPrecPar)
+    srwl.CalcElecFieldGaussian(wfr, GsnBm, arPrecPar)
     return wfr
 
 

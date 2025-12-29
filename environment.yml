@@ -1,20 +1,22 @@
 channels:
     - default
     - conda-forge
-
 dependencies:
-    - nomkl
-    - numpy >= 1.9
+    # - nomkl
+    - numpy
     - scipy
     - matplotlib
     - h5py
     - pytest
     - jupyter
-    - libgcc
+    - srwpy
+    # - libgcc
     - mock
     - sphinx
-    - python=3.7
+    - python
     - pytest-profiling
     - autopep8
     - requests
     - pip
+    - pip:
+        - --no-deps phenom-xfel

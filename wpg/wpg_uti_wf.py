@@ -1,16 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import copy
 import numpy
 import pylab
 
 from wpg.beamline import Beamline
-from wpg.srwlib import srwl
+from srwpy.srwlib import srwl
 from wpg.wavefront import Wavefront
 
 __author__ = 'A. Buzmakov, L. Samoylova, C. Fortmann-Grote'

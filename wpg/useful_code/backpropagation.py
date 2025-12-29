@@ -1,8 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import os
 import errno
 import gc
@@ -10,8 +5,8 @@ import numpy as np
 import scipy
 import scipy.optimize
 
-import wpg.srwlib
-from wpg.srwlib import SRWLOptC
+import srwpy.srwlib
+from srwpy.srwlib import SRWLOptC
 from wpg import Wavefront
 from wpg import Beamline # new class for fixing bugs of srw classes
 
@@ -361,9 +356,9 @@ def forward_propagate(root_dir, distance, propagation_parameters):
 
     # wpg.srwlib.srwl.ResizeElecField(wf_L0._srwl_wf, 't',[0,3.,1.])
 
-    wpg.srwlib.srwl.SetRepresElecField(wf_L0._srwl_wf, 'f')
+    srwpy.srwlib.srwl.SetRepresElecField(wf_L0._srwl_wf, 'f')
     bl0.propagate(wf_L0)
-    wpg.srwlib.srwl.SetRepresElecField(wf_L0._srwl_wf, 't')
+    srwpy.srwlib.srwl.SetRepresElecField(wf_L0._srwl_wf, 't')
     fit_gaussian_pulse(wf_L0)
     wf_L0.store_hdf5(out_path)
 
@@ -396,9 +391,9 @@ def back_propagate(params):
     srwl_bl1 = SRWLOptC([drift1, ], [propagation_parameters, ])
     bl1 = Beamline(srwl_bl1)
 
-    wpg.srwlib.srwl.SetRepresElecField(wf_L1._srwl_wf, 'f')
+    srwpy.srwlib.srwl.SetRepresElecField(wf_L1._srwl_wf, 'f')
     bl1.propagate(wf_L1)
-    wpg.srwlib.srwl.SetRepresElecField(wf_L1._srwl_wf, 't')
+    srwpy.srwlib.srwl.SetRepresElecField(wf_L1._srwl_wf, 't')
 
     fit_gaussian_pulse(wf_L1)
     wf_L1.store_hdf5(out_path)

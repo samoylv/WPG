@@ -10,11 +10,6 @@ The most propagation methods based on SRW library.
 .. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 # This deprecate warnings form SRWLib visualization module
 
 # import warnings
@@ -24,7 +19,7 @@ from __future__ import unicode_literals
 # warnings.resetwarnings()
 
 # fix segmentation fault using fftw from numpy mkl 
-from .srw import srwlpy
+import srwpy
 
 # Create aliases for simple importing 
 

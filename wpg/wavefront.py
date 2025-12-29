@@ -8,20 +8,14 @@ This module contains base wrapper for SRWLWfr (Wavefront). It's implement numpy 
 .. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
 """
 
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import array
 import warnings
 
 import numpy as np
 import h5py
 
-from wpg.srw import srwlpy 
-import wpg.srwlib as srwlib
+from srwpy import srwlpy 
+import srwpy.srwlib as srwlib
 
 import wpg.utils as utils
 import wpg.glossary as glossary
@@ -680,7 +674,7 @@ class Wavefront(object):
       
     @property
     def wavelength(self):
-        """
+        r"""
         Calculate and return the wavelength based on photon energy.
         
         This property calculates the wavelength using the relationship:

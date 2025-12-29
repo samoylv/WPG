@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 """
 This module contains definitions (glossary) of Wavefront fields. Described mapping fields SRWLWfr <-> wpg.Wavefront
 
@@ -8,10 +9,10 @@ This module contains definitions (glossary) of Wavefront fields. Described mappi
 .. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+# from __future__ import absolute_import
+# from __future__ import division
+# from __future__ import print_function
+# from __future__ import unicode_literals
 
 import inspect
 import sys
@@ -1127,7 +1128,7 @@ class WFDataArrEhor(RadiationField):
         Horizontal polarization
         """
 
-        res = np.array(self._wf._srwl_wf.arEx, dtype='float32', copy=False)
+        res = np.asarray(self._wf._srwl_wf.arEx, dtype='float32')
         
         correct_shape = (self._wf.params.Mesh.ny,
                          self._wf.params.Mesh.nx,
@@ -1203,7 +1204,7 @@ class WFDataArrEver(RadiationField):
         Vertical polarization
         """
 
-        res = np.array(self._wf._srwl_wf.arEy, dtype='float32', copy=False)
+        res = np.asarray(self._wf._srwl_wf.arEy, dtype='float32')
         correct_shape = (self._wf.params.Mesh.ny,
                          self._wf.params.Mesh.nx,
                          self._wf.params.Mesh.nSlices,

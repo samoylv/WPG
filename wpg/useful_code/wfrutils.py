@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 __author__ = 'A. Buzmakov, L. Samoylova'
 
@@ -12,8 +8,8 @@ import os
 import sys
 sys.path.insert(0, os.path.join('..', '..'))
 
-from wpg.srwlib import srwl
-import wpg.srwlib
+from srwpy.srwlib import srwl
+import srwpy.srwlib
 from wpg.wpg_uti_wf import propagate_wavefront
 from wpg import Wavefront, Beamline
 import time
@@ -38,12 +34,12 @@ def find_nearest_value(array, value):
 def print_beamline(bl):
     if isinstance(bl, Beamline):
         print(bl)
-    elif isinstance(bl, wpg.srwlib.SRWLOptC):
+    elif isinstance(bl, srwpy.srwlib.SRWLOptC):
         mbl = Beamline(bl)
         print(mbl)
     else:
         raise ValueError(
-            'Input type must be wpg.srwlib.SRWLOptC or wpg.Beamline, given: {}'.format(
+            'Input type must be srwpy.srwlib.SRWLOptC or wpg.Beamline, given: {}'.format(
                 type(bl))
         )
 

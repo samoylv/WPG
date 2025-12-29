@@ -8,19 +8,16 @@ Described mapping (or aliases) of some of SRW optical elements (SRWLOpt* <-> wpg
 
 .. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+
 
 import os
 import errno
-from wpg.srwlib import SRWLOptD as Drift
-from wpg.srwlib import SRWLOptL as Lens
-from wpg.srwlib import SRWLOptT
+from srwpy.srwlib import SRWLOptD as Drift
+from srwpy.srwlib import SRWLOptL as Lens
+from srwpy.srwlib import SRWLOptT
 
-from wpg.srwlib import srwl, srwl_opt_setup_CRL
-import wpg.srwlib
+from srwpy.srwlib import srwl, srwl_opt_setup_CRL
+import srwpy.srwlib
 import numpy as np
 from scipy.interpolate import griddata
 
@@ -55,7 +52,7 @@ class Empty(WPGOpticalElement):
         Propagate wavefront through empty propagator,
         used for sampling and resizing wavefront
         """
-        beamline = wpg.srwlib.SRWLOptC([], propagation_parameters)
+        beamline = srwpy.srwlib.SRWLOptC([], propagation_parameters)
         srwl.PropagElecField(wfr._srwl_wf, beamline)
 
 class Screen(Empty):
@@ -323,7 +320,7 @@ def Aperture(shape, ap_or_ob, Dx, Dy=1e23, x=0, y=0):
     :param x, y:     transverse coordinates of center [m]
     :return: opAp  - aperture propagator, ``struct SRWLOptA``
     """
-    from wpg.srwlib import SRWLOptA
+    from srwpy.srwlib import SRWLOptA
 
     opAp = SRWLOptA(shape, ap_or_ob, Dx, Dy, x, y)
     return opAp
@@ -343,7 +340,7 @@ def Mirror_elliptical(orient, p, q, thetaE, theta0, length, roll=0., yaw=0., dis
 	:param yaw: misaligned yaw axis
     :return: opEFM  - elliptical mirror propagator, ``struct SRWLOptMirEl`` 
     """
-    from wpg.srwlib import SRWLOptMirEl
+    from srwpy.srwlib import SRWLOptMirEl
 
     if orient == 'x':  # horizontal plane ellipsoidal mirror
         opEFM = SRWLOptMirEl(_p=p, _q=q, _ang_graz=thetaE, 
@@ -368,7 +365,7 @@ def WF_dist(nx, ny, Dx, Dy):
     :param Dx: size in m
     :param Dy: size in
     """
-    from wpg.srwlib import SRWLOptT
+    from srwpy.srwlib import SRWLOptT
     return SRWLOptT(nx, ny, Dx, Dy)
 
 
@@ -503,7 +500,7 @@ def VLS_grating(_mirSub, _m=1, _grDen=100, _grDen1=0, _grDen2=0, _grDen3=0, _grD
     :return: SRWLOptG: VLS grating propagator, ``struct SRWLOptG``
     """
 
-    from .srwlib import SRWLOptG
+    from srwpy.srwlib import SRWLOptG
     return SRWLOptG(_mirSub, _m, _grDen, _grDen1, _grDen2, _grDen3, _grDen4, _grAng)
 
 

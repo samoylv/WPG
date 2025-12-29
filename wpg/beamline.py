@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 """
 This module contains  wrapper for SRWLOptC (optical container) and propagation parameters.
@@ -12,9 +8,8 @@ This module contains  wrapper for SRWLOptC (optical container) and propagation p
 
 .. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
 """
-
-import wpg.srwlib as srwlib
-from wpg.srwlib import srwl
+from srwpy import srwlib
+from srwpy.srwlib import srwl
 from wpg.utils import srw_obj2str
 import wpg.optical_elements
 
