@@ -147,6 +147,9 @@ class Beamline(object):
                     # Empty as the first element of the group: SRW 4.2.1 rejects SRWLOptC([], [pp])
                     # ("No objects were submitted for parsing"), resize with a drift of zero length
                     optical_elements = [srwlib.SRWLOptD(0.)]
+                propagation_parameters = [_with_output_axis(opt, pp) for opt, pp in
+                                          zip(optical_elements, propagation_parameters)] + \
+                    propagation_parameters[len(optical_elements):]
                 srwl_beamline = srwlib.SRWLOptC(optical_elements, propagation_parameters)
 
                 if gpu is None:
@@ -250,6 +253,18 @@ class Beamline(object):
         option['propagation_parameters'] = option['propagation_parameters'][:number + 1]
         option.pop('screen', None)  # the resizing of the Screen after element1 is removed
         del self.propagation_options[group + 1:]
+
+
+def _with_output_axis(element, pp):
+    """
+    Propagation parameters of an element with its fixed output optical axis (WPG mirrors with
+    fixed_axis=True keep it in ``wpg_output_axis``) as SRW parameters 12-16; 17 parameters given by the
+    user are kept as they are.
+    """
+    axis = getattr(element, 'wpg_output_axis', None)
+    if axis is None or len(pp) != 12:
+        return pp
+    return list(pp) + list(axis)
 
 
 def _drift_length(element, warn=True):

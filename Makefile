@@ -27,7 +27,7 @@ else
 endif
 
 install: srw
-	$(PYTHON) -m pip install -e ".[test]" --config-settings editable_mode=compat
+	$(PYTHON) -m pip install -e ".[test,materials]" --config-settings editable_mode=compat
 
 test:
 	$(PYTHON) -m pytest

@@ -357,35 +357,207 @@ def Aperture(shape, ap_or_ob, Dx, Dy=1e23, x=0, y=0):
     return opAp
 
 
-def Mirror_elliptical(orient, p, q, thetaE, theta0, length, roll=0., yaw=0., distance=0.):
+def _mirror_orientation(orient, theta0, roll=0., yaw=0., distance=0., tangent_sign=-1.):
     """
-    Defining a plane elliptical focusing mirror propagator: A wrapper to a SRWL function SRWLOptMirEl() 
+    Orientation of an SRW mirror (SRWLOptMir*) in the frame of the incident beam.
 
-    :param orient:    mirror orientation, 'x' (horizontal) or 'y' (vertical)
-    :param p:  distance to one ellipsis center (source), [m]
-    :param q:  distance to the other ellipsis center (focus), [m]
-    :param thetaE:  design incidence angle in the center of mirror, [rad]
-    :param theta0:  "real" incidence angle in the center of mirror, [rad]
-    :param length:  mirror length, [m]
-	:param roll: misaligned roll axis
-	:param yaw: misaligned yaw axis
-    :return: opEFM  - elliptical mirror propagator, ``struct SRWLOptMirEl`` 
+    The beam is deflected in the plane of ``orient``: 'x' - horizontal, 'y' - vertical.
+    The normal is rotated by ``roll`` around the tangential direction (its sign as in WPG before
+    2026.11, where the normal was not normalized: (cos theta0, sin roll, -sin theta0) for 'x');
+    ``yaw`` shifts the mirror centre across the beam by ``tan(yaw) * distance``.
+    ``tangent_sign`` is the sign of the in-plane component of the tangential vector: -1 as in the SRW
+    examples (the first focus p of an ellipse is on the side of the incident beam); the collimating
+    paraboloid of SRW (_uc='c') needs +1 (checked: f = 50 m, source at 50 m, beam size kept 109.7 um
+    with +1, grows to 179 um with -1, WPG_notes/mirrors/check_parabolic_tangent.py).
+
+    :return: dict of SRW keyword arguments _nvx, _nvy, _nvz, _tvx, _tvy, _x, _y
+    """
+    c, s = np.cos(theta0), np.sin(theta0)
+    cr, sr = np.cos(roll), np.sin(roll)
+    shift = np.tan(yaw) * distance
+    t = tangent_sign * s
+    if orient == 'x':
+        return dict(_nvx=c * cr, _nvy=sr, _nvz=-s * cr, _tvx=t, _tvy=0., _x=shift, _y=0.)
+    if orient == 'y':
+        return dict(_nvx=sr, _nvy=c * cr, _nvz=-s * cr, _tvx=0., _tvy=t, _x=0., _y=shift)
+    raise TypeError('orient should be "x" or "y"')
+
+
+def _design_output_axis(orient, theta):
+    """
+    Output optical axis of a mirror deflecting by 2*theta, in the frame of the incident beam: SRW
+    propagation parameters 12-16 (longitudinal vector x, y, z and horizontal base vector x, y).
+    """
+    c2, s2 = float(np.cos(2 * theta)), float(np.sin(2 * theta))
+    if orient == 'x':
+        return [s2, 0., c2, c2, 0.]
+    return [0., s2, c2, 1., 0.]
+
+
+def _mirror(srw_class, orient, theta0, length, width, roll, yaw, distance, reflectivity, tangent_sign=-1.,
+            fixed_axis=False, thetaE=None, **kwargs):
+    """SRW mirror with WPG orientation and reflectivity (see Mirror_elliptical)."""
+    from wpg.materials import Reflectivity
+    mirror = srw_class(_size_tang=length, _size_sag=width, _treat_in_out=1,
+                       **kwargs, **_mirror_orientation(orient, theta0, roll, yaw, distance, tangent_sign))
+    if fixed_axis:
+        # used by Beamline.propagate as SRW propagation parameters 12-16
+        mirror.wpg_output_axis = _design_output_axis(orient, theta0 if thetaE is None else thetaE)
+    if reflectivity is not None:
+        if not isinstance(reflectivity, Reflectivity):
+            reflectivity = Reflectivity.constant(reflectivity)
+        reflectivity.apply(mirror)
+    return mirror
+
+
+def Mirror_elliptical(orient, p, q, thetaE, theta0, length, roll=0., yaw=0., distance=0.,
+                      reflectivity=None, width=1., fixed_axis=True):
+    """
+    Elliptical (cylinder, focusing in the plane of deflection) mirror: a wrapper of SRWLOptMirEl.
+
+    :param p: distance from the source (first focus) to the mirror centre [m]
+    :param q: distance from the mirror centre to the image (second focus) [m]
+    :param orient: plane of deflection, 'x' (horizontal) or 'y' (vertical)
+    :param thetaE: design grazing angle at the mirror centre [rad]
+    :param theta0: real grazing angle at the mirror centre [rad] (misalignment of pitch)
+    :param length: mirror length (tangential) [m]
+    :param roll: rotation of the mirror around its long axis [rad]
+    :param yaw: misaligned yaw, the mirror centre is shifted across the beam by tan(yaw) * distance
+    :param distance: distance for yaw [m]
+    :param reflectivity: None - ideal mirror (R = 1); number - intensity reflectivity R for all
+        energies and angles; :class:`wpg.materials.Reflectivity` - table vs energy, grazing angle and
+        polarization, e.g. ``Reflectivity.from_material('B4C', ekev, angles, rho=2.52)``
+    :param width: mirror width (sagittal) [m]
+    :param fixed_axis: True - the output optical axis is the design one (deflection by 2*thetaE), so a
+        misalignment theta0 != thetaE deflects the beam by 2*(theta0 - thetaE) off this axis, as in a
+        real beamline; False - SRW default: the output axis follows the real normal, the beam stays on
+        it and the misalignment changes only the aberrations. Applied by Beamline.propagate as SRW
+        propagation parameters 12-16 unless 17 parameters are given explicitly
+    :return: ``SRWLOptMirEl``
     """
     from srwpy.srwlib import SRWLOptMirEl
+    return _mirror(SRWLOptMirEl, orient, theta0, length, width, roll, yaw, distance, reflectivity,
+                   fixed_axis=fixed_axis, thetaE=thetaE, _p=p, _q=q, _ang_graz=thetaE, _r_sag=1.e+40)
 
-    if orient == 'x':  # horizontal plane ellipsoidal mirror
-        opEFM = SRWLOptMirEl(_p=p, _q=q, _ang_graz=thetaE, 
-                             _r_sag=1.e+40, _size_tang=length,
-                             _nvx=np.cos(theta0), _nvy=np.sin(roll), _nvz=-np.sin(theta0),
-                             _tvx=-np.sin(theta0), _tvy=0, _x=np.tan(yaw)*distance, _y=0, _treat_in_out=1)
-    elif orient == 'y':  # vertical plane ellipsoidal mirror
-        opEFM = SRWLOptMirEl(_p=p, _q=q, _ang_graz=thetaE,
-                             _r_sag=1.e+40, _size_tang=length,
-                             _nvx=np.sin(roll), _nvy=np.cos(theta0), _nvz=-np.sin(theta0),
-                             _tvx=0, _tvy=-np.sin(theta0), _x=0, _y=np.tan(yaw)*distance, _treat_in_out=1)
-    else:
-        raise TypeError('orient should be "x" or "y"')
-    return opEFM
+
+def Mirror_hyperbolic(orient, p, q, thetaE, theta0, length, convex=True, roll=0., yaw=0., distance=0.,
+                      reflectivity=None, width=1., fixed_axis=True):
+    """
+    Hyperbolic (cylinder) mirror: a wrapper of SRWLOptMirHyp.
+
+    :param p: distance from the first focus (source) to the mirror centre [m]
+    :param q: distance from the mirror centre to the second focus [m]
+    :param convex: use the convex (True) or concave (False) side of the hyperboloid
+    :param orient: plane of deflection, 'x' (horizontal) or 'y' (vertical)
+    :param thetaE: design grazing angle at the mirror centre [rad]
+    :param theta0: real grazing angle at the mirror centre [rad] (misalignment of pitch)
+    :param length: mirror length (tangential) [m]
+    :param roll: rotation of the mirror around its long axis [rad]
+    :param yaw: misaligned yaw, the mirror centre is shifted across the beam by tan(yaw) * distance
+    :param distance: distance for yaw [m]
+    :param reflectivity: None - ideal mirror (R = 1); number - intensity reflectivity R for all
+        energies and angles; :class:`wpg.materials.Reflectivity` - table vs energy, grazing angle and
+        polarization, e.g. ``Reflectivity.from_material('B4C', ekev, angles, rho=2.52)``
+    :param width: mirror width (sagittal) [m]
+    :param fixed_axis: True - the output optical axis is the design one (deflection by 2*thetaE), so a
+        misalignment theta0 != thetaE deflects the beam by 2*(theta0 - thetaE) off this axis, as in a
+        real beamline; False - SRW default: the output axis follows the real normal, the beam stays on
+        it and the misalignment changes only the aberrations. Applied by Beamline.propagate as SRW
+        propagation parameters 12-16 unless 17 parameters are given explicitly
+    :return: ``SRWLOptMirHyp``
+    """
+    from srwpy.srwlib import SRWLOptMirHyp
+    return _mirror(SRWLOptMirHyp, orient, theta0, length, width, roll, yaw, distance, reflectivity,
+                   fixed_axis=fixed_axis, thetaE=thetaE, _p=p, _q=q, _ang_graz=thetaE, _r_sag=1.e+40, _is_convex=convex)
+
+
+def Mirror_parabolic(orient, f, thetaE, theta0, length, collimating=False, roll=0., yaw=0., distance=0.,
+                     reflectivity=None, width=1., fixed_axis=True):
+    """
+    Parabolic (cylinder) mirror: a wrapper of SRWLOptMirPar.
+
+    :param f: distance from the focus of the paraboloid to the mirror centre [m]
+    :param collimating: False - focusing a beam from a source at infinity to the distance f;
+        True - collimating a beam from a source at the distance f (both act as a lens with the
+        focal length f near the axis, they differ in aberrations of a large footprint).
+        SRW finds the limits of the paraboloid surface with a step set by the number of points
+        _npt; with the SRW default 500 the mirror cuts the beam (f = 50 m, 3 mrad, footprint RMS
+        37 mm, length 0.3 m: 9 % of the energy lost, 26 % at _npt = 400), the loss falls with _npt
+        (0.01 % at 5000, no change of the run time), so the wrapper uses _npt = 5000.
+    :param orient: plane of deflection, 'x' (horizontal) or 'y' (vertical)
+    :param thetaE: design grazing angle at the mirror centre [rad]
+    :param theta0: real grazing angle at the mirror centre [rad] (misalignment of pitch)
+    :param length: mirror length (tangential) [m]
+    :param roll: rotation of the mirror around its long axis [rad]
+    :param yaw: misaligned yaw, the mirror centre is shifted across the beam by tan(yaw) * distance
+    :param distance: distance for yaw [m]
+    :param reflectivity: None - ideal mirror (R = 1); number - intensity reflectivity R for all
+        energies and angles; :class:`wpg.materials.Reflectivity` - table vs energy, grazing angle and
+        polarization, e.g. ``Reflectivity.from_material('B4C', ekev, angles, rho=2.52)``
+    :param width: mirror width (sagittal) [m]
+    :param fixed_axis: True - the output optical axis is the design one (deflection by 2*thetaE), so a
+        misalignment theta0 != thetaE deflects the beam by 2*(theta0 - thetaE) off this axis, as in a
+        real beamline; False - SRW default: the output axis follows the real normal, the beam stays on
+        it and the misalignment changes only the aberrations. Applied by Beamline.propagate as SRW
+        propagation parameters 12-16 unless 17 parameters are given explicitly
+    :return: ``SRWLOptMirPar``
+    """
+    from srwpy.srwlib import SRWLOptMirPar
+    # SRW 'c' expects the tangential vector opposite to the SRW examples (see _mirror_orientation)
+    return _mirror(SRWLOptMirPar, orient, theta0, length, width, roll, yaw, distance, reflectivity,
+                   tangent_sign=1. if collimating else -1., fixed_axis=fixed_axis, thetaE=thetaE,
+                   _f=f, _uc='c' if collimating else 'f', _ang_graz=thetaE, _r_sag=1.e+40, _npt=5000)
+
+
+def Mirror_spherical(orient, r, theta0, length, roll=0., yaw=0., distance=0., reflectivity=None, width=1.):
+    """
+    Spherical mirror: a wrapper of SRWLOptMirSph.
+
+    Focal lengths at grazing angle theta: tangential r*sin(theta)/2, sagittal r/(2*sin(theta)).
+
+    :param r: radius of curvature [m]
+    :param orient: plane of deflection, 'x' (horizontal) or 'y' (vertical)
+    :param theta0: grazing angle at the mirror centre [rad]
+    :param length: mirror length (tangential) [m]
+    :param roll: rotation of the mirror around its long axis [rad]
+    :param yaw: misaligned yaw, the mirror centre is shifted across the beam by tan(yaw) * distance
+    :param distance: distance for yaw [m]
+    :param reflectivity: None - ideal mirror (R = 1); number - intensity reflectivity R for all
+        energies and angles; :class:`wpg.materials.Reflectivity` - table vs energy, grazing angle and
+        polarization, e.g. ``Reflectivity.from_material('B4C', ekev, angles, rho=2.52)``
+    :param width: mirror width (sagittal) [m]
+    :return: ``SRWLOptMirSph``
+    """
+    from srwpy.srwlib import SRWLOptMirSph
+    return _mirror(SRWLOptMirSph, orient, theta0, length, width, roll, yaw, distance, reflectivity, _r=r)
+
+
+def Mirror_toroidal(orient, r_tang, r_sag, theta0, length, roll=0., yaw=0., distance=0., reflectivity=None,
+                    width=1.):
+    """
+    Toroidal mirror: a wrapper of SRWLOptMirTor.
+
+    Focal lengths at grazing angle theta: tangential r_tang*sin(theta)/2, sagittal r_sag/(2*sin(theta)).
+    Imaging a source at the distance p to q: r_tang = 2pq/((p+q) sin theta), r_sag = 2pq sin(theta)/(p+q).
+
+    :param r_tang: tangential (major) radius [m]
+    :param r_sag: sagittal (minor) radius [m]
+    :param orient: plane of deflection, 'x' (horizontal) or 'y' (vertical)
+    :param theta0: grazing angle at the mirror centre [rad]
+    :param length: mirror length (tangential) [m]
+    :param roll: rotation of the mirror around its long axis [rad]
+    :param yaw: misaligned yaw, the mirror centre is shifted across the beam by tan(yaw) * distance
+    :param distance: distance for yaw [m]
+    :param reflectivity: None - ideal mirror (R = 1); number - intensity reflectivity R for all
+        energies and angles; :class:`wpg.materials.Reflectivity` - table vs energy, grazing angle and
+        polarization, e.g. ``Reflectivity.from_material('B4C', ekev, angles, rho=2.52)``
+    :param width: mirror width (sagittal) [m]
+    :return: ``SRWLOptMirTor``
+    """
+    from srwpy.srwlib import SRWLOptMirTor
+    return _mirror(SRWLOptMirTor, orient, theta0, length, width, roll, yaw, distance, reflectivity,
+                   _rt=r_tang, _rs=r_sag)
+
 
 def WF_dist(nx, ny, Dx, Dy):
     """

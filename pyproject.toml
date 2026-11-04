@@ -25,9 +25,11 @@ dependencies = [
 [project.optional-dependencies]
 # wpg.source (SASE pulses) uses phenom
 source = ["phenom-xfel"]
+# wpg.materials (optical constants, mirror reflectivity) uses xraylib
+materials = ["xraylib"]
 test = ["pytest", "nbformat", "nbconvert", "ipykernel"]
 docs = ["sphinx"]
-dev = ["WPG[test,docs]", "ruff"]
+dev = ["WPG[test,docs,materials]", "ruff"]
 
 [project.urls]
 Homepage = "https://github.com/samoylv/WPG"

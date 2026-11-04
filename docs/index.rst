@@ -16,6 +16,7 @@ Contents:
    srwlib
    beamline
    optical_elements
+   materials
    generators
    wpg_uti_wf
    wpg_uti_oe
