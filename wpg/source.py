@@ -14,7 +14,7 @@ from phenom.source import sase_pulse as sp
 
 import scipy.constants
 
-h = scipy.constants.physical_constants['Planck constant in eV s'][0]
+h = scipy.constants.physical_constants['Planck constant in eV/Hz'][0]
 
 def analytical_pulse_energy(q, photon_energy):
     """

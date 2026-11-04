@@ -20,6 +20,7 @@ import warnings
 from array import array
 
 import numpy as np
+from scipy.integrate import trapezoid
 
 #: h*c [eV*m]
 HC_EV_M = 1.239841984e-6
@@ -256,7 +257,7 @@ def _distance(a, b):
     grid = np.linspace(lo, hi, 4 * max(a['n'], b['n']))
     pa = np.interp(grid, a['coords'], a['density'])
     pb = np.interp(grid, b['coords'], b['density'])
-    return 0.5 * np.trapezoid(np.abs(pa - pb), grid)
+    return 0.5 * trapezoid(np.abs(pa - pb), grid)
 
 
 def suggest_propagation_parameters(wf, element, semi_analytical=None, tol=1e-2, factor=1.5, max_iter=8,

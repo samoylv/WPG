@@ -63,8 +63,8 @@ def read_genesis_file(genesis_out, genesis_dfl):
     '''
 
     # Needed constants.
-    speed_of_light = const.codata.value('speed of light in vacuum')
-    h_eV_s = const.codata.value('Planck constant in eV s')
+    speed_of_light = const.value('speed of light in vacuum')
+    h_eV_s = const.value('Planck constant in eV/Hz')
 
     # Undulator period: not used any more (the dfl field is already in sqrt(W) per cell).
     lmb_und = 2.75e-2

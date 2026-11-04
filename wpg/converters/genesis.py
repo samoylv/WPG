@@ -40,8 +40,8 @@ def vector_grid_conversion(_hf, _npoints, _nslices, _grid_size, _wv, _lambda_un)
           (Real and imaginary parts)shape = (npoints,npoints, slice_count,2)))
     '''
     # Definition of constants
-    vac_imp = const.codata.value('characteristic impedance of vacuum')
-    eev = 1e6 * const.codata.value('electron mass energy equivalent in MeV')
+    vac_imp = const.value('characteristic impedance of vacuum')
+    eev = 1e6 * const.value('electron mass energy equivalent in MeV')
 
     # Definition of internal variables
     h5f = _hf
@@ -74,8 +74,8 @@ def vector_grid_conversion(_hf, _npoints, _nslices, _grid_size, _wv, _lambda_un)
     return matrix_t
 
 def read_genesis_file(gen_fname):
-    speed_of_light = const.codata.value('speed of light in vacuum')
-    h_eV_s = const.codata.value('Planck constant in eV s')
+    speed_of_light = const.value('speed of light in vacuum')
+    h_eV_s = const.value('Planck constant in eV/Hz')
     lmb_und = 2.75e-2
 
     wf = Wavefront()
