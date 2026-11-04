@@ -118,7 +118,20 @@ def test_hdf5_tree(tmp_path, capsys):
     assert capsys.readouterr().out
 
 
-def test_gpu_option():
+# Known errors of SRW 4.2.1 (master 3c38a0d) on GPU, measured with a CUDA build on RTX 3090:
+# without semi-analytical treatment the drift length is ignored for several slices,
+# a single slice comes back with x and y transposed. Without CUDA SRW falls back to CPU and all cases pass.
+GPU_CASES = [
+    pytest.param(3, 1, id='3 slices, semi-analytical'),
+    pytest.param(3, 0, id='3 slices, no semi-analytical',
+                 marks=pytest.mark.xfail(reason='SRW GPU ignores drift length without semi-analytical treatment')),
+    pytest.param(1, 1, id='1 slice',
+                 marks=pytest.mark.xfail(reason='SRW GPU transposes x and y of a single-slice wavefront')),
+]
+
+
+@pytest.mark.parametrize('nz, semi', GPU_CASES)
+def test_gpu_option(nz, semi):
     """gpu=1 gives the same intensity as CPU (with srwpy without CUDA SRW falls back to CPU)."""
     from wpg.beamline import Beamline
     from wpg.optical_elements import Drift, Use_PP
@@ -126,12 +139,14 @@ def test_gpu_option():
 
     res = []
     for gpu in (None, 1):
-        wf = _gauss_wavefront(nx=200, nz=3)
+        wf = _gauss_wavefront(nx=200, nz=nz)
         b = Beamline()
-        b.append(Drift(5), Use_PP())
-        srwl.SetRepresElecField(wf._srwl_wf, 'f')
+        b.append(Drift(50), Use_PP(semi_analytical_treatment=semi))
+        if nz > 1:
+            srwl.SetRepresElecField(wf._srwl_wf, 'f')
         b.propagate(wf, gpu=gpu)
-        srwl.SetRepresElecField(wf._srwl_wf, 't')
+        if nz > 1:
+            srwl.SetRepresElecField(wf._srwl_wf, 't')
         res.append(wf.get_intensity())
     np.testing.assert_allclose(res[1], res[0], rtol=0, atol=1e-4 * res[0].max())
 

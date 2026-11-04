@@ -50,6 +50,11 @@ description to `build/srw_build_info.json`.
 OpenMP and CUDA cannot be combined in one build: SRW uses FFTW2 for the OpenMP version and FFTW3 with
 cuFFT for the CUDA version.
 
+With the CUDA build, propagation runs on GPU only when requested: `Beamline.propagate(wfr, gpu=1)`
+(`gpu` is the number of the GPU device). This is experimental: SRW 4.2.1 on GPU agrees with CPU
+for several slices in frequency domain with `Use_PP(semi_analytical_treatment=1)`, but ignores the
+drift length without semi-analytical treatment and transposes x and y of a single-slice wavefront.
+
 ## Docker
 
 See [Docker/readme.md](Docker/readme.md).

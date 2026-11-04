@@ -121,6 +121,11 @@ class Beamline(object):
         :param gpu: number of the GPU device (1 - first GPU) to propagate on,
             None - propagate on CPU. Requires srwpy built with CUDA
             (``make srw SRW_MODE=cuda``), otherwise SRW propagates on CPU.
+            Experimental: SRW 4.2.1 on GPU gives correct results for several slices
+            in frequency domain with semi-analytical treatment of the quadratic phase
+            (``Use_PP(semi_analytical_treatment=1)``), but ignores the drift length
+            without it and transposes x and y of a single-slice wavefront
+            (see tests/test_wpg.py::test_gpu_option).
         :type gpu: int or None
         """
         for propagation_option in self.propagation_options:
