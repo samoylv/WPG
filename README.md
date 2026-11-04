@@ -21,7 +21,7 @@ a logarithmic scale normalized to the peak of the ideal focus (µm): (b) ideal m
 errors of 1.5 nm RMS on both mirrors. Each case takes 0.2 s on a laptop (Intel i7-14700HX, serial SRW),
 [script](docs/images/make_showcase_figures.py).*
 
-An overview in 9 slides: [PDF](docs/slides/WPG_2026.11.pdf), [PowerPoint](docs/slides/WPG_2026.11.pptx).
+An overview in 10 slides: [PDF](docs/slides/WPG_2026.11.pdf), [PowerPoint](docs/slides/WPG_2026.11.pptx).
 
 ## What WPG does
 

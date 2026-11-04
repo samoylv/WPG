@@ -154,7 +154,9 @@ def caption(slide, text, left, top, width, height=0.6, size=13, align=PP_ALIGN.L
     add_runs(par, text, size, GREY)
 
 
-def slide_number(slide, n):
+def slide_number(slide, n=None):
+    """Footer with the slide number; n defaults to the position of the slide in the deck."""
+    n = n or len(prs.slides)
     _, tf = textbox(slide, SLIDE_W - MARGIN - 2.5, SLIDE_H - 0.45, 2.5, 0.3)
     par = tf.paragraphs[0]
     par.alignment = PP_ALIGN.RIGHT
@@ -305,7 +307,7 @@ _, tf = textbox(s, MARGIN, 6.35, SLIDE_W - 2 * MARGIN, 0.5)
 add_runs(tf.paragraphs[0], "Wave optics: diffraction, mirror surface errors and the finite size of optical elements "
          "are in the result",
          20, GREY)
-slide_number(s, 2)
+slide_number(s)
 
 # ---------------------------------------------------------------- 3. quick example
 s = new_slide()
@@ -324,9 +326,66 @@ p = tf.paragraphs[0]
 add_runs(p, "Output:  ", 18, ACCENT, bold=True)
 add_runs(p, "`" + printed + "`", 16)
 add_runs(p, "   a 9 keV focus of 1.17 × 1.03 µm FWHM after a KB pair", 18, DARK)
-slide_number(s, 3)
+slide_number(s)
 
-# ---------------------------------------------------------------- 4. real mirrors
+# ---------------------------------------------------------------- 4. optical elements
+# a shortened copy of the table in the "Optical elements" section of README.md
+ELEMENTS = [
+    ("Free space", "`Drift(L)`", "SRWLOptD", "length"),
+    ("Thin lens", "`Lens(Fx, Fy)`", "SRWLOptL", "focal lengths"),
+    ("Aperture or obstacle", "`Aperture(...)`", "SRWLOptA", "rectangular or circular, size and position"),
+    ("Refractive lenses", "`CRL`, `create_CRL`, `create_CRL_from_file`", "SRWLOptT",
+     "material, shape, apex radius, number of lenses"),
+    ("Elliptical mirror", "`Mirror_elliptical`", "SRWLOptMirEl", "source and image distances, grazing angles"),
+    ("Hyperbolic mirror", "`Mirror_hyperbolic`", "SRWLOptMirHyp", "as elliptical, convex or concave"),
+    ("Parabolic mirror", "`Mirror_parabolic`", "SRWLOptMirPar", "focal length, focusing or collimating"),
+    ("Spherical mirror", "`Mirror_spherical`", "SRWLOptMirSph", "radius of curvature"),
+    ("Toroidal mirror", "`Mirror_toroidal`", "SRWLOptMirTor", "tangential and sagittal radii"),
+    ("Plane mirror, measured", "`Mirror_plane`, `Mirror_plane_2d`", "SRWLOptT", "1D or 2D height profile from a file"),
+    ("Grating", "`VLS_grating`", "SRWLOptG", "diffraction order, varied line spacing"),
+    ("Phase screen", "`WF_dist`", "SRWLOptT", "map of the optical path difference"),
+    ("Surface height errors", "`wpg.surface.Surface_errors`", "SRWLOptT", "measured or random heights"),
+    ("Resizing", "`Empty()`", "—", "window and sampling only"),
+    ("Screen", "`Screen(filename)`", "—", "resizing, wavefront saved to HDF5"),
+]
+
+
+def cell_text(cell, text, size, color=DARK, bold=False, fill=None, mono=False):
+    cell.margin_left = cell.margin_right = Inches(0.08)
+    cell.margin_top = cell.margin_bottom = Inches(0.02)
+    cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+    cell.fill.solid()
+    cell.fill.fore_color.rgb = fill or WHITE
+    par = cell.text_frame.paragraphs[0]
+    add_runs(par, f"`{text}`" if mono else text, size, color, bold=bold)
+
+
+s = new_slide()
+title(s, "Optical elements")
+takeaway(s, "Each element is an SRW object, so any other SRW element can be appended to a beamline as well")
+widths = [2.5, 3.8, 1.75, 4.08]
+row_h = 0.29
+tbl = s.shapes.add_table(len(ELEMENTS) + 1, 4, Inches(MARGIN), Inches(1.85), Inches(sum(widths)),
+                         Inches(row_h * (len(ELEMENTS) + 1))).table
+tbl.first_row = False
+tbl.horz_banding = False
+for j, w in enumerate(widths):
+    tbl.columns[j].width = Inches(w)
+for i in range(len(ELEMENTS) + 1):
+    tbl.rows[i].height = Inches(row_h)
+for j, head in enumerate(("Element", "WPG", "SRW object", "Main parameters")):
+    cell_text(tbl.cell(0, j), head, 15, WHITE, bold=True, fill=ACCENT)
+for i, row in enumerate(ELEMENTS, start=1):
+    fill = LIGHT if i % 2 == 0 else WHITE
+    for j, text in enumerate(row):
+        mono = j == 2 and text != "—"
+        cell_text(tbl.cell(i, j), text, 13 if j in (1, 2) else 14, fill=fill, mono=mono)
+_, tf = textbox(s, MARGIN, 6.62, SLIDE_W - 2 * MARGIN, 0.4)
+add_runs(tf.paragraphs[0], "All curved mirrors take `reflectivity=`, `roll` and `yaw`. Elliptical, hyperbolic and "
+         "parabolic ones also take `fixed_axis`.", 15, GREY)
+slide_number(s)
+
+# ---------------------------------------------------------------- 5. real mirrors
 s = new_slide()
 title(s, "Real mirrors: coating reflectivity")
 takeaway(s, "Reflectivity from `wpg.materials` differs from the CXRO calculator by less than 0.007 at 1\u20136 mrad")
@@ -340,9 +399,9 @@ bullets(s, [
     "`reflectivity=` takes a constant R or a table R(energy, angle)",
     "New mirror shapes: hyperbolic, parabolic, spherical, toroidal",
 ], l + w + 0.35, 2.15, SLIDE_W - MARGIN - (l + w + 0.35), 4.6, size=20, space=14)
-slide_number(s, 4)
+slide_number(s)
 
-# ---------------------------------------------------------------- 5. surface errors
+# ---------------------------------------------------------------- 6. surface errors
 s = new_slide()
 title(s, "Surface height errors and misalignment")
 takeaway(s, "Height errors of 1.5 nm RMS on the KB mirrors spread part of the focus into a cross-shaped halo")
@@ -369,9 +428,9 @@ for i, (head, body) in enumerate(cols):
     p = tf.add_paragraph()
     p.alignment = PP_ALIGN.LEFT
     add_runs(p, body, 18)
-slide_number(s, 5)
+slide_number(s)
 
-# ---------------------------------------------------------------- 6. numerics
+# ---------------------------------------------------------------- 7. numerics
 s = new_slide()
 title(s, "Numerics under control")
 takeaway(s, "By default the beam wraps around the window, the suggested window gives the analytic profile")
@@ -384,9 +443,9 @@ bullets(s, [
     "`suggest_propagation_parameters` chooses `Use_PP` zoom and sampling by trial propagations",
     "`set_radius_from_field` corrects the radius of curvature near the waist",
 ], l + w + 0.35, 2.15, SLIDE_W - MARGIN - (l + w + 0.35), 4.6, size=20, space=14)
-slide_number(s, 6)
+slide_number(s)
 
-# ---------------------------------------------------------------- 7. speed
+# ---------------------------------------------------------------- 8. speed
 s = new_slide()
 title(s, "Speed: SRW with OpenMP or CUDA")
 takeaway(s, "OpenMP on 32 cores or CUDA on an RTX 3090 run the drift about 3 times faster than the serial wheel")
@@ -404,9 +463,9 @@ bullets(s, [
     "GPU on request with `gpu=1`, experimental",
     "Windows uses the PyPI wheel",
 ], rx, 3.95, rw, 2.8, size=20, space=12)
-slide_number(s, 7)
+slide_number(s)
 
-# ---------------------------------------------------------------- 8. new in 2026.11
+# ---------------------------------------------------------------- 9. new in 2026.11
 s = new_slide()
 title(s, "New in 2026.11")
 takeaway(s, "A modernized WPG with new mirror physics and tools that check the numerics")
@@ -423,9 +482,9 @@ tf.vertical_anchor = MSO_ANCHOR.MIDDLE
 p = tf.paragraphs[0]
 add_runs(p, "Fixes of beam parameters, converters and optics that gave wrong results. ", 20, ACCENT, bold=True)
 add_runs(p, "Results of old scripts can change: see the upgrade notes in `CHANGELOG.md`.", 20)
-slide_number(s, 8)
+slide_number(s)
 
-# ---------------------------------------------------------------- 9. get started + cite
+# ---------------------------------------------------------------- 10. get started + cite
 s = new_slide()
 title(s, "Get started and cite")
 _, tf = textbox(s, MARGIN, 1.45, 6, 0.5)
@@ -466,7 +525,7 @@ add_runs(p, "49", 18, bold=True)
 add_runs(p, ", 1347\u20131355 (2016). ", 18)
 add_runs(p, "doi:10.1107/S160057671600995X", 18, ACCENT)
 link(p.runs[-1], DOI_URL)
-slide_number(s, 9)
+slide_number(s)
 
 # ---------------------------------------------------------------- save and export
 prs.save(OUT)
