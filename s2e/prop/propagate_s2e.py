@@ -8,6 +8,7 @@ import h5py
 import multiprocessing
 import numpy
 import os
+import sys
 import wpg
 import srwpy.srwlib
 
@@ -55,7 +56,23 @@ def add_history(wf_file_name, history_file_name):
                 elif not k == 'data':
                     history_h5.copy(k,wf_h5['history']['parent']['detail'])
                 else:
-                    wf_h5['history']['parent']['detail']['data'] = h5py.ExternalLink(history_file_name,'/data')
+                    wf_h5['history']['parent']['detail']['data'] = h5py.ExternalLink(
+                        _external_link_path(wf_file_name, history_file_name), '/data')
+
+
+def _external_link_path(wf_file_name, history_file_name):
+    """
+    Path to the parent file as stored in the external link: relative to the folder of the
+    output file (HDF5 resolves it from the folder of the file that holds the link, so it does not
+    depend on the current directory), with '/' separators. Absolute path if no relative path exists
+    (other drive on Windows).
+    """
+    try:
+        rel = os.path.relpath(os.path.abspath(history_file_name),
+                              os.path.dirname(os.path.abspath(wf_file_name)))
+    except ValueError:
+        rel = os.path.abspath(history_file_name)
+    return rel.replace(os.sep, '/')
 
 
 def calculate_fwhm(wfr):
@@ -69,13 +86,15 @@ def calculate_fwhm(wfr):
 
 
     mesh = wfr.params.Mesh
-    dx = (mesh.xMax-mesh.xMin)/mesh.nx
-    dy = (mesh.yMax-mesh.yMin)/mesh.ny
+    dx = (mesh.xMax-mesh.xMin)/(mesh.nx-1)
+    dy = (mesh.yMax-mesh.yMin)/(mesh.ny-1)
 
-    x_center = intens[intens.shape[0]//2,:]
+    # row and column through the intensity maximum
+    iy, ix = numpy.unravel_index(numpy.argmax(intens), intens.shape)
+    x_center = intens[iy,:]
     fwhm_x = len(x_center[x_center>x_center.max()/2])*dx
 
-    y_center = intens[:,intens.shape[1]//2]
+    y_center = intens[:,ix]
     fwhm_y = len(y_center[y_center>y_center.max()/2])*dy
     return {'fwhm_x':fwhm_x, 'fwhm_y': fwhm_y}
 
@@ -100,6 +119,12 @@ def get_intensity_on_axis(wfr):
 def propagate(in_fname, out_fname, get_beamline):
     """
     Propagate wavefront
+
+    Warning: after propagation the transverse window is always cut to its central half in x and y
+    (``ResizeElecField(..., 'c', [0, 0.5, 1, 0.5, 1])``), whatever the beamline. The part of the
+    beam outside the central half is lost silently: for a Gaussian beam that fills the window up
+    to +-3.5 sigma about 15 % of the pulse energy is lost (helpers_s2e_energy.py, 50 slices).
+    Make the window wide enough in get_beamline (or check the energy) if this matters.
 
     :param in_file: input wavefront file
     :param out_file: output file
@@ -134,7 +159,8 @@ def propagate(in_fname, out_fname, get_beamline):
     # Switch back to time domain.
     srwpy.srwlib.srwl.SetRepresElecField(wf._srwl_wf, 't')
 
-    #Resizing: decreasing Range of Horizontal and Vertical Position:
+    #Resizing: decreasing Range of Horizontal and Vertical Position
+    # (cuts the window to its central half, see the warning in the docstring):
     srwpy.srwlib.srwl.ResizeElecField(wf._srwl_wf, 'c', [0, 0.5, 1, 0.5,  1]);
 
     add_custom_data(wf, bl0)
@@ -238,11 +264,33 @@ def add_custom_data(wf, bl0):
     wf.custom_fields['/info/package_version'] = '2014.1'
 
 
+def load_beamline_function(beamline_file):
+    """
+    Load get_beamline() from a Python file with beamline description.
+
+    The module is registered in sys.modules as 'custom_beamline', so that get_beamline can be pickled.
+
+    :param beamline_file: path to the Python file with get_beamline()
+    :return: get_beamline function
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('custom_beamline', beamline_file)
+    custom_beamline = importlib.util.module_from_spec(spec)
+    sys.modules['custom_beamline'] = custom_beamline
+    spec.loader.exec_module(custom_beamline)
+    return custom_beamline.get_beamline
+
+
 def propagate_wrapper(params):
     """
     Wrapper for passing parameters as a tupple from multiprocessing module
+
+    get_beamline may be a function or a path to the Python file with get_beamline()
+    (the file is then loaded in the worker process, which works with any start method).
     """
     (in_fname, out_fname, get_beamline) = params
+    if isinstance(get_beamline, (str, os.PathLike)):
+        get_beamline = load_beamline_function(get_beamline)
     return propagate(in_fname, out_fname, get_beamline)
 
 def directory_process(in_dname, out_dname, get_beamline, cpu_number):
@@ -251,7 +299,8 @@ def directory_process(in_dname, out_dname, get_beamline, cpu_number):
 
     :param in_dname: input directory name
     :param out_dname: ouput directory name
-    :param get_beamline: function to build beamline
+    :param get_beamline: function to build beamline, or path to the Python file with get_beamline()
+        (a path is needed for the 'spawn' start method of multiprocessing, the default on Windows and macOS)
     :param cpu_number: NUmber of CPUs for parallel computing
 
     """
@@ -300,17 +349,16 @@ def main():
         parser.error('Beamline description file specified, use --beamline-file option')
         return
     else:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location('custom_beamline', options.beamline_file)
-        custom_beamline = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(custom_beamline)
-        get_beamline = custom_beamline.get_beamline
+        get_beamline = load_beamline_function(options.beamline_file)
 
     if options.in_dname and options.out_dname:
         print('Input directory {}, output directory {}, number of cores {}'.format(
             options.in_dname, options.out_dname, options.cpu_number))
         print('Batch propagation started')
-        directory_process(options.in_dname, options.out_dname, get_beamline, int(options.cpu_number))
+        # the worker processes load the beamline file themselves (pickling a function from a module
+        # loaded by path fails with the 'spawn' start method)
+        directory_process(options.in_dname, options.out_dname, os.path.abspath(options.beamline_file),
+                          int(options.cpu_number))
         print('Batch propagation finished')
 
     elif options.in_fname and options.out_fname:

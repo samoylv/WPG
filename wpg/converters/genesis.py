@@ -18,15 +18,10 @@ def open_slice_data(slice_dict, slice_index):
       slice_dict[slice_folder][()]
       Contents of a particular entry of the Glossary (corresponding to the slice_index supplied as input)
     '''
-    sl = [slice_index]
-    if (0 < sl[0] < 10):
-        sl_s = '00' + str(sl[0])
-    elif (10 <= sl[0] <= 99):
-        sl_s = '0' + str(sl[0])
-    elif (sl[0] >= 100):
-        sl_s = str(sl[0])
-    slice_folder = '/slice000' + sl_s
-    slice_folder = slice_folder + '/field'
+    # GENESIS numbers the slice groups from 1 with six digits: /slice000001 ... /slice001000 ...
+    if slice_index < 1:
+        raise ValueError('GENESIS slice numbering starts at 1, got {}'.format(slice_index))
+    slice_folder = '/slice%06d/field' % slice_index
     return slice_dict[slice_folder][()]
 
 
@@ -70,20 +65,12 @@ def vector_grid_conversion(_hf, _npoints, _nslices, _grid_size, _wv, _lambda_un)
 
     # Cycle over all slices, converting the 1D vector into a 3D Matrix and
     # dividing by the mesh size in order to get the field in units of \sqrt{W/mm^2}
-    for islice in range(1, nsl):
+    # GENESIS slices are numbered 1..nsl, slice k goes to the array index k - 1
+    for islice in range(1, nsl + 1):
         print('slice No ' + str(islice))
         tmp_data = open_slice_data(h5f, islice)
-        for jc in range(npt):
-            for lc in range(npt):
-                ind = 0
-                while ind < 2:
-                    if ind == 0:
-                        vect = tmp_data[0::2]
-                    elif ind == 1:
-                        vect = tmp_data[1::2]
-                    matrix_t[jc, lc, islice - 1, ind] = fact * \
-                        vect[(jc * npt) + lc] / (1000. * mesh_size)
-                    ind = ind + 1
+        matrix_t[:, :, islice - 1, 0] = fact * tmp_data[0::2][:npt * npt].reshape(npt, npt) / (1000. * mesh_size)
+        matrix_t[:, :, islice - 1, 1] = fact * tmp_data[1::2][:npt * npt].reshape(npt, npt) / (1000. * mesh_size)
     return matrix_t
 
 def read_genesis_file(gen_fname):
@@ -106,10 +93,7 @@ def read_genesis_file(gen_fname):
     ### Definition of the Electric field field arrays where the electric field from the GENESIS output file
     ###  will be copied
 
-        wf.data.arrEhor = np.zeros(shape=(npoints, npoints, slice_count, 2))
-        wf.data.arrEver = np.zeros(shape=(npoints, npoints, slice_count, 2))
-
-    ### Fill in the fields of the wavefront object
+    ### Fill in the fields of the wavefront object (mesh first: the field arrays must match it)
         wf.params.wEFieldUnit = 'sqrt(W/mm^2)'
         wf.params.photonEnergy = h_eV_s * speed_of_light / wavelength
         print('Photon energy: ', wf.params.photonEnergy, 'eV')
@@ -131,5 +115,6 @@ def read_genesis_file(gen_fname):
     ### vector_grid_conversion function
         wf.data.arrEhor = vector_grid_conversion(
             hf, npoints, slice_count, range_xy, wavelength, lmb_und)
+        wf.data.arrEver = np.zeros_like(wf.data.arrEhor)
 
     return wf

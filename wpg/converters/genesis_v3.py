@@ -18,20 +18,10 @@ def open_slice_data(slice_dict, slice_index):
       slice_dict[slice_folder][()]
       Contents of a particular entry of the Glossary (corresponding to the slice_index supplied as input)
     '''
-    if (0 < slice_index < 10):
-        sl_s = '00000' + str(slice_index)
-    elif (10 <= slice_index <= 99):
-        sl_s = '0000'+str(slice_index)
-    elif(100<=slice_index< 1000):
-        sl_s = '000'+str(slice_index)
-    elif(1000<=slice_index<10000):
-        sl_s = '00'+str(slice_index)
-    elif(10000<=slice_index<100000):
-        sl_s = '0'+str(slice_index)
-    else:
-        sl_s = str(slice_index)
-
-    slice_folder = '/slice'+sl_s+'/field'
+    # GENESIS numbers the slice groups from 1 with six digits: /slice000001 ... /slice001000 ...
+    if slice_index < 1:
+        raise ValueError('GENESIS slice numbering starts at 1, got {}'.format(slice_index))
+    slice_folder = '/slice%06d/field' % slice_index
     return slice_dict[slice_folder][()]
 
 
@@ -57,7 +47,7 @@ def vector_grid_conversion(_hf, _npoints, _nslices, _grid_size, _wv, _lambda_un)
     h5f = _hf
     npt = _npoints
     nsl = _nslices
-    mesh_size = 2.*_grid_size / (npt - 1)
+    mesh_size = _grid_size / (npt - 1)  # _grid_size is the full width (npt - 1) * gridsize
     lmb = _wv
     lmb_u = _lambda_un
     matrix_t = np.zeros(shape=(npt, npt, nsl, 2))
@@ -76,20 +66,12 @@ def vector_grid_conversion(_hf, _npoints, _nslices, _grid_size, _wv, _lambda_un)
 
     # Cycle over all slices, converting the 1D vector into a 3D Matrix and
     # dividing by the mesh size in order to get the field in units of \sqrt{W/mm^2}
-    for islice in range(1, nsl):
+    # GENESIS slices are numbered 1..nsl, slice k goes to the array index k - 1
+    for islice in range(1, nsl + 1):
         print('slice No ' + str(islice))
         tmp_data = open_slice_data(h5f, islice)
-        for jc in range(npt):
-            for lc in range(npt):
-                ind = 0
-                while ind < 2:
-                    if ind == 0:
-                        vect = tmp_data[0::2]
-                    elif ind == 1:
-                        vect = tmp_data[1::2]
-                    matrix_t[jc, lc, islice - 1, ind] = fact * \
-                        vect[(jc * npt) + lc]
-                    ind = ind + 1
+        matrix_t[:, :, islice - 1, 0] = fact * tmp_data[0::2][:npt * npt].reshape(npt, npt)
+        matrix_t[:, :, islice - 1, 1] = fact * tmp_data[1::2][:npt * npt].reshape(npt, npt)
     return matrix_t
 
 

@@ -69,7 +69,7 @@ def plot_1d(profile, title_fig, title_x, title_y):
 
 def plot_2d(amap, xmin, xmax, ymin, ymax, title_fig, title_x, title_y):
     # pylab.figure()
-    pylab.imshow(amap, extent=(ymin, ymax, xmin, xmax))
+    pylab.imshow(amap, extent=(xmin, xmax, ymin, ymax))
     pylab.colorbar()
     # pylab.axis('tight')
     pylab.xlabel(title_x)
@@ -87,7 +87,7 @@ def calculate_peak_pos(mwf):
     nc = numpy.where(irr == irr_max)
 #     print(irr.shape, nc, nx, ny)
     x0 = x_axis[nc[1][0]]
-    y0 = x_axis[nc[0][0]]
+    y0 = y_axis[nc[0][0]]
 #     irr_x = irr[ny // 2, :]
 #     irr_y = irr[:, nx // 2]
 
@@ -126,19 +126,19 @@ def show_slices_hsv(wf, slice_numbers=None, pretitle=''):
     if wf.params.wSpace == 'R-space':
         pulse_energy = wf.get_intensity().sum(axis=0).sum(axis=0).sum(axis=0)
         energyJ = calc_pulse_energy(wf)
-        dx = (wf.params.Mesh.xMax - wf.params.Mesh.xMin) // \
+        dx = (wf.params.Mesh.xMax - wf.params.Mesh.xMin) / \
             (wf.params.Mesh.nx - 1)
-        dy = (wf.params.Mesh.yMax - wf.params.Mesh.yMin) // \
+        dy = (wf.params.Mesh.yMax - wf.params.Mesh.yMin) / \
             (wf.params.Mesh.ny - 1)
     elif wf.params.wSpace == 'Q-space':
-        dx = (wf.params.Mesh.qxMax - wf.params.Mesh.qxMin) // \
+        dx = (wf.params.Mesh.qxMax - wf.params.Mesh.qxMin) / \
             (wf.params.Mesh.nx - 1)
-        dy = (wf.params.Mesh.qyMax - wf.params.Mesh.qyMin) // \
+        dy = (wf.params.Mesh.qyMax - wf.params.Mesh.qyMin) / \
             (wf.params.Mesh.ny - 1)
     else:
         raise TypeError('wSpace should be "R-space" or "Q-space"')
 
-    dt = (wf.params.Mesh.sliceMax - wf.params.Mesh.sliceMin) // \
+    dt = (wf.params.Mesh.sliceMax - wf.params.Mesh.sliceMin) / \
         (wf.params.Mesh.nSlices - 1)
     print('dt', dt)
 
@@ -147,6 +147,7 @@ def show_slices_hsv(wf, slice_numbers=None, pretitle=''):
 
     if isinstance(slice_numbers, int):
         slice_numbers = [slice_numbers, ]
+    slice_numbers = numpy.asarray(slice_numbers, dtype=int)
 
     intense = wf_intensity.sum(0).sum(0)
     intense = numpy.squeeze(intense)
@@ -155,9 +156,10 @@ def show_slices_hsv(wf, slice_numbers=None, pretitle=''):
 
     pylab.figure()
     if wf.params.wDomain == 'time':
-        pylab.plot(numpy.linspace(wf.params.Mesh.sliceMin, wf.params.Mesh.sliceMax,
-                                  wf.params.Mesh.nSlices)*1e15, intense)
-        pylab.plot(slice_numbers, intense[slice_numbers], color='g', linestyle='None',
+        t_axis = numpy.linspace(wf.params.Mesh.sliceMin, wf.params.Mesh.sliceMax,
+                                wf.params.Mesh.nSlices)*1e15
+        pylab.plot(t_axis, intense)
+        pylab.plot(t_axis[slice_numbers], intense[slice_numbers], color='g', linestyle='None',
                    markersize=5, marker='o', markerfacecolor='w', markeredgecolor='g')
         pylab.title(pretitle+' Instanteneous power')
         pylab.xlim(wf.params.Mesh.sliceMin*1e15, wf.params.Mesh.sliceMax*1e15)
@@ -197,12 +199,15 @@ def show_slices_hsv(wf, slice_numbers=None, pretitle=''):
     if wf.params.wSpace == 'R-space':
         x_axis = numpy.linspace(
             wf.params.Mesh.xMin, wf.params.Mesh.xMax, wf.params.Mesh.nx)
+        y_axis = numpy.linspace(
+            wf.params.Mesh.yMin, wf.params.Mesh.yMax, wf.params.Mesh.ny)
     elif wf.params.wSpace == 'Q-space':
         x_axis = numpy.linspace(
             wf.params.Mesh.qxMin, wf.params.Mesh.qxMax, wf.params.Mesh.nx)
+        y_axis = numpy.linspace(
+            wf.params.Mesh.qyMin, wf.params.Mesh.qyMax, wf.params.Mesh.ny)
     else:
         raise TypeError('wSpace should be "R-space" or "Q-space"')
-    y_axis = x_axis
 
     pylab.figure(figsize=(15, 7))
     pylab.subplot(121)
@@ -211,7 +216,7 @@ def show_slices_hsv(wf, slice_numbers=None, pretitle=''):
     pylab.colorbar(orientation='horizontal')
     if wf.params.wSpace == 'R-space':
         pylab.title('Nphotons per ' + str(numpy.floor(dx*1e6)) +
-                    'x'+str(numpy.floor(dx*1e6))+r' $\mu m ^2$ pixel')
+                    'x'+str(numpy.floor(dy*1e6))+r' $\mu m ^2$ pixel')
 
     pylab.subplot(122)
     pylab.plot(y_axis*1e6, data[:, int(center_x)]*1e3, 'b', label='Y-cut')
@@ -267,7 +272,7 @@ def show_slices_hsv(wf, slice_numbers=None, pretitle=''):
         RGB = hsv_to_rgb(HSV)
         pylab.imshow(RGB)
         pylab.title('Nphotons x10$^6$ per ' + str(numpy.floor(dx*1e6)) +
-                    'x'+str(numpy.floor(dx*1e6))+r' $\mu m ^2$ pixel')
+                    'x'+str(numpy.floor(dy*1e6))+r' $\mu m ^2$ pixel')
 #         pylab.contour(fit_data, cmap=pylab.cm.copper)
 
 #         pylab.subplot(142)
@@ -329,8 +334,10 @@ def plot_wfront(mwf, title_fig, isHlog, isVlog, i_x_min, i_y_min, orient, onePlo
     # [LS14-06-02]
     # for 2D Gaussian the intrincic SRW GsnBeam wave field units Nph/mm^2/0.1%BW
     # to get fluence W/mm^2
-    # (Note: coherence time for Gaussian beam duration should be specified):
-    ii = ii*mwf.params.photonEnergy/J2EV  # *1e3
+    # (Note: coherence time for Gaussian beam duration should be specified).
+    # Only for this unit: a field in sqrt(W/mm^2) (GENESIS, time domain) is already in W/mm^2.
+    if mwf.params.wEFieldUnit == 'sqrt(Phot/s/0.1%bw/mm^2)':
+        ii = ii*mwf.params.photonEnergy/J2EV  # *1e3
     imax = numpy.max(ii)
     [nx, ny, xmin, xmax, ymin, ymax] = get_mesh(mwf)
     ph = mwf.get_phase(slice_number=0, polarization='horizontal')

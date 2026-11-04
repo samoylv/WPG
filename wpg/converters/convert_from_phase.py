@@ -6,7 +6,7 @@ import numpy
 def convert_from_phase(in_file_name,out_file_name):
 
     def convert_item(name,obj):
-        node_name=name.encode()
+        node_name=name  # h5py gives str names in Python 3
         if not isinstance(obj, h5py.Group):
             if node_name.startswith('data/'):
                 if node_name=='data/arrEhor':

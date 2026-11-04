@@ -1,23 +1,24 @@
-import sys
-#sys.path.insert(0, '../WPG') # AB
-#sys.path.insert(0,'/diskmnt/a/lsamoylv/WPG')
-#sys.path.insert(0,'/Users/lsamoylv/code/WPG')
-sys.path.insert(0,'/data/S2E/packages/WPG/')
-
 import os
-import pylab as plt
+import matplotlib.pyplot as plt
 
 import numpy as np
 from wpg import Wavefront
 
 
+def _prop_out_file_name(prop_out_number):
+    """File name from the argument: a name ending with .h5 is used as is,
+    a number gives prop_out_<7 digits>.h5, any other name gets the .h5 extension."""
+    name = str(prop_out_number)
+    if name.endswith('.h5'):
+        return name
+    if name.isdigit():
+        return "prop_out_{}.h5".format(name.zfill(7))
+    return name + '.h5'
+
+
 def show_diagnostics(prop_out_number):
     # read prop_out_.h5
-    if not prop_out_number == 'prop_out_1.h5':
-        #prop_out_file = "prop_out_{}.h5".format(prop_out_number.zfill(7))
-        prop_out_file = "{}.h5".format(prop_out_number.zfill(7))
-    else:
-        prop_out_file = prop_out_number
+    prop_out_file = _prop_out_file_name(prop_out_number)
 
     if not os.path.exists(prop_out_file):
         print('Input file {} not found.'.format(prop_out_file))
@@ -40,19 +41,24 @@ def show_diagnostics(prop_out_number):
     data = total_intensity * dt
     plt.figure()
     plt.imshow(data*dx*dy*1e6*J2eV/wf.params.photonEnergy,extent=[mesh.xMin*1e6,mesh.xMax*1e6,mesh.yMin*1e6,mesh.yMax * 1e6])
-    title = 'Number of photons per %.2f x %.2f $nm ^2$ pixel'  %  (dx*1e9, dx*1e9)
+    title = 'Number of photons per %.2f x %.2f $nm ^2$ pixel'  %  (dx*1e9, dy*1e9)
     plt.title(title)
     plt.colorbar()
     plt.xlabel(r'[$\mu$m]')
 
     # window 2: plot of 2 curves:
-    #(1) history/parent/parent/temporal_struct - before propagating
-    temporal_struct = wf.custom_fields['history']['parent']['parent']['misc']['temporal_struct']
-    t0 = (temporal_struct[:, 0].max() + temporal_struct[:, 0].min()) / 2
-
+    #(1) history/parent/detail/misc/temporal_struct - before propagating
+    # (add_history in propagate_s2e.py stores the parent file in history/parent/detail)
     plt.figure()
-    plt.plot(temporal_struct[:, 0] - t0, temporal_struct[:, 1] * 1e-9, 'b',label = 'original')
-    plt.hold(True)
+    try:
+        temporal_struct = np.asarray(
+            wf.custom_fields['history']['parent']['detail']['misc']['temporal_struct'])
+    except (KeyError, TypeError):
+        print('No history/parent/detail/misc/temporal_struct in {}, the original pulse is not shown.'.format(
+            prop_out_file))
+    else:
+        t0 = (temporal_struct[:, 0].max() + temporal_struct[:, 0].min()) / 2
+        plt.plot(temporal_struct[:, 0] - t0, temporal_struct[:, 1] * 1e-9, 'b',label = 'original')
     #(2) integral intensity I(t) after propagating
 
     t = np.linspace(tmin, tmax, wf.params.Mesh.nSlices)
@@ -70,7 +76,6 @@ def show_diagnostics(prop_out_number):
     sz1 = wf.custom_fields['misc']['spectrum1']
     plt.figure()
     plt.plot(sz0[:,0],sz0[:,1], label='before propagating')
-    plt.hold(True)
     plt.plot(sz1[:,0],sz1[:,1],label='after propagating')
     plt.grid(True)
     plt.title('Spectrum (x=y=0)')

@@ -21,38 +21,22 @@ def vector_grid_conversion(data, _npoints, _nslices, _grid_size, _wv, _lambda_un
 
     Based on WPG/wpg/converters/genesis.py
     '''
-    # Definition of constants
-    vac_imp = const.codata.value('characteristic impedance of vacuum')
-    eev = 1e6 * const.codata.value('electron mass energy equivalent in MeV')
-
-    # Definition of internal variables
+    # The dfl field of GENESIS 2 is already in sqrt(W) per grid cell: sum |E|^2 over the grid
+    # is the radiation power (checked with ocelot on tests/utest/lcls: 4.6728e9 W in both).
+    # Hence no conversion factor from the dimensionless GENESIS field is applied here
+    # (_wv and _lambda_un are kept in the signature for compatibility, they are not used);
+    # the field is only divided by the mesh step in mm to get sqrt(W/mm^2).
     npt = _npoints
     nsl = _nslices
     mesh_size = _grid_size / (npt - 1)
-    lmb = _wv
-    lmb_u = _lambda_un
     matrix_t = numpy.zeros(shape=(npt, npt, nsl, 2))
 
-
-    # Definition of parameters needed for the scaling factor to \sqrt{W} units
-    xkw0 = 2. * numpy.pi / lmb_u
-    xks = 2. * numpy.pi / lmb
-    dxy = xkw0 * mesh_size
-
-    # Scaling factor in order to get the field in units of \sqrt{W}
-    # (consistent with GENESIS v2)
-    fact = dxy * eev * xkw0 / xks / numpy.sqrt(vac_imp)
-    fact = fact / (xkw0 * xkw0)
-
-    # Cycle over all slices, converting the 1D vector into a 3D Matrix and
-    # dividing by the mesh size in order to get the field in units of \sqrt{W/mm^2}
-
     # Slice out real and imaginary parts and store in wavefront matrix.
-    # radiation field axes are z,y,x. Wavefront axes are x,y,z, (re/im)
-    matrix_t[:,:,:,0] = data.real.swapaxes(0,2)
-    matrix_t[:,:,:,1] = data.imag.swapaxes(0,2)
+    # radiation field axes (ocelot) are z, y, x; wavefront axes are y, x, z, (re/im)
+    matrix_t[:, :, :, 0] = data.real.transpose(1, 2, 0)
+    matrix_t[:, :, :, 1] = data.imag.transpose(1, 2, 0)
 
-    matrix_t  = matrix_t * fact / ( 1000. * mesh_size) # 1e3 converts from m to mm.
+    matrix_t = matrix_t / (1000. * mesh_size)  # 1e3 converts from m to mm.
 
     ### ORIGINAL CODE
     #for z_slice in range(_nslices):
@@ -82,7 +66,7 @@ def read_genesis_file(genesis_out, genesis_dfl):
     speed_of_light = const.codata.value('speed of light in vacuum')
     h_eV_s = const.codata.value('Planck constant in eV s')
 
-    # Hard-code undulator period, should be read from genesis out object.
+    # Undulator period: not used any more (the dfl field is already in sqrt(W) per cell).
     lmb_und = 2.75e-2
 
     # Initialize empty wavefront.
@@ -99,14 +83,7 @@ def read_genesis_file(genesis_out, genesis_dfl):
     wavelength = genesis_radiation_field.xlamds
     npoints = genesis_radiation_field.Nx()
 
-    # Definition of the Electric field arrays where the electric field from the GENESIS output file
-    #  will be copied
-
-    # Setup E-field.
-    wf.data.arrEhor = numpy.zeros(shape=(npoints, npoints, slice_count, 2))
-    wf.data.arrEver = numpy.zeros(shape=(npoints, npoints, slice_count, 2))
-
-    # Fill in the fields of the wavefront object
+    # Fill in the fields of the wavefront object (mesh first: the field arrays must match it)
     wf.params.wEFieldUnit = 'sqrt(W/mm^2)'
     wf.params.photonEnergy = h_eV_s * speed_of_light / wavelength
     wf.params.wDomain = 'time'
@@ -116,6 +93,9 @@ def read_genesis_file(genesis_out, genesis_dfl):
     pulse_length = (slice_count - 1) * slice_spacing / (speed_of_light)
     wf.params.Mesh.sliceMin = -pulse_length / 2.
     wf.params.Mesh.sliceMax = pulse_length / 2.
+    # ocelot Lx() is the full GENESIS grid width leng = 2*dgrid = (ncar - 1) * meshsize,
+    # so the WPG step range_xy / (npoints - 1) equals the GENESIS meshsize
+    # (ocelot's own dfl.dx = Lx()/Nx is smaller by 1/ncar and is not used).
     range_xy = genesis_radiation_field.Lx()
     wf.params.Mesh.xMin = -range_xy / 2.
     wf.params.Mesh.xMax = range_xy / 2.
@@ -130,6 +110,7 @@ def read_genesis_file(genesis_out, genesis_dfl):
     # vector_grid_conversion function
     wf.data.arrEhor = vector_grid_conversion(
         genesis_radiation_field.fld, npoints, slice_count, range_xy, wavelength, lmb_und)
+    wf.data.arrEver = numpy.zeros_like(wf.data.arrEhor)
 
     return wf
 

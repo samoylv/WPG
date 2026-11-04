@@ -26,26 +26,32 @@ def mkdir_p(path):
 
 
 def gaussian(height, center_x, center_y, width_x, width_y):
-    """Returns a gaussian function with the given parameters"""
+    """Returns a gaussian function f(y, x) with the given parameters.
+
+    The arguments follow the WPG array layout (ny, nx): the first argument is the row
+    (y, axis 0) index, the second one is the column (x, axis 1) index, so that
+    ``gaussian(*params)(*np.indices(data.shape))`` is evaluated on the grid of ``data``.
+    """
     width_x = float(width_x)
     width_y = float(width_y)
-    return lambda x, y: height * np.exp(
+    return lambda y, x: height * np.exp(
         -(((center_x - x) / width_x) ** 2 + ((center_y - y) / width_y) ** 2) / 2)
 
 
 def moments(data):
     """Returns (height, x, y, width_x, width_y)
     the gaussian parameters of a 2D distribution by calculating its
-    moments """
+    moments. data has the WPG layout (ny, nx): x is the column (axis 1) index,
+    y is the row (axis 0) index, all values in pixels."""
     total = data.sum()
-    X, Y = np.indices(data.shape)
+    Y, X = np.indices(data.shape)
     x = (X * data).sum() / total
     y = (Y * data).sum() / total
-    col = data[:, int(y)]
-    width_x = np.sqrt(
-        abs((np.arange(col.size) - y) ** 2 * col).sum() / col.sum())
-    row = data[int(x), :]
+    col = data[:, int(x)]
     width_y = np.sqrt(
+        abs((np.arange(col.size) - y) ** 2 * col).sum() / col.sum())
+    row = data[int(y), :]
+    width_x = np.sqrt(
         abs((np.arange(row.size) - x) ** 2 * row).sum() / row.sum())
     height = data.max()
     return height, x, y, width_x, width_y
@@ -53,7 +59,9 @@ def moments(data):
 
 def fit_gaussian(data):
     """Returns (height, x, y, width_x, width_y)
-    the gaussian parameters of a 2D distribution found by a fit"""
+    the gaussian parameters of a 2D distribution found by a fit.
+    data has the WPG layout (ny, nx): x is the column (axis 1) index, y is the row (axis 0)
+    index, centres and RMS widths are in pixels."""
     params = moments(data)
     errorfunction = lambda p: np.ravel(
         gaussian(*p)(*np.indices(data.shape)) - data)
@@ -63,7 +71,7 @@ def fit_gaussian(data):
     res = gaussian(*x)(*np.indices(data.shape))
     error = infodict['fvec']
     ss_err = ((error) ** 2).sum()
-    ss_tot = ((res - res.mean()) ** 2).sum()
+    ss_tot = ((data - data.mean()) ** 2).sum()
     rsquared = 1 - (ss_err / ss_tot)
     return {'params': x, 'rsquared': rsquared}
 
@@ -71,6 +79,12 @@ def fit_gaussian(data):
 def fit_gaussian_pulse(wf, polarization='horizontal'):
     """
     Calculate gaussian parameters for all slices in wavefront and add it to custom_fields['misc']['gaussain_parameters']
+
+    Centres and widths (center_x, width_x, pulse_center_x, ...) are in pixels, x along the
+    columns (axis 1), y along the rows (axis 0) of the intensity array.
+    pulse_variance_x, pulse_variance_y are the spatial variances (second central moments) of the
+    time-integrated intensity along x and y in m^2 (in rad^2 in Q-space),
+    pulse_variance = pulse_variance_x + pulse_variance_y (mean square distance from the centroid).
     """
     # TODO: add other polarizations
     wf_intensity = wf.get_intensity(None, polarization)
@@ -115,9 +129,21 @@ def fit_gaussian_pulse(wf, polarization='horizontal'):
     pulse_total_intensity_0_75 = np.sum(
         pulse_intensity * (fit_data_pulse > height_pulse * 0.75))
 
-    pulse_variance_x = np.var(pulse_intensity, axis=1)
-    pulse_variance_y = np.var(pulse_intensity, axis=0)
-    pulse_variance = np.var(pulse_intensity)
+    # spatial second moments of the time-integrated intensity on the mesh coordinates
+    mesh = wf.params.Mesh
+    if wf.params.wSpace == 'Q-space':
+        x_axis = np.linspace(mesh.qxMin, mesh.qxMax, mesh.nx)
+        y_axis = np.linspace(mesh.qyMin, mesh.qyMax, mesh.ny)
+    else:
+        x_axis = np.linspace(mesh.xMin, mesh.xMax, mesh.nx)
+        y_axis = np.linspace(mesh.yMin, mesh.yMax, mesh.ny)
+    profile_x = pulse_intensity.sum(axis=0)
+    profile_y = pulse_intensity.sum(axis=1)
+    mean_x = (x_axis * profile_x).sum() / profile_x.sum()
+    mean_y = (y_axis * profile_y).sum() / profile_y.sum()
+    pulse_variance_x = ((x_axis - mean_x) ** 2 * profile_x).sum() / profile_x.sum()
+    pulse_variance_y = ((y_axis - mean_y) ** 2 * profile_y).sum() / profile_y.sum()
+    pulse_variance = pulse_variance_x + pulse_variance_y
 
     if not 'misc' in wf.custom_fields:
         wf.custom_fields['misc'] = {}
@@ -189,7 +215,7 @@ def show_slices(wfr, slice_numbers=None):
     #     print wf_intensity.shape
     pulse_energy=wfr.get_intensity().sum(axis=0).sum(axis=0).sum(axis=0)
     J2eV = 6.24150934e18
-    print('Number of photons per pulse: %e' %(pulse_energy*dx*dx*1e6*dt*J2eV/wfr.params.photonEnergy))
+    print('Number of photons per pulse: %e' %(pulse_energy*dx*dy*1e6*dt*J2eV/wfr.params.photonEnergy))
     
     if slice_numbers is None:
         slice_numbers = list(range(wf_intensity.shape[-1]))
@@ -231,14 +257,14 @@ def show_slices(wfr, slice_numbers=None):
                                       width_x*dx*1e6, width_y*dy*1e6, rsquared))
              
     x_axis = np.linspace(wfr.params.Mesh.xMin,wfr.params.Mesh.xMax,wfr.params.Mesh.nx)
-    y_axis = x_axis
+    y_axis = np.linspace(wfr.params.Mesh.yMin,wfr.params.Mesh.yMax,wfr.params.Mesh.ny)
              
              
     plt.figure(figsize=(20, 7))
     plt.subplot(131)
     plt.imshow(data*dx*dy*1e6*J2eV/wfr.params.photonEnergy)
     plt.colorbar(orientation='horizontal')
-    plt.title('Nphotons per '+ str(np.floor(dx*1e6))+'x'+str(np.floor(dx*1e6))+r' $\mu m ^2$ pixel')
+    plt.title('Nphotons per '+ str(np.floor(dx*1e6))+'x'+str(np.floor(dy*1e6))+r' $\mu m ^2$ pixel')
              
     plt.contour(fit_data, cmap=plt.cm.copper)
              
@@ -285,7 +311,7 @@ def show_slices(wfr, slice_numbers=None):
         plt.subplot(141)
         plt.imshow(data*dx*dy*1e6*J2eV/wfr.params.photonEnergy*1e-6) #number of photons in a slice of thickness dt
         plt.colorbar(orientation='horizontal')
-        plt.title('Nphotons x10$^6$ per '+ str(np.floor(dx*1e6))+'x'+str(np.floor(dx*1e6))+r' $\mu m ^2$ pixel')
+        plt.title('Nphotons x10$^6$ per '+ str(np.floor(dx*1e6))+'x'+str(np.floor(dy*1e6))+r' $\mu m ^2$ pixel')
         plt.contour(fit_data, cmap=plt.cm.copper)
 
         plt.subplot(142)
@@ -373,7 +399,7 @@ def back_propagate(params):
     out_path = os.path.join(input_dir, out_file_name)
 
     if os.path.exists(out_path):
-        return
+        return out_path
 
     wf_L1 = Wavefront()
     wf_L1.load_hdf5(input_path)
