@@ -119,6 +119,33 @@ print(calculate_fwhm(wf))   # {'fwhm_x': 1.17e-06, 'fwhm_y': 1.03e-06}, m
 Tutorials with beamlines of the European XFEL are in [`samples/Tutorials`](samples/Tutorials) (Jupyter
 notebooks), the documentation is at [wpg.readthedocs.io](https://wpg.readthedocs.io).
 
+## Optical elements
+
+Elements of `wpg.optical_elements` (unless another module is named). Each returns an SRW optical element,
+so any other SRW element (`srwpy.srwlib.SRWLOpt*`) can be appended to a beamline as well.
+
+| Element | WPG | SRW object | Main parameters |
+|---|---|---|---|
+| Free space | `Drift(L)` | `SRWLOptD` | length, m |
+| Thin lens | `Lens(Fx, Fy)` | `SRWLOptL` | focal lengths, m |
+| Aperture or obstacle | `Aperture(shape, ap_or_ob, Dx, Dy, x, y)` | `SRWLOptA` | rectangular or circular, size and position |
+| Compound refractive lens | `CRL(...)`, `create_CRL(...)`, `create_CRL_from_file(...)` | `SRWLOptT` | δ and attenuation length of the material, parabolic or spherical shape, aperture, radius at the apex, number of lenses. The last two functions cache the transmission in a file |
+| Elliptical mirror | `Mirror_elliptical(orient, p, q, thetaE, theta0, length)` | `SRWLOptMirEl` | distances to the source and the image, design and actual grazing angles |
+| Hyperbolic mirror | `Mirror_hyperbolic(orient, p, q, thetaE, theta0, length, convex)` | `SRWLOptMirHyp` | as the elliptical one, convex or concave side |
+| Parabolic mirror | `Mirror_parabolic(orient, f, thetaE, theta0, length, collimating)` | `SRWLOptMirPar` | focal length, focusing or collimating |
+| Spherical mirror | `Mirror_spherical(orient, r, theta0, length)` | `SRWLOptMirSph` | radius of curvature |
+| Toroidal mirror | `Mirror_toroidal(orient, r_tang, r_sag, theta0, length)` | `SRWLOptMirTor` | tangential and sagittal radii |
+| Plane mirror with height errors | `Mirror_plane(orient, theta, length, range_xy, filename)`, `Mirror_plane_2d(...)` | `SRWLOptT` | 1D or 2D measured height profile from a file |
+| Grating | `VLS_grating(substrate, m, grDen, grDen1, ...)` | `SRWLOptG` | mirror substrate, diffraction order, groove density as a polynomial (varied line spacing) |
+| Phase screen | `WF_dist(nx, ny, Dx, Dy)` | `SRWLOptT` | empty transmission element to fill with an optical path difference |
+| Surface height errors | `wpg.surface.Surface_errors(orient, theta, profile, width)` | `SRWLOptT` | 1D profile or 2D map of heights (measured or from `random_profile`, `random_surface`), placed after its mirror |
+| Resizing | `Empty()` | none | only changes the window and sampling with its `Use_PP` |
+| Screen | `Screen(filename)` | none | resizing, and the wavefront is written to an HDF5 file |
+
+All curved mirrors take `reflectivity=` (a number or `wpg.materials.Reflectivity`), `roll` and `yaw`. The
+elliptical, hyperbolic and parabolic mirrors also take `fixed_axis`: with it (the default) a pitch error
+`theta0 != thetaE` deflects the beam. `orient` is `'x'` or `'y'`, the plane of deflection.
+
 ## New in 2026.11
 
 SRW comes from the official `srwpy` package instead of the copy of 2019 bundled with WPG, and WPG runs on
