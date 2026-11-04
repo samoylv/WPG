@@ -35,6 +35,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_REPO = 'https://github.com/ochubar/SRW.git'
 DEFAULT_WORKDIR = os.path.join(HERE, 'SRW')
 BUILD_INFO = os.path.join(HERE, 'srw_build_info.json')
+# dependency on the internal FFTW build and CUDA include dirs, see the file
+CMAKE_FIXES = os.path.join(HERE, 'srw_cmake_fixes.cmake')
 # CMAKE_CUDA_ARCHITECTURES=native in SRW CMakeLists needs CMake >= 3.24
 BUILD_REQUIREMENTS = ['packaging', 'setuptools', 'wheel', 'cmake>=3.24']
 
@@ -65,6 +67,7 @@ def build_env(mode, cuda_archs, jobs, python):
     env = os.environ.copy()
     env.pop('MODE', None)
     cmake_args = env.pop('CMAKE_ARGS', '').split()
+    cmake_args.append('-DCMAKE_PROJECT_INCLUDE=' + CMAKE_FIXES)
     if mode == 'omp':
         env['MODE'] = 'omp'  # setup.py: MODE=omp -> -DUSE_OPENMP=ON
     elif mode == 'cuda':
@@ -75,6 +78,9 @@ def build_env(mode, cuda_archs, jobs, python):
         nvcc = os.path.join(cuda_path, 'bin', 'nvcc')
         if not os.path.exists(nvcc):
             sys.exit(f'nvcc not found at {nvcc}, set CUDA_PATH to the CUDA toolkit')
+        if not os.path.exists(os.path.join(cuda_path, 'include', 'cufft.h')):
+            sys.exit(f'cuFFT (cufft.h) not found in {cuda_path}/include: install the cuFFT development package '
+                     'of this CUDA version or set CUDA_PATH to a CUDA toolkit with cuFFT')
         env['CUDA_PATH'] = cuda_path
         env['CUDACXX'] = nvcc
         env['PATH'] = os.path.join(cuda_path, 'bin') + os.pathsep + env['PATH']
@@ -127,6 +133,8 @@ def main():
         sys.exit('Building SRW from sources is supported on Linux only, '
                  'on this system install the official wheels: python -m pip install srwpy')
     python = os.path.abspath(args.python)
+    if os.path.exists(BUILD_INFO):
+        os.remove(BUILD_INFO)  # do not leave the description of a previous build after a failed one
 
     if args.src:
         src = os.path.abspath(os.path.expanduser(args.src))
