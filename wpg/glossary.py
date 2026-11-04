@@ -1137,7 +1137,7 @@ class WFDataArrEhor(RadiationField):
         if not res.shape:
             pass
         elif np.prod(res.shape) == np.prod(correct_shape):
-            res.shape = correct_shape
+            res = res.reshape(correct_shape)
         else:
             print(res.shape, correct_shape)
             raise ValueError('Alarm')
@@ -1174,7 +1174,7 @@ class WFDataArrEhor(RadiationField):
             self._wf.params.ny = val.shape[0]
             self._wf.params.nSlices = val.shape[2]
 
-        val.shape = (np.prod(val.shape),)
+        val = val.reshape(-1)
         self._wf._srwl_wf.arEx = val
 
 
@@ -1212,7 +1212,7 @@ class WFDataArrEver(RadiationField):
         if not res.shape:
             pass
         elif np.prod(res.shape) == np.prod(correct_shape):
-            res.shape = correct_shape
+            res = res.reshape(correct_shape)
         else:
             print(res.shape, correct_shape)
             raise ValueError('Alarm')
@@ -1246,7 +1246,7 @@ class WFDataArrEver(RadiationField):
             self._wf.params.ny = val.shape[0]
             self._wf.params.nSlices = val.shape[2]
 
-        val.shape = (np.prod(val.shape),)
+        val = val.reshape(-1)
         
         self._wf._srwl_wf.arEy = val
 

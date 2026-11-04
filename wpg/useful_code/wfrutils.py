@@ -6,7 +6,6 @@ __author__ = 'A. Buzmakov, L. Samoylova'
 # search path
 import os
 import sys
-sys.path.insert(0, os.path.join('..', '..'))
 
 from srwpy.srwlib import srwl
 import srwpy.srwlib
@@ -14,7 +13,7 @@ from wpg.wpg_uti_wf import propagate_wavefront
 from wpg import Wavefront, Beamline
 import time
 import numpy
-import pylab
+import matplotlib.pyplot as pylab
 
 # from srwlib import *
 
@@ -170,7 +169,7 @@ def show_slices_hsv(wf, slice_numbers=None, pretitle=''):
         pylab.plot((slice_numbers*dt-wf.params.Mesh.nSlices*dt/2)/wf.params.photonEnergy*1e3, intense[slice_numbers], color='g', linestyle='None',
                    markersize=5, marker='o', markerfacecolor='w', markeredgecolor='g')
         pylab.title(pretitle+' Spectrum')
-        pylab.xlabel('$\Delta \omega / \omega _0 10^{3}$')
+        pylab.xlabel(r'$\Delta \omega / \omega _0 10^{3}$')
         pylab.ylabel('[a.u.]')
     pylab.show()
 
@@ -212,19 +211,16 @@ def show_slices_hsv(wf, slice_numbers=None, pretitle=''):
     pylab.colorbar(orientation='horizontal')
     if wf.params.wSpace == 'R-space':
         pylab.title('Nphotons per ' + str(numpy.floor(dx*1e6)) +
-                    'x'+str(numpy.floor(dx*1e6))+' $\mu m ^2$ pixel')
+                    'x'+str(numpy.floor(dx*1e6))+r' $\mu m ^2$ pixel')
 
     pylab.subplot(122)
     pylab.plot(y_axis*1e6, data[:, int(center_x)]*1e3, 'b', label='Y-cut')
-    pylab.hold(True)
     pylab.plot(
         y_axis*1e6, fit_data[:, int(center_x)]*1e3, 'b:', label='Gaussian fit')
-    pylab.hold(True)
     pylab.plot(x_axis*1e6, data[int(center_y), :]*1e3,  'g', label='X-cut')
-    pylab.hold(True)
     pylab.plot(
         x_axis*1e6, fit_data[int(center_y), :]*1e3,  'g--', label='Gaussian fit')
-    pylab.xlabel('[$\mu$m]')
+    pylab.xlabel(r'[$\mu$m]')
     pylab.ylabel('mJ/mm$^2$')
     pylab.grid(True)
     pylab.legend()
@@ -271,7 +267,7 @@ def show_slices_hsv(wf, slice_numbers=None, pretitle=''):
         RGB = hsv_to_rgb(HSV)
         pylab.imshow(RGB)
         pylab.title('Nphotons x10$^6$ per ' + str(numpy.floor(dx*1e6)) +
-                    'x'+str(numpy.floor(dx*1e6))+' $\mu m ^2$ pixel')
+                    'x'+str(numpy.floor(dx*1e6))+r' $\mu m ^2$ pixel')
 #         pylab.contour(fit_data, cmap=pylab.cm.copper)
 
 #         pylab.subplot(142)
@@ -282,16 +278,13 @@ def show_slices_hsv(wf, slice_numbers=None, pretitle=''):
         pylab.subplot(143)
         pylab.plot(
             y_axis*1e6,     data[:, int(center_x)]*1e3,  'b', label='Y-cut')
-        pylab.hold(True)
         pylab.plot(
             y_axis*1e6, fit_data[:, int(center_x)]*1e3,  'b:', label='Gaussian fit')
-        pylab.hold(True)
         pylab.plot(
             x_axis*1e6,     data[int(center_y), :]*1e3,  'g', label='X-cut')
-        pylab.hold(True)
         pylab.plot(
             x_axis*1e6, fit_data[int(center_y), :]*1e3,  'g--', label='Gaussian fit')
-        pylab.xlabel('[$\mu$m]')
+        pylab.xlabel(r'[$\mu$m]')
         pylab.ylabel('mJ/mm$^2$')
         pylab.grid(True)
         pylab.legend()
@@ -301,7 +294,7 @@ def show_slices_hsv(wf, slice_numbers=None, pretitle=''):
             y_axis*1e6, phase[:, int(center_x)], label='Y-cut', marker='d', markersize=4)
         pylab.plot(
             x_axis*1e6, phase[int(center_y), :], label='X-cut', marker='o', markersize=4)
-        pylab.xlabel('[$\mu$m]')
+        pylab.xlabel(r'[$\mu$m]')
         pylab.legend()
 
         pylab.show()

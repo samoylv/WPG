@@ -2,7 +2,7 @@
 
 __author__ = 'A. Buzmakov'
 
-import pylab as plt
+import matplotlib.pyplot as plt
 import numpy as np
 from . import wavefront
 

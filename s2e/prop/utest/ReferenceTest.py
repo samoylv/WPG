@@ -110,7 +110,7 @@ def wgetData(url=None):
 
 
     # Make https request.
-    print "Attempting to download %s." % (url)
+    print("Attempting to download %s." % (url))
     r = requests.get(url, stream=True)
 
     # Write to local file in chunks of 1 MB.
@@ -123,7 +123,7 @@ def wgetData(url=None):
     f.close()
 
     # Return.
-    print "Download completed and saved to %s." % (local_filename)
+    print("Download completed and saved to %s." % (local_filename))
     return local_filename
 
 if __name__ == '__main__':

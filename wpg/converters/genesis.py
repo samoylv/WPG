@@ -1,5 +1,4 @@
 #encoding: utf-8
-from __future__ import print_function
 
 __author__ = 'Hector Mauricio Castaneda Cortes'
 
@@ -16,7 +15,7 @@ def open_slice_data(slice_dict, slice_index):
       slice_index (Slice Index)
 
     Output:
-      slice_dict[slice_folder].value
+      slice_dict[slice_folder][()]
       Contents of a particular entry of the Glossary (corresponding to the slice_index supplied as input)
     '''
     sl = [slice_index]
@@ -28,7 +27,7 @@ def open_slice_data(slice_dict, slice_index):
         sl_s = str(sl[0])
     slice_folder = '/slice000' + sl_s
     slice_folder = slice_folder + '/field'
-    return slice_dict[slice_folder].value
+    return slice_dict[slice_folder][()]
 
 
 def vector_grid_conversion(_hf, _npoints, _nslices, _grid_size, _wv, _lambda_un):
@@ -96,11 +95,11 @@ def read_genesis_file(gen_fname):
 
     ### Open the hdf5 output GENESIS file
     with h5py.File(gen_fname, 'r') as hf:
-        grid_size = hf['gridsize'].value
-        slice_count = hf['slicecount'].value
+        grid_size = hf['gridsize'][()]
+        slice_count = hf['slicecount'][()]
         print(slice_count)
-        slice_spacing = hf['slicespacing'].value
-        wavelength = hf['wavelength'].value
+        slice_spacing = hf['slicespacing'][()]
+        wavelength = hf['wavelength'][()]
         data1 = open_slice_data(hf, 1)
         npoints = int(np.sqrt(len(data1) / 2))
 

@@ -213,10 +213,11 @@ def load_hdf5_tree(hdf5_file_name):
     def add_item(name, obj):
         if not isinstance(obj, h5py.Group):
             tmp = {}
-            if type(obj.value) == numpy.ndarray:
+            value = obj[()]
+            if isinstance(value, numpy.ndarray):
                 tmp['value'] = 'array shape = {}'.format(obj.shape)
             else:
-                tmp['value'] = obj.value
+                tmp['value'] = value
             tmp['attrs'] = dict((k.encode(), v) for k, v in list(obj.attrs.items()))
             out_dict.update({name.encode(): tmp})
 

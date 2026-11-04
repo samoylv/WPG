@@ -20,7 +20,7 @@ def show_diagnostics(prop_out_number):
         prop_out_file = prop_out_number
 
     if not os.path.exists(prop_out_file):
-        print 'Input file {} not found.'.format(prop_out_file)
+        print('Input file {} not found.'.format(prop_out_file))
         return
 
     wf = Wavefront()

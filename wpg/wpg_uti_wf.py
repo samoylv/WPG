@@ -2,7 +2,7 @@
 
 import copy
 import numpy
-import pylab
+import matplotlib.pyplot as pylab
 
 from wpg.beamline import Beamline
 from srwpy.srwlib import srwl

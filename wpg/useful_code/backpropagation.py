@@ -178,7 +178,7 @@ def show_slices(wfr, slice_numbers=None):
         :params slice_numbers: slices to be shown, may by list, int, or None (for all slices)
         """
     
-    import pylab as plt
+    import matplotlib.pyplot as plt
     
     wf_intensity = wfr.get_intensity(polarization='horizontal')
     wf_phase = wfr.get_phase(polarization='horizontal')
@@ -238,19 +238,16 @@ def show_slices(wfr, slice_numbers=None):
     plt.subplot(131)
     plt.imshow(data*dx*dy*1e6*J2eV/wfr.params.photonEnergy)
     plt.colorbar(orientation='horizontal')
-    plt.title('Nphotons per '+ str(np.floor(dx*1e6))+'x'+str(np.floor(dx*1e6))+' $\mu m ^2$ pixel')
+    plt.title('Nphotons per '+ str(np.floor(dx*1e6))+'x'+str(np.floor(dx*1e6))+r' $\mu m ^2$ pixel')
              
     plt.contour(fit_data, cmap=plt.cm.copper)
              
     plt.subplot(132)
     plt.plot(y_axis*1e6,     data[:, int(center_x)]*1e3, 'b', label='Y-cut')
-    plt.hold(True)
     plt.plot(y_axis*1e6, fit_data[:, int(center_x)]*1e3, 'b:',label='Gaussian fit')
-    plt.hold(True)
     plt.plot(x_axis*1e6,     data[int(center_y), :]*1e3,  'g', label='X-cut')
-    plt.hold(True)
     plt.plot(x_axis*1e6, fit_data[int(center_y), :]*1e3,  'g--', label='Gaussian fit')
-    plt.xlabel('[$\mu$m]')
+    plt.xlabel(r'[$\mu$m]')
     plt.ylabel('mJ/mm$^2$')
     plt.grid(True)
     plt.legend()
@@ -288,7 +285,7 @@ def show_slices(wfr, slice_numbers=None):
         plt.subplot(141)
         plt.imshow(data*dx*dy*1e6*J2eV/wfr.params.photonEnergy*1e-6) #number of photons in a slice of thickness dt
         plt.colorbar(orientation='horizontal')
-        plt.title('Nphotons x10$^6$ per '+ str(np.floor(dx*1e6))+'x'+str(np.floor(dx*1e6))+' $\mu m ^2$ pixel')
+        plt.title('Nphotons x10$^6$ per '+ str(np.floor(dx*1e6))+'x'+str(np.floor(dx*1e6))+r' $\mu m ^2$ pixel')
         plt.contour(fit_data, cmap=plt.cm.copper)
 
         plt.subplot(142)
@@ -298,13 +295,10 @@ def show_slices(wfr, slice_numbers=None):
                  
         plt.subplot(143)
         plt.plot(y_axis*1e6,     data[:, int(center_x)]*1e3,  'b', label='Y-cut')
-        plt.hold(True)
         plt.plot(y_axis*1e6, fit_data[:, int(center_x)]*1e3,  'b:',label='Gaussian fit')
-        plt.hold(True)
         plt.plot(x_axis*1e6,     data[int(center_y), :]*1e3,  'g', label='X-cut')
-        plt.hold(True)
         plt.plot(x_axis*1e6, fit_data[int(center_y), :]*1e3,  'g--',label='Gaussian fit')
-        plt.xlabel('[$\mu$m]')
+        plt.xlabel(r'[$\mu$m]')
         plt.ylabel('mJ/mm$^2$')
         plt.grid(True)
         plt.legend()
@@ -313,14 +307,14 @@ def show_slices(wfr, slice_numbers=None):
         plt.subplot(144)
         plt.plot(y_axis*1e6, phase[:, int(center_x)], label='Y-cut', marker='d', markersize=4)
         plt.plot(x_axis*1e6, phase[int(center_y), :], label='X-cut', marker='o', markersize=4)
-        plt.xlabel('[$\mu$m]')
+        plt.xlabel(r'[$\mu$m]')
         plt.legend()
                  
         plt.show()
 
 
 def forward_propagate(root_dir, distance, propagation_parameters):
-    """
+    r"""
     Forward_propagate_wavefront
     the result will saved in root_dir\distance\distance.h5 file
     

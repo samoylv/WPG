@@ -23,19 +23,19 @@ def convert_from_phase(in_file_name,out_file_name):
                 h5out[node_name][:,1::2,:]=obj[1]
             elif node_name=='VERSION':
                 node_name='version'
-                h5out[node_name]=obj.value
+                h5out[node_name]=obj[()]
             else:
                 node_name='header/'+node_name
                 if obj.dtype==numpy.dtype('|S1'):
                     #if coloumn string
-                    val=''.join(obj.value)
+                    val=b''.join(obj[()]).decode()
                     if node_name=='header/wEFieldUnit' and val=='GW/cm^2':
                         val='arbitrary'
                     if node_name== 'header/wFloatType':
                         val='float'
                     h5out[node_name]=val
                 else:
-                    h5out[node_name]=obj.value
+                    h5out[node_name]=obj[()]
 
     with h5py.File(in_file_name,'r') as h5in:
         with h5py.File(out_file_name,'w') as h5out:

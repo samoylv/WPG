@@ -3,9 +3,6 @@ __author__ = 'O. Chubar, A. Buzmakov'
 
 import os
 import math
-# Import standart libraries and addnig "../wavefront" directory to python search path
-import sys
-sys.path.insert(0, os.path.join('..', '..'))
 
 #**********************Auxiliary Functions
 # Read data comumns from ASCII file:

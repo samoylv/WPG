@@ -24,7 +24,9 @@ from wpg.utils import srw_obj2str
 
 from wpg.wpg_uti_math import fit_gaussian
 
-warnings.filterwarnings('ignore', category=Warning)
+# wpg.glossary warns on every load/store about fields not defined for the current
+# wavefront (e.g. Q-space mesh); these messages are informational, hide only them
+warnings.filterwarnings('ignore', category=UserWarning, module='wpg.glossary')
 
 
 class Wavefront(object):
@@ -210,9 +212,9 @@ class Wavefront(object):
 
         res = srwlib.srwl.CalcIntFromElecField(
             res, self._srwl_wf, pol, 0, 6, self.params.photonEnergy, 0, 0)
-        res = np.array(res, dtype='float32', copy=False)
-        res.shape = (
-            self.params.Mesh.ny, self.params.Mesh.nx, self.params.Mesh.nSlices)
+        res = np.asarray(res, dtype='float32')
+        res = res.reshape((
+            self.params.Mesh.ny, self.params.Mesh.nx, self.params.Mesh.nSlices))
         if slice_number is not None:
             res = res[:, :, slice_number]
         return res
@@ -283,9 +285,9 @@ class Wavefront(object):
         
         res = srwlib.srwl.CalcIntFromElecField(
             res, self._srwl_wf, pol, 5, 6, self.params.photonEnergy, 0, 0)
-        res = np.array(res, dtype='float32', copy=False)
-        res.shape = (
-            self.params.Mesh.ny, self.params.Mesh.nx, self.params.Mesh.nSlices)
+        res = np.asarray(res, dtype='float32')
+        res = res.reshape((
+            self.params.Mesh.ny, self.params.Mesh.nx, self.params.Mesh.nSlices))
         if slice_number is not None:
             res = res[:, :, slice_number]
         return res
@@ -317,9 +319,9 @@ class Wavefront(object):
         
         res = srwlib.srwl.CalcIntFromElecField(
             res, self._srwl_wf, pol, 6, 6, self.params.photonEnergy, 0, 0)
-        res = np.array(res, dtype='float32', copy=False)
-        res.shape = (
-            self.params.Mesh.ny, self.params.Mesh.nx, self.params.Mesh.nSlices)
+        res = np.asarray(res, dtype='float32')
+        res = res.reshape((
+            self.params.Mesh.ny, self.params.Mesh.nx, self.params.Mesh.nSlices))
         if slice_number is not None:
             res = res[:, :, slice_number]
         return res

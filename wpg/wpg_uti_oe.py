@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import pylab as plt
+import matplotlib.pyplot as plt
 
 __author__ = 'A. Buzmakov, L. Samoylova'
 

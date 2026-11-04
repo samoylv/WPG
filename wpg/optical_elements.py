@@ -77,7 +77,7 @@ class Screen(Empty):
         if filename is None:
             filename="screen.h5"
         # Check type.
-        if not isinstance(filename, (str, unicode)):
+        if not isinstance(filename, str):
             raise TypeError('The parameter "filename" must be str, received %s.' % (type(filename)))
         # Check if parent dir exists.
         filename = os.path.abspath(filename)
@@ -702,7 +702,7 @@ def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., lengt
     heightProfData[0, :] = heightProfData[0, :] * xscale
 
     if bPlot:
-        import pylab as plt
+        import matplotlib.pyplot as plt
         plt.figure()
         plt.plot(heightProfData[0, :]*1e3, heightProfData[1, :]*scale*1.e9)
         plt.xlim([(-length+x0)*0.5e3,(length-x0)*0.5e3])
@@ -785,7 +785,10 @@ def create_CRL(directory, voids_params,
     if not isinstance(voids_params, tuple):
         raise TypeError('Voids_params must be tuple')
 
-    file_name = '_'.join([str(a) for a in args[:-1]])
+    # file name from the CRL parameters (``args`` was undefined here)
+    args = [_foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n,
+            _wall_thick, _xc, _yc, _void_cen_rad, _e_start, _e_fin, _nx, _ny]
+    file_name = '_'.join([str(a) for a in args])
     subdir_name = '_'.join([str(v) for v in voids_params])
     if directory is None:
         full_path = os.path.join(subdir_name, file_name + '.pkl')

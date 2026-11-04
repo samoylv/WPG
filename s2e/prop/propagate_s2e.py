@@ -246,7 +246,7 @@ def propagate_wrapper(params):
     return propagate(in_fname, out_fname, get_beamline)
 
 def directory_process(in_dname, out_dname, get_beamline, cpu_number):
-    """
+    r"""
     Process directory with in_dname\FELsource_out*.h5 files and store it after propagation in out_dname\prop_out*.h5 files
 
     :param in_dname: input directory name
@@ -314,7 +314,7 @@ def main():
         print('Batch propagation finished')
 
     elif options.in_fname and options.out_fname:
-        print('Input file {}, output file {}'.format(options.in_fname, options.out_fname, get_beamline))
+        print('Input file {}, output file {}'.format(options.in_fname, options.out_fname))
         propagate(options.in_fname, options.out_fname, get_beamline)
 
 if __name__ == '__main__':

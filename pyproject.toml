@@ -43,9 +43,12 @@ addopts = "-v -m 'not notebooks'"
 
 [tool.ruff]
 target-version = "py310"
-extend-exclude = ["samples", "docs", "beamlines", "unittest_", "updates", "Docker"]
+extend-exclude = ["samples", "docs", "beamlines", "unittest_", "updates", "Docker", "s2e/prop/notebook_for_dev"]
 
 [tool.ruff.lint]
-# F: pyflakes (undefined names, unused imports), E9: syntax errors,
-# NPY201: NumPy 2 incompatibilities, UP: outdated Python constructs
-select = ["F", "E9", "NPY201", "UP"]
+# Bug classes only, no style rules (keeps the diff with colleagues' branches small):
+# F: pyflakes (undefined names, ...), E9: syntax errors, W605: invalid escape sequences,
+# NPY201: NumPy 2 incompatibilities
+select = ["F", "E9", "W605", "NPY201"]
+# unused imports and variables in old code are harmless
+ignore = ["F401", "F841"]
