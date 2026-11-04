@@ -112,12 +112,16 @@ class Beamline(object):
 
         # self.srwl_beamline.arOpt.append(optical_element)
         # self.srwl_beamline.arProp.append(propagation_parameters)
-    def propagate(self, wfr):
+    def propagate(self, wfr, gpu=None):
         """
         Propagate wavefront through beamline.
 
         :param wfr: Input wavefront (will be re-writed after propagation)
         :type wfr: wpg.wavefront.Wavefront
+        :param gpu: number of the GPU device (1 - first GPU) to propagate on,
+            None - propagate on CPU. Requires srwpy built with CUDA
+            (``make srw SRW_MODE=cuda``), otherwise SRW propagates on CPU.
+        :type gpu: int or None
         """
         for propagation_option in self.propagation_options:
             if all([isinstance(o, srwlib.SRWLOpt) for o in propagation_option['optical_elements']]):
@@ -125,7 +129,10 @@ class Beamline(object):
                     propagation_option['optical_elements'],
                     propagation_option['propagation_parameters'])
                 
-                srwl.PropagElecField(wfr._srwl_wf, srwl_beamline)
+                if gpu is None:
+                    srwl.PropagElecField(wfr._srwl_wf, srwl_beamline)
+                else:
+                    srwl.PropagElecField(wfr._srwl_wf, srwl_beamline, None, int(gpu))
 
                 # fixing wf._srwl_wf.mesh.zStart bug for Drift
                 # TODO: Try to fix it with _treat parameter

@@ -363,13 +363,14 @@ def plot_intensity_qmap(wf, output_file=None, save='',
     return
 
 
-def propagate_wavefront(wavefront, beamline, output_file=None):
+def propagate_wavefront(wavefront, beamline, output_file=None, gpu=None):
     """
     Propagate wavefront and store it in output file.
 
     :param wavefront: wpg.Wavefront object or path to HDF5 file
     :param beamline: SRWLOptC container of beamline
     :param output_file: if parameter present - store propagaed wavefront to file
+    :param gpu: number of the GPU device (1 - first GPU), None - CPU, see Beamline.propagate
     :return: propagated wavefront object
     """
 
@@ -388,7 +389,7 @@ def propagate_wavefront(wavefront, beamline, output_file=None):
 
     print_mesh(wfr)
     print('*****propagating wavefront (with resizing)...')
-    bl.propagate(wfr)
+    bl.propagate(wfr, gpu=gpu)
 
     if output_file is not None:
         print('save hdf5:', output_file)

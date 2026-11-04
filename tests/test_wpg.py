@@ -116,3 +116,21 @@ def test_hdf5_tree(tmp_path, capsys):
     assert len(tree) > 0
     print_hdf5(path)
     assert capsys.readouterr().out
+
+
+def test_gpu_option():
+    """gpu=1 gives the same intensity as CPU (with srwpy without CUDA SRW falls back to CPU)."""
+    from wpg.beamline import Beamline
+    from wpg.optical_elements import Drift, Use_PP
+    from srwpy.srwlib import srwl
+
+    res = []
+    for gpu in (None, 1):
+        wf = _gauss_wavefront(nx=200, nz=3)
+        b = Beamline()
+        b.append(Drift(5), Use_PP())
+        srwl.SetRepresElecField(wf._srwl_wf, 'f')
+        b.propagate(wf, gpu=gpu)
+        srwl.SetRepresElecField(wf._srwl_wf, 't')
+        res.append(wf.get_intensity())
+    np.testing.assert_allclose(res[1], res[0], rtol=0, atol=1e-4 * res[0].max())
