@@ -80,7 +80,7 @@ def sase_pulse(x=None, y=None, t=None, photon_energy=10e3, pulse_energy=1e-03,
     :param photon_energy: Photon energy in eV [float or list/array, default=10e3]
     :param pulse_energy: Pulse energy in J [float or list/array, default=1e-03]
     :param pulse_duration: Pulse duration in seconds [float or list/array, default=15e-15]
-    :param bandwidth: Bandwidth in eV [float or list/array, default=1e-12]
+    :param bandwidth: relative bandwidth, fraction of photon_energy (as in phenom) [float or list/array, default=1e-12]
     :param sigma: Beam size in meters [float or list/array, calculated if None]
     :param div: Beam divergence in radians [float or list/array, calculated if None]
     :param x0: Initial x position [float or list/array, default=0.0]
@@ -89,10 +89,18 @@ def sase_pulse(x=None, y=None, t=None, photon_energy=10e3, pulse_energy=1e-03,
     :param theta_x: Beam tilt angle in x [float or list/array, default=0.0]
     :param theta_y: Beam tilt angle in y [float or list/array, default=0.0]
     :param domain: Domain type ('freq' or 'time') [str, default='freq']
-    :param polarization: 'horizontal', 'vertical' or 'circular'
-    :return: List of electric fields of the SASE pulses [list of np.ndarray]
+    :param polarization: 'horizontal', 'vertical' or 'circular' (Ey = i*Ex, each component
+        with 1/2 of the pulse energy)
+    :return: wpg.Wavefront, or list of them if any parameter is a list/array
     """
-    
+    if x is None or y is None or t is None:
+        raise ValueError('sase_pulse needs the mesh: x, y and t coordinate arrays must be given')
+    if domain not in ('time', 'freq'):
+        raise ValueError("domain must be 'time' or 'freq', given: {!r}".format(domain))
+    if polarization not in ('horizontal', 'vertical', 'circular'):
+        raise ValueError("polarization must be 'horizontal', 'vertical' or 'circular', given: {!r}".format(
+            polarization))
+
     # Determine the maximum length of the input lists/arrays
     arg_lengths = [len(arg) if isinstance(arg, (list, np.ndarray)) else 1 for arg in 
                    [photon_energy, pulse_energy, pulse_duration, bandwidth, sigma, div, x0, y0, t0, theta_x, theta_y]]
@@ -136,28 +144,40 @@ def sase_pulse(x=None, y=None, t=None, photon_energy=10e3, pulse_energy=1e-03,
                     theta_y=theta_y[i],
                     domain=domain)
             
-        nx, ny, nt = efield.shape
+        # phenom builds the transverse field with np.meshgrid(x, y) (indexing 'xy'),
+        # so the array is (ny, nx, nt) -- the layout of WPG arrEhor/arrEver
+        ny, nx, nt = efield.shape
+        if (nx, ny, nt) != (len(x), len(y), len(t)):
+            raise ValueError('phenom field of shape {} does not match (len(y), len(x), len(t)) = {}'.format(
+                efield.shape, (len(y), len(x), len(t))))
+
+        # complex field -> WPG (Re, Im) arrays of both polarizations
+        if polarization == 'horizontal':
+            e_hor, e_ver = efield, np.zeros_like(efield)
+        elif polarization == 'vertical':
+            e_hor, e_ver = np.zeros_like(efield), efield
+        else:  # circular: Ey = i*Ex, total energy as for a linear polarization
+            e_hor, e_ver = efield / np.sqrt(2), 1j * efield / np.sqrt(2)
 
         wfr = Wavefront()
-
-        # Setup E-field.
-        wfr.data.arrEhor = np.zeros(shape=(nx, ny, nt, 2))
-        wfr.data.arrEver = np.zeros(shape=(nx, ny, nt, 2))
-
+        # domain flag and slice mesh in the units of the phenom field (no FFT here)
+        if domain == 'time':
+            wfr.params.wDomain = 'time'
+            slice_min, slice_max = np.min(t), np.max(t)
+        else:
+            # phenom (spectrum.linear_SASE_spectrum) puts the spectrum on
+            # E = linspace(E0 - 3*bw, E0 + 3*bw, nt), bw = E0*bandwidth
+            wfr.params.wDomain = 'frequency'
+            bw = photon_energy[i] * bandwidth[i]
+            slice_min, slice_max = photon_energy[i] - 3 * bw, photon_energy[i] + 3 * bw
         wfr.params.wEFieldUnit = 'sqrt(W/mm^2)'
         wfr.params.photonEnergy = photon_energy[i]
-        
+
         wfr.params.Mesh.nSlices = nt
         wfr.params.Mesh.nx = nx
-        wfr.params.Mesh.ny = ny      
-        
-        wfr.params.Mesh.sliceMin = np.min(t)
-        wfr.params.Mesh.sliceMax = np.max(t)
-        
-        wfr.params.wDomain = 'time'
-        
-        wfr.set_electric_field_representation('f')
-        
+        wfr.params.Mesh.ny = ny
+        wfr.params.Mesh.sliceMin = slice_min
+        wfr.params.Mesh.sliceMax = slice_max
         wfr.params.Mesh.xMin = np.min(x)
         wfr.params.Mesh.xMax = np.max(x)
         wfr.params.Mesh.yMin = np.min(y)
@@ -165,25 +185,11 @@ def sase_pulse(x=None, y=None, t=None, photon_energy=10e3, pulse_energy=1e-03,
 
         wfr.params.Rx = 1
         wfr.params.Ry = 1
-        
-        #convert complex wavefield into wpg style electric field array
-        arrE = np.zeros([efield.shape[0], efield.shape[1], efield.shape[2], 2])
-        
-        arrE[:,:,:,0] = efield.real
-        arrE[:,:,:,1] = efield.imag
-        
-        # polarization
-        if polarization == 'horizontal':
-            wfr.data.arrEhor = arrE
-            wfr.data.arrEver = np.zeros_like(arrE)
-        elif polarization == 'vertical':
-            wfr.data.arrEhor = None
-            wfr.data.arrEver = np.zeros_like(arrE)
-        elif polarization == 'circular':
-            wfr.data.arrEhor = arrE
-            wfr.data.arrEver = arrE
 
-        wavefronts.append(wfr)    
+        wfr.data.arrEhor = np.stack([e_hor.real, e_hor.imag], axis=-1)
+        wfr.data.arrEver = np.stack([e_ver.real, e_ver.imag], axis=-1)
+
+        wavefronts.append(wfr)
     
     if len(wavefronts) == 1:
         wavefronts = wavefronts[0]

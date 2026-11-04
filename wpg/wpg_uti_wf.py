@@ -69,7 +69,7 @@ def averaged_intensity(wf, bPlot=False):
     wrapper for integral_intensity() for backward compatibility
 
     """
-    integral_intensity(wf, bPlot)
+    return integral_intensity(wf, bPlot=bPlot)
 
 
 def integral_intensity(wf, threshold=0.01, bPlot=True):
@@ -98,7 +98,7 @@ def integral_intensity(wf, threshold=0.01, bPlot=True):
 
     # Get meaningful slices.
     aw = [a[0] for a in numpy.argwhere(int0 > int0max * threshold)]
-    int0_mean = int0[min(aw):max(aw)]  # meaningful range of pulse
+    int0_mean = int0[min(aw):max(aw) + 1]  # meaningful range of pulse
     if bPlot:
         if mesh.nSlices > 1:
             dSlice = (mesh.sliceMax - mesh.sliceMin) / (mesh.nSlices - 1)
@@ -106,7 +106,7 @@ def integral_intensity(wf, threshold=0.01, bPlot=True):
             dSlice = 0
         pylab.figure()
         pylab.plot(numpy.arange(mesh.nSlices) * dSlice + mesh.sliceMin, int0)
-        pylab.plot(numpy.arange(min(aw), max(aw)) *
+        pylab.plot(numpy.arange(min(aw), max(aw) + 1) *
                    dSlice + mesh.sliceMin, int0_mean, 'ro')
         if(wf.params.wDomain == 'time'):
             pylab.title('Power')
@@ -120,8 +120,8 @@ def integral_intensity(wf, threshold=0.01, bPlot=True):
         pylab.figure()
         pylab.plot(numpy.arange(mesh.nSlices) *
                    dSlice + mesh.sliceMin, int0_00)
-        pylab.plot(numpy.arange(min(aw), max(aw)) * dSlice +
-                   mesh.sliceMin, int0_00[min(aw):max(aw)], 'ro')
+        pylab.plot(numpy.arange(min(aw), max(aw) + 1) * dSlice +
+                   mesh.sliceMin, int0_00[min(aw):max(aw) + 1], 'ro')
         if(wf.params.wDomain == 'time'):
             pylab.title('On-Axis Power Density')
             pylab.xlabel('s')
@@ -133,7 +133,7 @@ def integral_intensity(wf, threshold=0.01, bPlot=True):
         pylab.show()
     averaged = int0_mean.sum() / len(int0_mean)
     print('number of meaningful slices:', len(int0_mean))
-    if(wf.params.wDomain == 'time'):
+    if(wf.params.wDomain == 'time') and mesh.nSlices > 1:
         dt = (mesh.sliceMax - mesh.sliceMin) / (mesh.nSlices - 1)
         print('Pulse energy {:1.2g} J'.format(int0_mean.sum() * dt))
     return averaged
@@ -179,7 +179,7 @@ def plot_intensity_map(wf, save='', range_x=None, range_y=None,
     nslices = wf.params.Mesh.nSlices
     if (nslices > 1):
         dt = (wf.params.Mesh.sliceMax - wf.params.Mesh.sliceMin) / (nslices - 1)
-        t0 = dt * nslices / 2 + wf.params.Mesh.sliceMin
+        t0 = (wf.params.Mesh.sliceMax + wf.params.Mesh.sliceMin) / 2
     else:
         t0 = (wf.params.Mesh.sliceMax + wf.params.Mesh.sliceMin) / 2
 
@@ -381,7 +381,8 @@ def propagate_wavefront(wavefront, beamline, output_file=None, gpu=None):
     print(bl)
 
     if isinstance(wavefront, Wavefront):
-        wfr = Wavefront(srwl_wavefront=wavefront._srwl_wf)
+        # copy: the caller's wavefront must not be propagated in place
+        wfr = Wavefront(srwl_wavefront=copy.deepcopy(wavefront._srwl_wf))
     else:
         print('*****reading wavefront from h5 file...')
         wfr = Wavefront()
@@ -403,18 +404,18 @@ def calculate_fwhm(wfr):
     Calculate FWHM of the beam calculating number of point bigger then max / 2 throuhgt center of the image
 
     :param wfr:  wavefront
-    :return: {'fwhm_x':fwhm_x, 'fwhm_y': fwhm_y} in [m]
+    :return: {'fwhm_x':fwhm_x, 'fwhm_y': fwhm_y} in [m] in R-space, in [rad] in Q-space
     """
 #    intens = wfr.get_intensity(polarization='total')
     intens = wfr.get_intensity(polarization='total').sum(axis=-1)
 
     mesh = wfr.params.Mesh
     if (wfr.params.wSpace == 'R-space'):
-        dx = (mesh.xMax - mesh.xMin) / mesh.nx
-        dy = (mesh.yMax - mesh.yMin) / mesh.ny
+        dx = (mesh.xMax - mesh.xMin) / (mesh.nx - 1)
+        dy = (mesh.yMax - mesh.yMin) / (mesh.ny - 1)
     elif (wfr.params.wSpace == 'Q-space'):
-        dx = (mesh.qxMax - mesh.qxMin) / mesh.nx
-        dy = (mesh.qyMax - mesh.qyMin) / mesh.ny
+        dx = (mesh.qxMax - mesh.qxMin) / (mesh.nx - 1)
+        dy = (mesh.qyMax - mesh.qyMin) / (mesh.ny - 1)
     else:
         return
 
@@ -440,14 +441,15 @@ def get_intensity_on_axis(wfr):
     :return: [z,s0] in [a.u.]
     """
 
-    wf_intensity = wfr.get_intensity(polarization='horizontal')
+    wf_intensity = wfr.get_intensity(polarization='total')
     mesh = wfr.params.Mesh
     # array dimensions # <-to avoid wrong dimension assignment
     dim = numpy.shape(wf_intensity)
     sz = numpy.zeros(shape=(mesh.nSlices, 2), dtype='float64')
     sz[:, 0] = numpy.linspace(mesh.sliceMin, mesh.sliceMax, mesh.nSlices)
     # <-to avoid wrong dimension assignment
-    sz[:, 1] = wf_intensity[dim[0] // 2, dim[1] // 2, :] / wf_intensity.max()
+    on_axis = wf_intensity[dim[0] // 2, dim[1] // 2, :]
+    sz[:, 1] = on_axis / on_axis.max()
 
     return sz
 
@@ -482,15 +484,15 @@ def check_sampling(wavefront):
     else:
         ret += 'Vertical Fresnel zone extension NOT within [7,10]*pixel_height -> Check pixel width."\n'
 
-    if Rx >= 3* fwhm_x:
+    if (xMax - xMin) >= 3 * fwhm_x:
         ret+= 'Horizontal ROI > 3* FWHM(x) -> OK\n'
     else:
         ret+= 'Horizontal ROI !> 3* FWHM(x) -> Increase ROI width (x).\n'
 
-    if Ry >= 3* fwhm_y:
-        ret+= 'Horizontal ROI > 3* FWHM(y) -> OK\n'
+    if (yMax - yMin) >= 3 * fwhm_y:
+        ret+= 'Vertical ROI > 3* FWHM(y) -> OK\n'
     else:
-        ret+= 'Horizontal ROI !> 3* FWHM(y) -> Increase ROI height (y).\n'
+        ret+= 'Vertical ROI !> 3* FWHM(y) -> Increase ROI height (y).\n'
 
     ret += 'Focus sampling: FWHM > 10*px\n\n'
 

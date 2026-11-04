@@ -14,23 +14,32 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
 
     :param nx: Number of point along x-axis
     :param ny: Number of point along y-axis
-    :param nz: Number of point along z-axis (slices)
+    :param nz: Number of point along z-axis (time slices); nz=1 gives a monochromatic
+        wavefront in frequency domain from build_gauss_wavefront_xy (with a warning)
     :param ekev: Energy in kEv
     :param xMin: Initial Horizontal Position [m]
     :param xMax: Final Horizontal Position [m]
     :param yMin: Initial Vertical Position [m]
     :param yMax: Final Vertical Position [m]
-    :param tau: Pulse duration [s]
-    :param sigX: Horiz. RMS size at Waist [m]
-    :param sigY:  Vert. RMS size at Waist [m]
+    :param tau: rms duration of the pulse intensity [s] (not FWHM)
+    :param sigX: Horiz. rms size of the intensity at Waist [m]
+    :param sigY:  Vert. rms size of the intensity at Waist [m]
     :param d2waist: Distance to Gaussian waist
-    :param pulseEn: Energy per Pulse [J]
+    :param pulseEn: Energy per Pulse [J], default 1 mJ
     :param pulseRange: pulse duration range in sigT's
     :param _mx: transverse Gauss-Hermite mode order in horizontal direction
     :param _my: transverse Gauss-Hermite mode order in vertical direction
-    :return: wpg.Wavefront structure
+    :return: SRWLWfr in time domain, electric field in sqrt(W/mm^2) (unitElFld = 2);
+        for nz=1 SRWLWfr in frequency domain (see build_gauss_wavefront_xy)
     """
-    # TODO: fix comment
+    if nz == 1:
+        # SRW CalcElecFieldGaussian with one time slice leaves mesh.eFin = NaN and gives the
+        # field at t = eStart; a single time slice even at t = 0 propagates to NaN in SRW 4.2.1.
+        warnings.warn('build_gauss_wavefront: nz=1 gives a monochromatic wavefront in frequency domain '
+                      '(build_gauss_wavefront_xy), SRW cannot build a single time slice', UserWarning)
+        return build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d2waist,
+                                        pulseEn=0.001 if pulseEn is None else pulseEn, pulseTau=tau,
+                                        _mx=_mx, _my=_my)
 
 
     GsnBm = srwlib.SRWLGsnBm()  # Gaussian Beam structure (just parameters)
@@ -62,7 +71,7 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
         GsnBm.mx = _mx 
     else:
         GsnBm.mx = 0  # Transverse Gauss-Hermite Mode Orders
-    if _mx is not None:
+    if _my is not None:
         GsnBm.my = _my 
     else:
         GsnBm.my = 0
@@ -105,6 +114,10 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
     arPrecPar = [sampFactNxNyForProp]
     #**********************Calculating Initial Wavefront
     srwl.CalcElecFieldGaussian(wfr, GsnBm, arPrecPar)
+    # The field in time domain is in sqrt(W/mm^2) (energy over x, y, t equals pulseEn).
+    # SRW keeps the default unitElFld = 1 (sqrt(Phot/s/0.1%bw/mm^2)) and uses it at the
+    # time -> frequency conversion: with 1 the spectrum comes out in photons/0.1%bw, with 2 in J/eV.
+    wfr.unitElFld = 2
 
     return wfr
 
@@ -164,7 +177,7 @@ def build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d
         GsnBm.mx = _mx 
     else:
         GsnBm.mx = 0  # Transverse Gauss-Hermite Mode Orders
-    if _mx is not None:
+    if _my is not None:
         GsnBm.my = _my 
     else:
         GsnBm.my = 0

@@ -8,7 +8,7 @@ from . import wavefront
 
 
 def get_limits2d(wf, axis):
-    m = wf.srwl_wfr.mesh
+    m = wf._srwl_wf.mesh
     if axis == 'z':
         return [m.xStart, m.xFin, m.yStart, m.yFin]
     elif axis == 'x':
@@ -63,19 +63,36 @@ def show_phase(data, slice_number=None, polarization=None, axis=None, extent=Non
 
 def show_2d_data(func, data, slice_number=None, axis=None, extent=None, cmap=None, vmin=None, vmax=None,
                  polarization=None):
+    """
+    Show a 2D slice of 3D data (ny, nx, nSlices) in the current axes.
+
+    axis='z' - x-y map of one slice; axis='x' - data[iy, :, :], rows along x, columns along slices;
+    axis='y' - data[:, ix, :], rows along y, columns along slices (see get_slice).
+    """
     if axis is None:
         axis = 'z'
+    slice_unit = 's'
 
     if type(data) is np.ndarray:
         if not len(data.shape) in [2, 3]:
             raise TypeError('Dimension of data must be 2 or 3, given dimension is {0}'.format(len(data.shape)))
         if len(data.shape) == 3:
             slice_data = get_slice(data, slice_number=slice_number, axis=axis)
+        else:
+            slice_data = data
     elif type(data) is wavefront.Wavefront:
         func_data = func(polarization=polarization)
         slice_data = get_slice(func_data, slice_number=slice_number, axis=axis)
         if extent is None:
-            extent = data.get_limits(axis=axis)
+            m = data.params.Mesh
+            if axis == 'z':
+                extent = data.get_limits(axis='z')
+            elif axis == 'x':  # rows of the slice along x
+                extent = [m.sliceMin, m.sliceMax, m.xMax, m.xMin]
+            else:  # rows of the slice along y
+                extent = [m.sliceMin, m.sliceMax, m.yMax, m.yMin]
+        if data.params.wDomain == 'frequency':
+            slice_unit = 'eV'
     else:
         raise TypeError(
             'Type of data must be numpy.ndarray or wavefront.Wavefront, given type is {0}'.format(type(data))
@@ -86,14 +103,9 @@ def show_2d_data(func, data, slice_number=None, axis=None, extent=None, cmap=Non
     if axis == 'z':
         plt.xlabel('m')
         plt.ylabel('m')
-    elif axis == 'y':
-        plt.xlabel('s')
-        plt.ylabel('m')
-    elif axis == 'y':
-        plt.xlabel('m')
-        plt.ylabel('s')
     else:
-        pass
+        plt.xlabel(slice_unit)
+        plt.ylabel('m')
 
     if not axis == 'z':
-        plt.axes().set_aspect('auto')
+        plt.gca().set_aspect('auto')

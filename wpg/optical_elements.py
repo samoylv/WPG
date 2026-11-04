@@ -51,8 +51,19 @@ class Empty(WPGOpticalElement):
         """
         Propagate wavefront through empty propagator,
         used for sampling and resizing wavefront
+
+        :param wfr: wpg.Wavefront
+        :param propagation_parameters: Use_PP, SRW propagation parameters list
+            or a list with one such list
         """
-        beamline = srwpy.srwlib.SRWLOptC([], propagation_parameters)
+        pp = propagation_parameters
+        if isinstance(pp, Use_PP):
+            pp = pp.get_srw_pp()
+        if not isinstance(pp[0], (list, tuple)):
+            pp = [pp]
+        # srwpy 4.2.1 rejects an empty SRWLOptC ("No objects were submitted for parsing"):
+        # resizing is done with a drift of zero length
+        beamline = srwpy.srwlib.SRWLOptC([Drift(0.)], [list(p) for p in pp])
         srwl.PropagElecField(wfr._srwl_wf, beamline)
 
 class Screen(Empty):
@@ -85,7 +96,7 @@ class Screen(Empty):
             raise IOError('%s is not a directory.' % (os.path.dirname(filename)))
         # Check if file exists. Don't overwrite.
         if os.path.isfile(filename):
-            raise IOError('%s already exists. Cowardly refusing to overwrite.')
+            raise IOError('%s already exists. Cowardly refusing to overwrite.' % filename)
 
         self.__filename = filename
 
@@ -94,6 +105,13 @@ class Screen(Empty):
 
         super(Screen, self).propagate(wfr, propagation_parameters)
         wfr.store_hdf5(self.__filename)
+
+
+def _check_switch(name, value):
+    """0/1 parameter of Use_PP: ValueError instead of silently keeping the old value."""
+    if value not in [0, 1]:
+        raise ValueError('{} must be 0 or 1, given: {!r}'.format(name, value))
+    return int(value)
 
 
 class Use_PP(object):
@@ -134,8 +152,10 @@ class Use_PP(object):
         self.pp = [0, 0, 1.0, 0, 0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0]
 
         if srw_pp is not None:
-            if isinstance(srw_pp, list) and (len(srw_pp) in [12, 17]):
-                self.pp = srw_pp
+            if not (isinstance(srw_pp, (list, tuple)) and (len(srw_pp) in [12, 17])):
+                raise ValueError('srw_pp must be a list or tuple of 12 or 17 SRW propagation parameters, '
+                                 'given: {!r}'.format(srw_pp))
+            self.pp = list(srw_pp)  # copy: zoom=... etc. must not change the caller's list
 
         if auto_resize_before is not None:
             self.auto_resize_before = auto_resize_before
@@ -177,8 +197,7 @@ class Use_PP(object):
 
     @auto_resize_before.setter
     def auto_resize_before(self, value):
-        if value in [0, 1]:
-            self.pp[0] = value
+        self.pp[0] = _check_switch('auto_resize_before', value)
 
     @property
     def auto_resize_after(self):
@@ -187,8 +206,7 @@ class Use_PP(object):
 
     @auto_resize_after.setter
     def auto_resize_after(self, value):
-        if value in [0, 1]:
-            self.pp[1] = value
+        self.pp[1] = _check_switch('auto_resize_after', value)
 
     @property
     def releative_precision(self):
@@ -201,13 +219,18 @@ class Use_PP(object):
 
     @property
     def semi_analytical_treatment(self):
-        """Allow (1) or not (0) for semi-analytical treatment of quadratic phase terms at propagation"""
+        """Treatment of the quadratic phase terms at propagation (SRW, cpp/src/core/sroptdrf.h,
+        ChooseLocalPropMode): 0 - standard (through angular representation), 1 and 2 - two variants
+        of the semi-analytical treatment of the quadratic phase, 3 - propagation from waist,
+        4 - propagation to waist, 5 - to waist beyond the paraxial approximation,
+        >= 100 - SRW test / benchmark modes"""
         return self.pp[3]
 
     @semi_analytical_treatment.setter
     def semi_analytical_treatment(self, value):
-        if value in [0, 1]:
-            self.pp[3] = value
+        if isinstance(value, str) or int(value) != value or not (0 <= value <= 5 or value >= 100):
+            raise ValueError('semi_analytical_treatment must be an integer 0..5 or >= 100, given: {!r}'.format(value))
+        self.pp[3] = int(value)
 
     @property
     def fft_resizing(self):
@@ -216,8 +239,7 @@ class Use_PP(object):
 
     @fft_resizing.setter
     def fft_resizing(self, value):
-        if value in [0, 1]:
-            self.pp[4] = value
+        self.pp[4] = _check_switch('fft_resizing', value)
 
     @property
     def zoom_h(self):
@@ -379,9 +401,10 @@ def Mirror_plane(orient, theta, length, range_xy, filename, scale=1, delim=' ', 
     :param range_xy: range in which the incident WF defined [m]
     :param filename: full file name with mirror profile of two columns, x and h(x) - heigh errors [m]
     :param scale: - height errors scale factor, optical path difference OPD = 2*h*scale*sin(theta)
-    :param delim: delimiter between data columns
+    :param delim: delimiter between data columns; ' ', '\\t' or None mean any whitespace
     :param xscale: scaling factor for the mirror profile x-axis (for taking an arbitrary scaled axis, i.e. im mm)
-    :param x0: shift of mirror longitudinal position [m]
+    :param x0: shift of mirror longitudinal position [m]: the profile point x = x0 (after xscale)
+        is placed at the beam axis, as in Mirror_plane_2d
     :return: opIPM  - imperfect plane mirror propagator
     """
     if orient == 'x':  # horizontal plane mirror
@@ -405,7 +428,12 @@ def Mirror_plane_2d(orient, theta, length, range_xy, filename, nx=1500, ny=100, 
     :param theta:   incidence angle [rad]
     :param length:  mirror length, [m]
     :param range_xy: range in which the incident WF defined [m]
-    :param filename: full file name with 2d mirror profile of three columns, x, y, and h(x, y) - height errors [m]
+    :param filename: full file name with 2d mirror profile of three columns, x, y, and h(x, y) - height errors [m];
+        x is the coordinate along the mirror, y across it
+    :param nx: number of points of the transmission mesh along the horizontal axis of the beam
+    :param ny: number of points of the transmission mesh along the vertical axis of the beam;
+        for orient='x' the mirror length goes along the horizontal axis (nx points),
+        for orient='y' along the vertical axis (ny points)
     :param scale: scale factor, optical path difference OPD = 2*h*scale*sin(theta)
     :param x0: shift of mirror longitudinal position [m]
     :param y0: shift of mirror transverse position [m]
@@ -456,8 +484,12 @@ def Mirror_plane_2d(orient, theta, length, range_xy, filename, nx=1500, ny=100, 
     else:
         raise TypeError('orient should be "x" or "y"')
 
-    # Create the mesh grid for x and y coordinates
-    xnew, ynew = np.mgrid[xmin:xmax:nx*1j, ymin:ymax:ny*1j]
+    # Mesh of the mirror coordinates (x along, y across the mirror) in the order of the SRW array
+    # arTr: shape (ny, nx) of the beam axes, horizontal index running fastest (ofst = 2*ix + 2*nx*iy)
+    if orient == 'x':  # mirror length along the horizontal beam axis
+        ynew, xnew = np.mgrid[ymin:ymax:ny*1j, xmin:xmax:nx*1j]
+    else:  # mirror length along the vertical beam axis
+        xnew, ynew = np.mgrid[xmin:xmax:ny*1j, ymin:ymax:nx*1j]
 
     # Perform 2D interpolation
     points = np.column_stack((x, y))
@@ -692,20 +724,23 @@ def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., lengt
     :params scale: scaling factor for the mirror profile
     :param xscale: scaling factor for the mirror profile x-axis (for taking an arbitrary scaled axis, i.e. im mm)
     :param length: mirror length, m, default value 1 m
+    :param x0: shift of mirror longitudinal position [m], subtracted from the profile coordinate
     :return: filled ``struct SRWLOptT``
     """
     from numpy import loadtxt
     # import SRW helpers functions
     from wpg.useful_code.srwutils import AuxTransmAddSurfHeightProfileScaled
 
-    heightProfData = loadtxt(mdatafile).T
-    heightProfData[0, :] = heightProfData[0, :] * xscale
+    # loadtxt(delimiter=' ') fails on several spaces / tabs in a row: whitespace -> None
+    delimiter = None if (delim is None or not delim.strip()) else delim
+    heightProfData = loadtxt(mdatafile, delimiter=delimiter).T
+    heightProfData[0, :] = heightProfData[0, :] * xscale - x0
 
     if bPlot:
         import matplotlib.pyplot as plt
         plt.figure()
         plt.plot(heightProfData[0, :]*1e3, heightProfData[1, :]*scale*1.e9)
-        plt.xlim([(-length+x0)*0.5e3,(length-x0)*0.5e3])
+        plt.xlim([-length*0.5e3, length*0.5e3])
         plt.xlabel('mm'); plt.ylabel('nm')
         plt.title('Height error profile {:s}'.format(mdatafile))
         plt.show()

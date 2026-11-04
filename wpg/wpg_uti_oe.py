@@ -69,21 +69,20 @@ def propagation_parameters(sx, zx, sy, zy, mode = "fresnel"):
     :param zx: horizontal zoom factor
     :param sy: vertical scaling factor
     :param zy: vertical zoom factor
-    :param mode: normal, semi-analytical, converge or diverge
-    
+    :param mode: treatment of the quadratic phase terms, SRW propagation parameter [3]
+        (cpp/src/core/sroptdrf.h, ChooseLocalPropMode), case-insensitive:
+        'fresnel' - 0, standard propagation through the angular representation;
+        'quadratic' - 1, semi-analytical treatment of the quadratic phase;
+        'fraunhofer' - 2, the second variant of the semi-analytical treatment of the quadratic
+        phase in SRW (not a far-field propagator, the name is kept for compatibility);
+        'diverge' - 3, propagation from waist; 'converge' - 4, propagation to waist
+
     :return propagation parameters:
     """
-    
-    if mode == "fresnel":
-        m = 0
-    elif mode == "quadratic":
-        m = 1
-    elif mode == "fraunhofer":
-        m = 2
-    elif mode == "diverge":
-        m = 3
-    elif mode == "converge":
-        m = 4
-    
+    modes = {"fresnel": 0, "quadratic": 1, "fraunhofer": 2, "diverge": 3, "converge": 4}
+    if str(mode).lower() not in modes:
+        raise ValueError('mode must be one of {}, given: {!r}'.format(list(modes), mode))
+    m = modes[str(mode).lower()]
+
     return [0,0,1,m,0,sx,zx/sx,sy,zy/sy,0,0,0]
 
