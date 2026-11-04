@@ -18,6 +18,7 @@ Contents:
    optical_elements
    materials
    surface
+   sampling
    generators
    wpg_uti_wf
    wpg_uti_oe

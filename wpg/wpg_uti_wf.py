@@ -419,13 +419,14 @@ def calculate_fwhm(wfr):
     else:
         return
 
-    x_center = intens[intens.shape[0] // 2, :]
+    # row and column through the maximum (the centre of the array missed an off-axis beam)
+    iy, ix = numpy.unravel_index(numpy.argmax(intens), intens.shape)
+    x_center = intens[iy, :]
     fwhm_x = len(x_center[x_center > x_center.max() / 2]) * dx
 
-    y_center = intens[:, intens.shape[1] // 2]
+    y_center = intens[:, ix]
     fwhm_y = len(y_center[y_center > y_center.max() / 2]) * dy
     if (wfr.params.wSpace == 'Q-space'):
-        print(wfr.params.wSpace)
         wl = 12.398 * 1e-10 / (wfr.params.photonEnergy * 1e-3)  # WaveLength
         fwhm_x = fwhm_x * wl
         fwhm_y = fwhm_y * wl
@@ -454,50 +455,14 @@ def get_intensity_on_axis(wfr):
     return sz
 
 def check_sampling(wavefront):
-    """ Utility to check the wavefront sampling. """
-    xMin = wavefront.params.Mesh.xMin;xMax = wavefront.params.Mesh.xMax;nx = wavefront.params.Mesh.nx
-    yMin = wavefront.params.Mesh.yMin;yMax = wavefront.params.Mesh.yMax;ny = wavefront.params.Mesh.ny
-    dx = (xMax-xMin)/(nx-1); dy = (yMax-yMin)/(ny-1)
-    xx=calculate_fwhm(wavefront); fwhm_x = xx[u'fwhm_x']; fwhm_y = xx[u'fwhm_y']
-    Rx =  wavefront.params.Rx; Ry =  wavefront.params.Ry
-    ekev = wavefront.params.photonEnergy*1e-3
-    dr_ext_x = 12.39e-10/ekev*Rx/(2*fwhm_x)
-    dr_ext_y = 12.39e-10/ekev*Ry/(2*fwhm_y)
+    """
+    Report on the sampling of a wavefront (text), see :func:`wpg.sampling.check_sampling`.
 
-    format_string = '|{:4.3e}|{:4.3e}|{:4.3e}|{:4.3e}|{:4.3e}|{:4.3e}|{:4.3e}|'
-
-    ret = 'WAVEFRONT SAMPLING REPORT\n'
-    ret += '+----------+---------+---------+---------+---------+---------+---------+---------+\n'
-    ret += '|x/y       |FWHM     |px       |ROI      |R        |Fzone    |px*7     |px*10    |\n'
-    ret += '+----------+---------+---------+---------+---------+---------+---------+---------+\n'
-    ret += "|Horizontal"+format_string.format(fwhm_x,dx,(xMax-xMin),Rx,dr_ext_x,dx*7,dx*10) + '\n'
-    ret+= "|Vertical  "+format_string.format(fwhm_y,dy,(yMax-yMin),Ry,dr_ext_y,dy*7,dy*10) + '\n'
-    ret += '+----------+---------+---------+---------+---------+---------+---------+---------+\n\n'
-
-    if 7*dx < dr_ext_x and 10*dx > dr_ext_x:
-        ret += 'Horizontal Fresnel zone extension within [7,10]*pixel_width -> OK\n'
-    else:
-        ret += 'Horizontal Fresnel zone extension NOT within [7,10]*pixel_width -> Check pixel width."\n'
-
-    if 7*dy < dr_ext_y and 10*dy > dr_ext_y:
-        ret += 'Vertical Fresnel zone extension within [7,10]*pixel_height -> OK\n'
-    else:
-        ret += 'Vertical Fresnel zone extension NOT within [7,10]*pixel_height -> Check pixel width."\n'
-
-    if (xMax - xMin) >= 3 * fwhm_x:
-        ret+= 'Horizontal ROI > 3* FWHM(x) -> OK\n'
-    else:
-        ret+= 'Horizontal ROI !> 3* FWHM(x) -> Increase ROI width (x).\n'
-
-    if (yMax - yMin) >= 3 * fwhm_y:
-        ret+= 'Vertical ROI > 3* FWHM(y) -> OK\n'
-    else:
-        ret+= 'Vertical ROI !> 3* FWHM(y) -> Increase ROI height (y).\n'
-
-    ret += 'Focus sampling: FWHM > 10*px\n\n'
-
-    ret += 'END OF REPORT'
-
-    return ret
+    The former criterion (Fresnel zone lambda*R/(2*FWHM) within 7-10 pixels) gave false alarms: a
+    negative R of a converging beam never passed, R of SRW near the waist is the distance to it, and
+    oversampling was reported as an error. The phase step between neighbouring pixels is measured now.
+    """
+    from wpg.sampling import check_sampling as _check
+    return _check(wavefront)
 
     
