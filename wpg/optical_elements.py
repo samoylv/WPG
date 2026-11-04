@@ -100,11 +100,20 @@ class Screen(Empty):
 
         self.__filename = filename
 
+    @property
+    def filename(self):
+        """Name of the file the wavefront is stored to."""
+        return self.__filename
+
+    def store(self, wfr):
+        """Store the wavefront to the file of the screen (Beamline calls it after the resizing)."""
+        wfr.store_hdf5(self.__filename)
+
     def propagate(self, wfr, propagation_parameters):
         """ Overloaded propagation for this element. """
 
         super(Screen, self).propagate(wfr, propagation_parameters)
-        wfr.store_hdf5(self.__filename)
+        self.store(wfr)
 
 
 def _check_switch(name, value):

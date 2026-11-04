@@ -321,3 +321,116 @@ def test_get_limits_silent(capsys):
     wf.get_limits()
     assert capsys.readouterr().out == ''
 
+
+# ------------------------------------------- Beamline: Screen, unknown elements, nested drifts
+
+def test_beamline_screen_stores_wavefront(tmp_path):
+    """Screen in a Beamline was dropped: its resizing was applied, the file was not written."""
+    import wpg
+    from wpg.optical_elements import Drift, Screen, Use_PP
+    fn = tmp_path / 'screen.h5'
+    wf = _wf(nx=64, nz=3)
+    bl = wpg.Beamline()
+    bl.append(Drift(5.), Use_PP())
+    bl.append(Screen(str(fn)), Use_PP(zoom=2.))
+    bl.append(Drift(5.), Use_PP())
+    assert 'Screen' in str(bl)
+    bl.propagate(wf)
+    assert fn.is_file()
+    stored = wpg.Wavefront()
+    stored.load_hdf5(str(fn))
+    assert stored.params.Mesh.zCoord == pytest.approx(D2WAIST + 5.)  # stored before the 2nd drift
+    assert stored.params.Mesh.nx == 128  # after the resizing of the Screen
+    assert wf.params.Mesh.zCoord == pytest.approx(D2WAIST + 10.)
+
+
+def test_beamline_crop_removes_screen(tmp_path):
+    """crop_beamline after the element before a Screen removes the Screen with its resizing."""
+    import wpg
+    from wpg.optical_elements import Drift, Screen, Use_PP
+    d1 = Drift(5.)
+    d1.name = 'd1'
+    bl = wpg.Beamline()
+    bl.append(d1, Use_PP())
+    bl.append(Screen(str(tmp_path / 'screen.h5')), Use_PP(zoom=2.))
+    bl.crop_beamline('d1')
+    assert 'screen' not in bl.propagation_options[0]
+    bl.propagate(_wf(nx=64, nz=3))
+    assert not (tmp_path / 'screen.h5').exists()
+
+
+@pytest.mark.parametrize('element', [None, 'drift', object(), [1]])
+def test_beamline_rejects_unknown_element(element):
+    """An element that is neither SRWLOpt nor Empty was dropped silently with its parameters."""
+    import wpg
+    from wpg.optical_elements import Use_PP
+    bl = wpg.Beamline()
+    with pytest.raises(TypeError, match='Optical element'):
+        bl.append(element, Use_PP())
+    assert bl.propagation_options == [{'optical_elements': [], 'propagation_parameters': []}]
+
+
+def test_beamline_empty_list_is_resizing():
+    """[] is still accepted as a resizing element (old form of Empty)."""
+    import wpg
+    from wpg.optical_elements import Drift, Use_PP
+    bl = wpg.Beamline()
+    bl.append(Drift(1.), Use_PP())
+    bl.append([], Use_PP(zoom=2.))
+    assert len(bl.propagation_options[0]['propagation_parameters']) == 2
+
+
+def test_beamline_nested_container_drift_zcoord():
+    """A drift inside a nested SRWLOptC propagated the field but did not shift zCoord."""
+    import wpg
+    from srwpy import srwlib
+    from wpg.optical_elements import Drift, Use_PP
+    pp = Use_PP().get_srw_pp()
+    inner = srwlib.SRWLOptC([Drift(2.), srwlib.SRWLOptC([Drift(3.)], [pp])], [pp, pp])
+    from srwpy.srwlib import srwl
+    wf_nested, wf_flat = _wf(nx=64, nz=3), _wf(nx=64, nz=3)
+    for w in (wf_nested, wf_flat):
+        srwl.SetRepresElecField(w._srwl_wf, 'f')
+    bl = wpg.Beamline()
+    bl.append(inner, Use_PP())
+    bl.propagate(wf_nested)
+    bl = wpg.Beamline()
+    bl.append(Drift(5.), Use_PP())
+    bl.propagate(wf_flat)
+    assert wf_nested.params.Mesh.zCoord == pytest.approx(D2WAIST + 5.)
+    np.testing.assert_allclose(wf_nested.get_intensity(), wf_flat.get_intensity(),
+                               rtol=0, atol=1e-6 * wf_flat.get_intensity().max())
+
+
+def test_drift_length_interferometer():
+    """SRWLOptI: zCoord follows the branch the recombined mesh is taken from, warning if they differ."""
+    from srwpy import srwlib
+    from wpg.beamline import _drift_length
+    from wpg.optical_elements import Drift, Use_PP
+    if not hasattr(srwlib, 'SRWLOptI'):
+        pytest.skip('SRWLOptI is absent in this srwpy')
+    pp = Use_PP().get_srw_pp()
+    br = [srwlib.SRWLOptC([Drift(2.)], [pp]), srwlib.SRWLOptC([Drift(3.)], [pp])]
+    with pytest.warns(UserWarning, match='branches differ'):
+        assert _drift_length(srwlib.SRWLOptI(br, [1, 1, 1])) == 3.
+    same = [srwlib.SRWLOptC([Drift(2.)], [pp]), srwlib.SRWLOptC([Drift(2.)], [pp])]
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        assert _drift_length(srwlib.SRWLOptI(same, [0, 1, 1])) == 2.
+
+
+def test_beamline_warns_time_domain():
+    """Propagation in the time domain gives noise in SRW: Beamline.propagate warns."""
+    import wpg
+    from srwpy.srwlib import srwl
+    from wpg.optical_elements import Drift, Use_PP
+    bl = wpg.Beamline()
+    bl.append(Drift(5.), Use_PP())
+    wf = _wf(nx=32, nz=3)
+    with pytest.warns(UserWarning, match='time domain'):
+        bl.propagate(wf)
+    wf = _wf(nx=32, nz=3)
+    srwl.SetRepresElecField(wf._srwl_wf, 'f')
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', UserWarning)
+        bl.propagate(wf)

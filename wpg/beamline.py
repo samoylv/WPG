@@ -8,6 +8,8 @@ This module contains  wrapper for SRWLOptC (optical container) and propagation p
 
 .. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
 """
+import warnings
+
 from srwpy import srwlib
 from srwpy.srwlib import srwl
 from wpg.utils import srw_obj2str
@@ -57,7 +59,7 @@ class Beamline(object):
                 try:
                     elem = po['optical_elements'][ti]
                 except IndexError:
-                    elem = wpg.optical_elements.Empty()
+                    elem = po.get('screen') or wpg.optical_elements.Empty()
 
                 try:
                     pp = po['propagation_parameters'][ti]
@@ -96,18 +98,25 @@ class Beamline(object):
         if isinstance(optical_element, srwlib.SRWLOpt):
             opt = optical_element
             pp = _get_srw_pp(propagation_parameters)
+            _drift_length(opt)  # warns about interferometer branches of different length
 
             last_pp_opt['optical_elements'].append(opt)
             last_pp_opt['propagation_parameters'].append(pp)
 
-        # support resizing element
-        if optical_element == [] or isinstance(optical_element, wpg.optical_elements.Empty):
+        # support resizing element: its propagation parameters close the group
+        # (SRW applies them as resizing after the last element), Screen also stores the wavefront
+        elif isinstance(optical_element, wpg.optical_elements.Empty) or \
+                (isinstance(optical_element, list) and not optical_element):
             pp = _get_srw_pp(propagation_parameters)
 
             last_pp_opt['propagation_parameters'].append(pp)
+            if isinstance(optical_element, wpg.optical_elements.Screen):
+                last_pp_opt['screen'] = optical_element
 
-        # self.srwl_beamline.arOpt.append(optical_element)
-        # self.srwl_beamline.arProp.append(propagation_parameters)
+        else:
+            raise TypeError(
+                'Optical element should be an SRW optical element (SRWLOpt), wpg Empty or Screen, '
+                'received {}'.format(type(optical_element)))
     def propagate(self, wfr, gpu=None):
         """
         Propagate wavefront through beamline.
@@ -123,6 +132,11 @@ class Beamline(object):
             the drift length is ignored (see tests/test_wpg.py::test_gpu_option).
         :type gpu: int or None
         """
+        if wfr.params.wDomain == 'time':
+            # SRW propagates every slice as a photon energy: in the time domain the result is noise
+            # (5 keV gaussian, 20 slices, drift 5 m: RMS size 875 um instead of 452 um)
+            warnings.warn('Wavefront is in the time domain: SRW propagates only in the frequency '
+                          "domain, call srwl.SetRepresElecField(wfr._srwl_wf, 'f') before propagation")
         for propagation_option in self.propagation_options:
             if all([isinstance(o, srwlib.SRWLOpt) for o in propagation_option['optical_elements']]):
                 optical_elements = propagation_option['optical_elements']
@@ -140,12 +154,15 @@ class Beamline(object):
                 else:
                     srwl.PropagElecField(wfr._srwl_wf, srwl_beamline, None, int(gpu))
 
-                # fixing wf._srwl_wf.mesh.zStart bug for Drift
+                # fixing wf._srwl_wf.mesh.zStart bug for Drift (also inside nested containers)
                 # TODO: Try to fix it with _treat parameter
                 for opt_element in propagation_option['optical_elements']:
-                    if isinstance(opt_element, srwlib.SRWLOptD):
-                        wfr.params.Mesh.zCoord = wfr.params.Mesh.zCoord + \
-                            opt_element.L
+                    wfr.params.Mesh.zCoord = wfr.params.Mesh.zCoord + \
+                        _drift_length(opt_element, warn=False)
+
+                screen = propagation_option.get('screen')
+                if screen is not None:
+                    screen.store(wfr)
             else:
                 raise ValueError('Unknown type of propagators')
 
@@ -231,7 +248,32 @@ class Beamline(object):
         option = self.propagation_options[group]
         option['optical_elements'] = option['optical_elements'][:number + 1]
         option['propagation_parameters'] = option['propagation_parameters'][:number + 1]
+        option.pop('screen', None)  # the resizing of the Screen after element1 is removed
         del self.propagation_options[group + 1:]
+
+
+def _drift_length(element, warn=True):
+    """
+    Total length of drifts in an SRW optical element, including nested containers.
+
+    SRW does not change mesh.zStart at a drift, Beamline adds this length to zCoord.
+    For an interferometer (SRWLOptI) the length of the branch whose mesh SRW takes at the
+    recombination (arPar[0]) is used.
+
+    :param warn: warn if branches of an interferometer have different drift lengths
+    """
+    if isinstance(element, srwlib.SRWLOptD):
+        return element.L
+    if isinstance(element, srwlib.SRWLOptC):
+        return sum(_drift_length(e, warn) for e in element.arOpt)
+    opt_i = getattr(srwlib, 'SRWLOptI', None)  # interferometer, SRW after 4.2.1
+    if opt_i is not None and isinstance(element, opt_i) and element.arOptC:
+        lengths = [_drift_length(c, warn) for c in element.arOptC]
+        if warn and max(lengths) - min(lengths) > 1e-9 * max(1., max(abs(v) for v in lengths)):
+            warnings.warn('Drift lengths of interferometer branches differ ({}), zCoord is '
+                          'shifted by the length of branch {}'.format(lengths, element.arPar[0]))
+        return lengths[element.arPar[0]]
+    return 0.
 
 
 def _check_srw_pp(pp):
