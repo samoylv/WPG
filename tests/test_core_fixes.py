@@ -127,7 +127,10 @@ def test_time_profile_of_frequency_domain_wavefront():
     # shapes are compared: SRW 4.2.1 round trip time -> frequency -> time multiplies the intensity
     # by (nSlices / (nSlices - 1))**2 = 1.1025 for 21 slices
     np.testing.assert_allclose(p_f / p_f.max(), p_t / p_t.max(), rtol=0, atol=1e-3)
-    np.testing.assert_allclose(wf_f.get_axis('t'), wf_t.get_axis('t'), rtol=1e-6)
+    # the central time is 0 in one domain and about 1e-31 s after the round trip on Linux (rounding),
+    # so the absolute tolerance is a millionth of the axis step
+    t = wf_t.get_axis('t')
+    np.testing.assert_allclose(wf_f.get_axis('t'), t, rtol=1e-6, atol=1e-6 * (t[1] - t[0]))
 
 
 # ------------------------------------------------------------- 4, 5. gaussian fit
