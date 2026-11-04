@@ -106,7 +106,10 @@ samples/Tutorials/*.test.ipynb
 samples/Tutorials/*.test.html
 samples/Tutorials/Tutorial_case_1/*.eps
 
-# SRW stuff
-Makefile
-wpg/srw/__srwl_logs__/
-wpg/srw/data_example_01
+# SRW built from sources by build/build_srw.py
+build/SRW/
+build/srw_build_info.json
+
+# test outputs
+tests/tests_data/
+.ruff_cache/

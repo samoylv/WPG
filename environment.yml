@@ -1,22 +1,21 @@
+# conda env create -n wpg -f environment.yml
+# conda activate wpg
+# python -m pip install --no-deps -e .
 channels:
-    - default
     - conda-forge
 dependencies:
-    # - nomkl
+    - python>=3.10
+    - srwpy>=4.2
     - numpy
     - scipy
     - matplotlib
-    - h5py
+    - h5py>=3
     - pytest
     - jupyter
-    - srwpy
-    # - libgcc
-    - mock
+    - nbformat
+    - nbconvert
     - sphinx
-    - python
-    - pytest-profiling
-    - autopep8
-    - requests
+    - ruff
     - pip
     - pip:
         - --no-deps phenom-xfel

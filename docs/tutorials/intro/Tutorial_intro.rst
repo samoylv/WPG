@@ -40,7 +40,7 @@ Import modules
     
     
     #import SRW core functions
-    from wpg.srwlib import srwl,SRWLOptD,SRWLOptA,SRWLOptC,SRWLOptT,SRWLOptL
+    from srwpy.srwlib import srwl,SRWLOptD,SRWLOptA,SRWLOptC,SRWLOptT,SRWLOptL
     
     #import SRW helpers functions
     from wpg.useful_code.srwutils import AuxTransmAddSurfHeightProfileScaled

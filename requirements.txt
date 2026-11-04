@@ -1,18 +1,14 @@
-# Requirements file for WPG.
-# Use with pip3: pip3 install [--user] -r requirements.txt
-# For conda, use the environment file: conda create env -n wpg --file environment.yml
+# Requirements file for WPG, the same as dependencies in pyproject.toml.
+# Prefer: python -m pip install -e .[test]
+# For conda use environment.yml
 
-numpy >= 1.9
+srwpy>=4.2
+numpy
 scipy
+h5py>=3
 matplotlib
-h5py
 pytest
-jupyter
-mock
-sphinx
-python >= 3.6.10
-pytest
-pytest-profiling
-autopep8
-requests
+nbformat
+nbconvert
+ipykernel
 phenom-xfel

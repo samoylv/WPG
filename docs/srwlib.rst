@@ -1,7 +1,7 @@
-:mod:`wpg.srwlib` module
-----------------------------------
+:mod:`srwpy.srwlib` module
+-----------------------------------
 
-.. automodule:: wpg.srw.srwlib
+.. automodule:: srwpy.srwlib
     :members:
     :undoc-members:
     :show-inheritance:

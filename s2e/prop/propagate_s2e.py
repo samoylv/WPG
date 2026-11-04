@@ -9,6 +9,7 @@ import multiprocessing
 import numpy
 import os
 import wpg
+import srwpy.srwlib
 
 MIRROR_DATA_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data_common/')
 
@@ -117,7 +118,7 @@ def propagate(in_fname, out_fname, get_beamline):
     bl0 = get_beamline()
 
     # Switch to frequency domain.
-    wpg.srwlib.srwl.SetRepresElecField(wf._srwl_wf, 'f')
+    srwpy.srwlib.srwl.SetRepresElecField(wf._srwl_wf, 'f')
 
     # Save spectrum for later reference.
     sz0 = get_intensity_on_axis(wf);
@@ -131,10 +132,10 @@ def propagate(in_fname, out_fname, get_beamline):
     wf.custom_fields['/misc/spectrum1'] = sz1
 
     # Switch back to time domain.
-    wpg.srwlib.srwl.SetRepresElecField(wf._srwl_wf, 't')
+    srwpy.srwlib.srwl.SetRepresElecField(wf._srwl_wf, 't')
 
     #Resizing: decreasing Range of Horizontal and Vertical Position:
-    wpg.srwlib.srwl.ResizeElecField(wf._srwl_wf, 'c', [0, 0.5, 1, 0.5,  1]);
+    srwpy.srwlib.srwl.ResizeElecField(wf._srwl_wf, 'c', [0, 0.5, 1, 0.5,  1]);
 
     add_custom_data(wf, bl0)
 
@@ -189,7 +190,7 @@ def stepwise(in_fname, get_beamline):
         beamline_step.append(element, option) ### <== CHECKME
 
         # Switch to frequency domain.
-        wpg.srwlib.srwl.SetRepresElecField(wf._srwl_wf, 'f')
+        srwpy.srwlib.srwl.SetRepresElecField(wf._srwl_wf, 'f')
 
         # Save spectrum for later reference.
         sz0 = get_intensity_on_axis(wf);
@@ -203,7 +204,7 @@ def stepwise(in_fname, get_beamline):
         wf.custom_fields['/misc/spectrum1'] = sz1
 
         # Switch back to time domain.
-        wpg.srwlib.srwl.SetRepresElecField(wf._srwl_wf, 't')
+        srwpy.srwlib.srwl.SetRepresElecField(wf._srwl_wf, 't')
 
         incremental_filename = "%04d.h5" % (i)
         print('Saving propagated wavefront to ' + incremental_filename)
@@ -299,8 +300,10 @@ def main():
         parser.error('Beamline description file specified, use --beamline-file option')
         return
     else:
-        import imp
-        custom_beamline = imp.load_source('custom_beamline', options.beamline_file)
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('custom_beamline', options.beamline_file)
+        custom_beamline = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(custom_beamline)
         get_beamline = custom_beamline.get_beamline
 
     if options.in_dname and options.out_dname:

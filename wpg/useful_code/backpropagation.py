@@ -354,8 +354,6 @@ def forward_propagate(root_dir, distance, propagation_parameters):
     wf_L0.params.Mesh.sliceMin = -(tmax-tmin)/2
     wf_L0.params.Mesh.sliceMax =  (tmax-tmin)/2
 
-    # wpg.srwlib.srwl.ResizeElecField(wf_L0._srwl_wf, 't',[0,3.,1.])
-
     srwpy.srwlib.srwl.SetRepresElecField(wf_L0._srwl_wf, 'f')
     bl0.propagate(wf_L0)
     srwpy.srwlib.srwl.SetRepresElecField(wf_L0._srwl_wf, 't')

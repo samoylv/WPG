@@ -47,7 +47,7 @@ Import modules
     import errno
     
     #import SRW core functions
-    from wpg.srwlib import srwl, srwl_opt_setup_CRL, SRWLOptD, SRWLOptA, SRWLOptC, SRWLOptT
+    from srwpy.srwlib import srwl, srwl_opt_setup_CRL, SRWLOptD, SRWLOptA, SRWLOptC, SRWLOptT
     
     #import SRW auxiliary functions
     from wpg.useful_code.srwutils import AuxTransmAddSurfHeightProfileScaled

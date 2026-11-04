@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "WPG"
+version = "2026.11"
+description = "WavePropaGator: interactive framework for X-ray wavefront propagation based on SRW"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Alexey Buzmakov", email = "buzmakov@gmail.com"},
+    {name = "Liubov Samoylova"},
+]
+requires-python = ">=3.10"
+# srwpy: official SRW wheels from PyPI, or a local build from sources (see build/build_srw.py)
+dependencies = [
+    "srwpy>=4.2",
+    "numpy",
+    "scipy",
+    "h5py>=3",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+# wpg.source (SASE pulses) uses phenom
+source = ["phenom-xfel"]
+test = ["pytest", "nbformat", "nbconvert", "ipykernel"]
+docs = ["sphinx"]
+dev = ["WPG[test,docs]", "ruff"]
+
+[project.urls]
+Homepage = "https://github.com/samoylv/WPG"
+Documentation = "https://wpg.readthedocs.io"
+
+[tool.setuptools.packages.find]
+include = ["wpg*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["notebooks: execute sample notebooks (slow), run with -m notebooks"]
+addopts = "-v -m 'not notebooks'"
+
+[tool.ruff]
+target-version = "py310"
+extend-exclude = ["samples", "docs", "beamlines", "unittest_", "updates", "Docker"]
+
+[tool.ruff.lint]
+# F: pyflakes (undefined names, unused imports), E9: syntax errors,
+# NPY201: NumPy 2 incompatibilities, UP: outdated Python constructs
+select = ["F", "E9", "NPY201", "UP"]

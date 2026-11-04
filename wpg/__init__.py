@@ -10,19 +10,19 @@ The most propagation methods based on SRW library.
 .. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
 """
 
-# This deprecate warnings form SRWLib visualization module
+# Load the SRW extension before numpy/scipy pull in their own FFT libraries
+# (fixes segmentation fault with FFTW from numpy MKL)
+from srwpy import srwlpy  # noqa: F401
 
-# import warnings
-# warnings.filterwarnings("ignore")
-# import srwlpy as srwlpy
-# import srwlib as srwlib
-# warnings.resetwarnings()
+# Create aliases for simple importing
+from .wavefront import Wavefront  # noqa: E402
+from .beamline import Beamline  # noqa: E402
+from .glossary import print_glossary  # noqa: E402
 
-# fix segmentation fault using fftw from numpy mkl 
-import srwpy
 
-# Create aliases for simple importing 
-
-from .wavefront import Wavefront
-from .beamline import Beamline
-from .glossary import print_glossary
+def __getattr__(name):
+    # old code used ``wpg.srwlib.srwl`` after ``import wpg``
+    if name == 'srwlib':
+        import importlib
+        return importlib.import_module('.srwlib', __name__)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

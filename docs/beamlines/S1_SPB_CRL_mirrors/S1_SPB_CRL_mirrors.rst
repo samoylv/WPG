@@ -31,7 +31,7 @@ S1 SPB CRL simplified beamline with imperfect mirrors
     from wpg.optical_elements import Aperture, Drift, CRL, Empty, Use_PP
     from wpg.generators import build_gauss_wavefront
     
-    from wpg.srwlib import srwl
+    from srwpy.srwlib import srwl
     
     from wpg.wpg_uti_exfl import calculate_theta_fwhm_cdr_s1
     from wpg.wpg_uti_wf import calculate_fwhm, averaged_intensity, look_at_q_space, plot_t_wf
