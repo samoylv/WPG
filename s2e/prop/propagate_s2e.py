@@ -37,8 +37,8 @@ def add_history(wf_file_name, history_file_name):
     :param wf_file_name: output file
     :param history_file_name: peraent file
     """
-    with h5py.File(wf_file_name) as wf_h5:
-        with h5py.File(history_file_name) as history_h5:
+    with h5py.File(wf_file_name, 'a') as wf_h5:
+        with h5py.File(history_file_name, 'r') as history_h5:
             if 'history' in wf_h5:
                 del wf_h5['history']
 

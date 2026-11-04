@@ -183,36 +183,23 @@ class Beamline(object):
         """
         edit the propagation parameters of an element by name
         """
-        try:
-            self.params[oe_name]["pp"] = new_parameters
-        except(KeyError):
-            pass
-        
-        self.bl.propagation_options[0]['propagation_parameters'][self.index(oe_name)] = new_parameters
+        self.propagation_options[0]['propagation_parameters'][self.index[oe_name]] = _get_srw_pp(new_parameters)
 
 
     def crop_beamline(self, element1 = None, element2 = None):
         """
-        crop the beamline to some position as defined by the name of the optical element
-        
-        :param bl: beamline object
-        :param position: position to be cropped to
+        crop the beamline after the optical element named element1 (element1 is kept)
+
+        :param element1: name of the last optical element to keep, None or unknown name - do nothing
+        :param element2: not used
         """
-        
-        if element1 is not None:
-            names = [el.name for el in self.bl.propagation_options[0]['optical_elements']]
-            idx1 = names.index(element1)
-    
-        if element2 is not None:
-            names = [el.name for el in self.bl.propagation_options[0]['optical_elements']]
-            idx2 = names.index(element2)
-            
-            
-        if element1 not in names:
-            pass 
-        else:
-            self.bl.propagation_options[0]['optical_elements'] = self.bl.propagation_options[0]['optical_elements'][:idx1+1]
-            self.bl.propagation_options[0]['propagation_parameters'] = self.bl.propagation_options[0]['propagation_parameters'][:idx1+1]
+        option = self.propagation_options[0]
+        names = [getattr(el, 'name', None) for el in option['optical_elements']]
+        if element1 is None or element1 not in names:
+            return
+        idx1 = names.index(element1)
+        option['optical_elements'] = option['optical_elements'][:idx1+1]
+        option['propagation_parameters'] = option['propagation_parameters'][:idx1+1]
 
 
 def _check_srw_pp(pp):

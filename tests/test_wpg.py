@@ -134,3 +134,26 @@ def test_gpu_option():
         srwl.SetRepresElecField(wf._srwl_wf, 't')
         res.append(wf.get_intensity())
     np.testing.assert_allclose(res[1], res[0], rtol=0, atol=1e-4 * res[0].max())
+
+
+def test_beamline_edit_by_name():
+    from wpg.beamline import Beamline
+    from wpg.optical_elements import Drift, Use_PP
+
+    b = Beamline()
+    names = ['d1', 'd2', 'd3']
+    for name in names:
+        d = Drift(1)
+        d.name = name
+        b.append(d, Use_PP())
+    assert b.index == {'d1': 0, 'd2': 1, 'd3': 2}
+
+    new_pp = Use_PP(zoom=2)
+    b.edit_propagation_parameters('d2', new_pp)
+    assert b.propagation_options[0]['propagation_parameters'][1] == new_pp.get_srw_pp()
+
+    b.crop_beamline('unknown')
+    assert len(b.propagation_options[0]['optical_elements']) == 3
+    b.crop_beamline('d2')
+    assert [el.name for el in b.propagation_options[0]['optical_elements']] == ['d1', 'd2']
+    assert len(b.propagation_options[0]['propagation_parameters']) == 2
