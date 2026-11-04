@@ -107,55 +107,31 @@ def AuxSaveOpTransmData(optTr, t, filePath):
 
 
 def AuxTransmAddSurfHeightProfileScaled(optSlopeErr, heightProfData, dim, ang, scale):
-    argHeightProfData = heightProfData[0]
-    valHeightProfData = heightProfData[1]
-    sinAng = math.sin(ang)
-    npData = len(heightProfData[0])
-    auxMesh = optSlopeErr.mesh
-    xStep = (auxMesh.xFin - auxMesh.xStart)/(auxMesh.nx - 1)
-    yStep = (auxMesh.yFin - auxMesh.yStart)/(auxMesh.ny - 1)
-    y = auxMesh.yStart
-    nyy = auxMesh.ny
+    """
+    Fill a transmission element (SRWLOptT) with the optical path difference of a 1D mirror height
+    profile: OPD = -2 sin(ang) h scale, amplitude 1, linear interpolation, 0 outside the profile.
 
-    hApprox = 0
-    ipStart = 0
-    for iy in range(nyy):
-        if('y' in dim):
-            hApprox = 0
-            y1 = argHeightProfData[ipStart] * sinAng
-            for i in range(ipStart + 1, npData):
-                y2 = argHeightProfData[i] * sinAng
-                if((y1 <= y) and (y < y2)):
-                    hApprox = ((valHeightProfData[i] - valHeightProfData[i - 1]) / ((argHeightProfData[
-                               i] - argHeightProfData[i - 1]) * sinAng)) * (y - y1) + valHeightProfData[i - 1]
-                    # print(ipStart, i, iy, y1, y, y2, argHeightProfData[i-1],
-                    # argHeightProfData[i], valHeightProfData[i-1], valHeightProfData[i],
-                    # hApprox)
-                    ipStart = i - 1
-                    break
-                y1 = y2
+    Vectorized version of the former loops (the same result, tests/test_surface.py); the profile is
+    sorted by position (the loops gave zeros for a profile with decreasing positions).
 
-        x = auxMesh.xStart
-        nxx = auxMesh.nx
-        for ix in range(nxx):
-            if('x' in dim):
-                if(ix == 0):
-                    ipStart = 0
-                hApprox = 0
-                x1 = argHeightProfData[ipStart] * sinAng
-                for i in range(ipStart + 1, npData):
-                    x2 = argHeightProfData[i] * sinAng
-                    if((x1 <= x) and (x < x2)):
-                        hApprox = ((valHeightProfData[i] - valHeightProfData[i - 1]) / ((argHeightProfData[
-                                   i] - argHeightProfData[i - 1]) * sinAng)) * (x - x1) + valHeightProfData[i - 1]
-                        ipStart = i - 1
-                        break
-                    x1 = x2
-            ofst = 2*ix + (2*auxMesh.nx)*iy
-            optSlopeErr.arTr[ofst] = 1.  # Amplitude Transmission
-            optSlopeErr.arTr[ofst + 1] = 0.  # Optical Path Difference
-            if(hApprox != 0):
-                optSlopeErr.arTr[ofst + 1] = -2 * sinAng * hApprox * scale  # Optical Path Difference (to check sign!)
-            x += xStep
-        y += yStep
+    :param optSlopeErr: SRWLOptT, its mesh is the beam cross-section at the mirror
+    :param heightProfData: [positions along the mirror [m], heights [m]]
+    :param dim: plane of deflection, 'x' or 'y'
+    :param ang: grazing angle [rad]
+    :param scale: factor for the heights
+    """
+    import numpy as np
+    from wpg.surface import _interp_inside, _set_transmission, _sorted_profile
+    arg, val = _sorted_profile(heightProfData[0], heightProfData[1])
+    m = optSlopeErr.mesh
+    sin_ang = math.sin(ang)
+    x = np.linspace(m.xStart, m.xFin, m.nx)
+    y = np.linspace(m.yStart, m.yFin, m.ny)
+    if 'x' in dim:
+        h = _interp_inside(x, arg * sin_ang, val)[None, :] * np.ones((m.ny, 1))
+    elif 'y' in dim:
+        h = _interp_inside(y, arg * sin_ang, val)[:, None] * np.ones((1, m.nx))
+    else:
+        h = np.zeros((m.ny, m.nx))
+    _set_transmission(optSlopeErr, -2 * sin_ang * h * scale)
 

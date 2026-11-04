@@ -17,6 +17,7 @@ Contents:
    beamline
    optical_elements
    materials
+   surface
    generators
    wpg_uti_wf
    wpg_uti_oe
