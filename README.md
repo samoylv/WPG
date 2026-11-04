@@ -56,8 +56,8 @@ cuFFT for the CUDA version.
 
 With the CUDA build, propagation runs on GPU only when requested: `Beamline.propagate(wfr, gpu=1)`
 (`gpu` is the number of the GPU device). This is experimental: SRW 4.2.1 on GPU agrees with CPU
-for several slices in frequency domain with `Use_PP(semi_analytical_treatment=1)`, but ignores the
-drift length without semi-analytical treatment and transposes x and y of a single-slice wavefront.
+for a single slice and, for several slices, with `Use_PP(semi_analytical_treatment=1)`, but for several
+slices without semi-analytical treatment it ignores the drift length.
 
 ## Docker
 

@@ -118,16 +118,28 @@ def test_hdf5_tree(tmp_path, capsys):
     assert capsys.readouterr().out
 
 
-# Known errors of SRW 4.2.1 (master 3c38a0d) on GPU, measured with a CUDA build on RTX 3090:
-# without semi-analytical treatment the drift length is ignored for several slices,
-# a single slice comes back with x and y transposed. Without CUDA SRW falls back to CPU and all cases pass.
+# Known error of SRW 4.2.1 (master 3c38a0d) on GPU, measured with a CUDA build on RTX 3090:
+# for several slices without semi-analytical treatment the drift length is ignored (3 and 32 slices).
+# A single monochromatic slice agrees with CPU. Without CUDA SRW falls back to CPU and all cases pass.
 GPU_CASES = [
     pytest.param(3, 1, id='3 slices, semi-analytical'),
     pytest.param(3, 0, id='3 slices, no semi-analytical',
                  marks=pytest.mark.xfail(reason='SRW GPU ignores drift length without semi-analytical treatment')),
-    pytest.param(1, 1, id='1 slice',
-                 marks=pytest.mark.xfail(reason='SRW GPU transposes x and y of a single-slice wavefront')),
+    pytest.param(1, 0, id='1 slice, no semi-analytical'),
+    pytest.param(1, 1, id='1 slice, semi-analytical'),
 ]
+
+
+def _monochromatic_wavefront(nx=200):
+    """Single slice in frequency domain (build_gauss_wavefront with nz=1 leaves eFin = NaN)."""
+    import wpg
+    from wpg.generators import build_gauss_wavefront_xy
+
+    d2waist, ekev = 270., 5.0
+    theta_rms = (17.2 - 6.4 * np.sqrt(0.1)) * 1e-6 / ekev ** 0.85 / 2.35
+    sig = 12.4e-10 / (ekev * 4 * np.pi * theta_rms)
+    xmax = theta_rms * d2waist * 3.5
+    return wpg.Wavefront(build_gauss_wavefront_xy(nx, nx, ekev, -xmax, xmax, -xmax, xmax, sig, sig, d2waist))
 
 
 @pytest.mark.parametrize('nz, semi', GPU_CASES)
@@ -139,7 +151,7 @@ def test_gpu_option(nz, semi):
 
     res = []
     for gpu in (None, 1):
-        wf = _gauss_wavefront(nx=200, nz=nz)
+        wf = _gauss_wavefront(nx=200, nz=nz) if nz > 1 else _monochromatic_wavefront()
         b = Beamline()
         b.append(Drift(50), Use_PP(semi_analytical_treatment=semi))
         if nz > 1:
