@@ -1,0 +1,7 @@
+.git
+build/SRW
+**/__pycache__
+**/*.pyc
+tests/tests_data
+wpg/srw
+.ruff_cache
