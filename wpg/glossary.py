@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
 
 """
-This module contains definitions (glossary) of Wavefront fields. Described mapping fields SRWLWfr <-> wpg.Wavefront
+This module contains definitions (glossary) of Wavefront fields: mapping of fields SRWLWfr <-> wpg.Wavefront
+and their description in HDF5 files.
+
+Each field is declared once as a class attribute (:class:`Field` descriptor) of a wavefront node:
+``wf.params`` (:class:`WavefrontParams`), ``wf.params.Mesh`` (:class:`WavefrontMesh`) and
+``wf.data`` (:class:`WavefrontData`). The descriptor reads and writes the SRW structure ``wf._srwl_wf``
+directly, so the fields are a live view of the SRW wavefront, visible to IDEs and static analysis.
+The glossary path of the field (e.g. ``params/Mesh/nx``) is the dataset name in the HDF5 file,
+the field metadata (description, units, limits, alias) are stored as the dataset attributes.
 
 .. module:: wpg.glossary
    :platform: Linux, Mac OSX, Windows
@@ -9,1492 +17,466 @@ This module contains definitions (glossary) of Wavefront fields. Described mappi
 .. moduleauthor:: Alexey Buzmakov <buzmakov@gmail.com>
 """
 
-# from __future__ import absolute_import
-# from __future__ import division
-# from __future__ import print_function
-# from __future__ import unicode_literals
-
-import inspect
-import sys
-import wpg.utils as utils
-import warnings
-import numpy as np
 import array
+import operator
+import warnings
+from typing import Any, Callable, Generic, Iterator, List, NoReturn, Optional, TypeVar, overload
+
+import numpy as np
+
+T = TypeVar('T')
 
 
-class RadiationField(object):
+def _units_from_description(description):
+    """Units written in square brackets in the description: 'time [s] or energy [ev]' -> 's or ev'."""
+    units = []
+    start = stop = 0
+    while start >= 0 and stop >= 0:
+        start = description.find('[', stop)
+        stop = description.find(']', start)
+        if start >= 0 and stop >= 0:
+            units.append(description[start + 1: stop])
+    return ' or '.join(units)
 
+
+class Field(Generic[T]):
     """
-    This is base class for all Wavefront fileds.
+    Wavefront field: descriptor of a node class mapped to an attribute of SRWLWfr and to an HDF5 dataset.
+
+    :param path: glossary path, also the dataset name in HDF5 files, e.g. ``'params/Mesh/nx'``
+    :param description: field description (HDF5 attribute ``description``)
+    :param srw: attribute of SRWLWfr, e.g. ``'mesh.nx'``, for fields directly mapped to SRW
+    :param convert: type conversion applied on assignment to ``srw`` (``int``, ``float``)
+    :param get: ``get(wf)`` for fields not directly mapped to SRW
+    :param set: ``set(wf, value)`` for fields not directly mapped to SRW
+    :param units: units (HDF5 attribute ``units``), by default taken from ``[...]`` in the description
+    :param limits: allowed values (HDF5 attribute ``limits``)
+    :param alias: name in SRW (HDF5 attribute ``alias``)
     """
 
-    glossary_name = None  # used as path for mapping in wpg.Wavefront
+    def __init__(self, path: str, description: str, *, srw: Optional[str] = None,
+                 convert: Optional[Callable[[Any], Any]] = None,
+                 get: Optional[Callable[[Any], T]] = None,
+                 set: Optional[Callable[[Any, T], None]] = None,
+                 units: Optional[str] = None, limits: Optional[str] = None, alias: Optional[str] = None):
+        if (srw is None) == (get is None):
+            raise ValueError(f'{path}: exactly one of srw= and get= must be given')
+        self.path = path
+        self.description = description
+        self.srw = srw
+        self._convert = convert
+        self._get = get
+        self._set = set
+        self.attributes = {'description': description,
+                           'units': _units_from_description(description) if units is None else units}
+        if limits is not None:
+            self.attributes['limits'] = limits
+        if alias is not None:
+            self.attributes['alias'] = alias
+        self.__doc__ = f"{description} (HDF5: ``{path}``)"
+        self.name = path.split('/')[-1]
+
+    @property
+    def glossary_name(self) -> str:
+        """Glossary path of the field (name used in older versions of WPG)."""
+        return self.path
+
+    def __set_name__(self, owner, name):
+        self.name = name
+
+    @overload
+    def __get__(self, node: None, owner: Any = None) -> 'Field[T]': ...
+
+    @overload
+    def __get__(self, node: Any, owner: Any = None) -> T: ...
+
+    def __get__(self, node, owner=None):
+        if node is None:
+            return self
+        wf = node._wf
+        if self._get is not None:
+            return self._get(wf)
+        return operator.attrgetter(self.srw)(wf._srwl_wf)
+
+    def __set__(self, node, value: T) -> None:
+        wf = node._wf
+        if self._get is not None:
+            if self._set is None:
+                raise AttributeError(f'{self.path} is read-only')
+            self._set(wf, value)
+            return
+        parent, _, attr = self.srw.rpartition('.')
+        obj = operator.attrgetter(parent)(wf._srwl_wf) if parent else wf._srwl_wf
+        setattr(obj, attr, self._convert(value) if self._convert is not None else value)
+
+    def __repr__(self):
+        return f'Field({self.path!r})'
+
+
+class ReadOnlyField(Field[T]):
+    """Field that can not be assigned (static analyzers report an assignment as an error)."""
+
+    def __set__(self, node, value: NoReturn) -> None:
+        raise AttributeError(f'{self.name} is a read-only shortcut, assign wf.params... instead')
+
+
+class _Node:
+    """Base class of wavefront nodes (``wf.params``, ``wf.params.Mesh``, ``wf.data``)."""
+
+    __slots__ = ('_wf',)
 
     def __init__(self, wf):
-        """
-        Used for map values to Wavefront. Also map description string from docstrings and attributes.
-
-        :param wf: Wavefront
-        :type wf: wpg.Wavefront
-        """
-
-        if not wf.__class__.__name__ == 'Wavefront':
-            raise TypeError
         self._wf = wf
-        self._value = None
-        self.attributes = {'description': self.__doc__,
-                           'units': self.find_units_label()}
 
-    def find_units_label(self):
-        """Search [units] in field docstring
+    @classmethod
+    def fields(cls) -> List[Field]:
+        """Fields of this node in the declaration order."""
+        res = []
+        for klass in reversed(cls.__mro__):
+            res += [v for v in vars(klass).values() if isinstance(v, Field)]
+        return res
 
-        :return: units string
-        """
-
-        descr = self.__doc__
-        descr = descr.replace('\n', ' ')
-        units = []
-        start = stop = 0
-        while start >= 0 and stop >= 0:
-            start = descr.find(r'[', stop)
-            stop = descr.find(r']', start)
-            if start >= 0 and stop >= 0:
-                units.append(descr[start+1: stop])
-
-        units = ' or '.join(units)
-        return units
-
-    def _map_to_dict(self):
-        """
-        Map Radiation field to dictionary
-
-        :return: dictionary
-        """
-
-        t = {}
-        utils.set_value(t, self.keys_chain, self.value)
-        return t
-
-    def _map_from_dict(self, dic):
-        """Map Radiation field from dictionary
-        :param dic: dictionary
-        """
-
-        self.value = utils.get_value(dic, self.keys_chain)
-
-    @property
-    def value(self):
-        """
-        Property where value stored.
-        """
-        raise NotImplementedError
-
-    @value.setter
-    def value(self, val):
-        raise NotImplementedError
-
-    @property
-    def keys_chain(self):
-        """
-        Split field name to the parts.
-
-        :return: tpule of strings
-        """
-        return self.glossary_name.split('/')
+    def __repr__(self):
+        values = ', '.join(f'{f.name}={getattr(self, f.name)!r}' for f in self.fields())
+        return f'{type(self).__name__}({values})'
 
 
-class WFVersion(RadiationField):
+# ---------------------------------------------------------------- helpers for non-trivial fields
 
-    """Hdf5 format version (glossary)"""
+def _enum_field(srw_attr, values, name):
+    """get/set for a string field mapped to an integer (or char) SRW flag: values = {srw_value: string}."""
+    def get(wf):
+        v = getattr(wf._srwl_wf, srw_attr)
+        if isinstance(v, bytes):
+            v = v.decode()
+        try:
+            return values[v]
+        except KeyError:
+            raise ValueError(f'internal error, wrong wavefront field value {name}={v!r}') from None
 
-    glossary_name = 'version'
+    def set(wf, val):
+        if isinstance(val, bytes):
+            val = val.decode()
+        for k, v in values.items():
+            if v == val:
+                setattr(wf._srwl_wf, srw_attr, k)
+                return
+        raise ValueError(f'{name}: value must be one of {list(values.values())}, given: {val!r}')
 
-    def __init__(self, wf):
-        """
-        Version field.
-
-        :param wf: Wavefront
-        :type wf: wpg.Wavefront
-        """
-
-        super(WFVersion, self).__init__(wf)
-
-        self.attributes.update(
-            {'units': '-',
-             'limits': '[???]',
-             'alias': 'VERSION'
-             })
-
-        self._value = 0.1
-
-    @property
-    def value(self):
-        """Hdf5 format version (glossary)"""
-
-        return self._value
-
-    @value.setter
-    def value(self, val):
-        self._value = val
+    return get, set
 
 
-class WFRadiationPhotonEnergy(RadiationField):
-
-    """Average photon energy [ev]"""
-
-    glossary_name = 'params/photonEnergy'
-
-    def __init__(self, wf):
-        """
-        params/photonEnergy field.
-
-        :param wf: Wavefront
-        :type wf: wpg.Wavefront
-        """
-
-        super(WFRadiationPhotonEnergy, self).__init__(wf)
-
-        self.attributes.update(
-            {'limits': '[1:1e6]',
-             'alias': 'avgPhotEn'
-             })
-
-    @property
-    def value(self):
-        """Average photon energy [ev]"""
-
-        return self._wf._srwl_wf.avgPhotEn
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.avgPhotEn = float(val)
+def _get_w_float_type(wf):
+    v = wf._srwl_wf.numTypeElFld
+    if v in ('f', b'f'):
+        return 'float'
+    elif v in ('d', b'd'):
+        return 'double'
+    raise ValueError(f'internal error, wrong wavefront field value numTypeElFld={v!r}')
 
 
-class WFRadiationMeshZCoord(RadiationField):
-
-    """Longitudinal position [m], Fast data: length of  active undulator,
-     Gaussian source: distance to waist """
-
-    glossary_name = 'params/Mesh/zCoord'
-
-    def __init__(self, wf):
-        """params/Mesh/zCoord field"""
-
-        super(WFRadiationMeshZCoord, self).__init__(wf)
-
-        self.attributes.update(
-            {'limits': '{???}',
-             'alias': 'mesh.zStart'
-             })
-
-    @property
-    def value(self):
-        """Longitudinal position, for fast data - length of  active undulator [m]"""
-
-        return self._wf._srwl_wf.mesh.zStart
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.mesh.zStart = float(val)
+def _set_w_float_type(wf, val):
+    if val in ('float', b'float'):
+        wf._srwl_wf.numTypeElFld = 'f'
+    elif val in ('double', b'double'):
+        raise ValueError('"double" type not supported yet')
+    else:
+        raise ValueError('value must be "float" or "double"')
 
 
-class WFRadiationWDomain(RadiationField):
+_E_FIELD_UNITS = {
+    'arbitrary': 0,
+    'sqrt(Phot/s/0.1%bw/mm^2)': 1,
+    'sqrt(J/eV/mm^2)': 2,  # frequency domain
+    'sqrt(W/mm^2)': 2,     # time domain
+}
 
-    """WF in time or frequency (photon energy) domain [string]"""
 
-    glossary_name = 'params/wDomain'
+def _get_w_efield_unit(wf):
+    unit = wf._srwl_wf.unitElFld
+    if unit == 0:
+        return 'arbitrary'
+    elif unit == 1:
+        return 'sqrt(Phot/s/0.1%bw/mm^2)'
+    elif unit == 2:
+        if wf._srwl_wf.presFT == 0:
+            return 'sqrt(J/eV/mm^2)'
+        elif wf._srwl_wf.presFT == 1:
+            return 'sqrt(W/mm^2)'
+    raise ValueError(f'internal error, wrong wavefront field value unitElFld={unit!r}')
 
-    def __init__(self, wf):
-        """params/wDomain field"""
 
-        super(WFRadiationWDomain, self).__init__(wf)
+def _set_w_efield_unit(wf, val):
+    if isinstance(val, bytes):
+        val = val.decode()
+    if val not in _E_FIELD_UNITS:
+        raise ValueError(f'value must be one of {list(_E_FIELD_UNITS)}, given: {val!r}')
+    wf._srwl_wf.unitElFld = _E_FIELD_UNITS[val]
 
-        self.attributes.update(
-            {'limits': '{"time", "frequency"}',
-             'alias': 'presFT'
-             })
 
-    @property
-    def value(self):
-        """WF in time or frequency (photon energy) domain"""
+def _space_dependent_range(srw_attr, space, path):
+    """get=, set= for mesh range defined only in R-space (xMin, ...) or Q-space (qxMin, ...)."""
+    def get(wf):
+        if wf.params.wSpace == space:
+            return getattr(wf._srwl_wf.mesh, srw_attr)
+        warnings.warn(f'{path} not defined if NOT params/wSpace=={space}')
+        return None
 
-        if self._wf._srwl_wf.presFT == 0:
-            return 'frequency'
-        elif self._wf._srwl_wf.presFT == 1:
-            return 'time'
+    def set(wf, val):
+        if not wf.params.wSpace == space:
+            warnings.warn(f'{path} not defined if NOT params/wSpace=={space}')
+        setattr(wf._srwl_wf.mesh, srw_attr, float(val))
+
+    return {'get': get, 'set': set}
+
+
+def _set_n_slices(wf, val):
+    wf._srwl_wf.mesh.ne = int(val)
+    wf._allocate_srw_moments()
+
+
+def _set_nval(wf, val):
+    wf._nval = int(val)
+
+
+def _set_version(wf, val):
+    wf._version = val
+
+
+def _efield_array(srw_attr):
+    """get/set of EM field array (Re, Im pairs) of one polarization as a 4D numpy array (ny, nx, nSlices, nval)."""
+    def get(wf):
+        res = np.asarray(getattr(wf._srwl_wf, srw_attr), dtype='float32')
+        mesh = wf.params.Mesh
+        correct_shape = (mesh.ny, mesh.nx, mesh.nSlices, wf.params.nval)
+        if not res.shape:
+            pass
+        elif res.size == np.prod(correct_shape):
+            res = res.reshape(correct_shape)
         else:
-            raise ValueError('internal error, wrong wavefront field vaule')
+            raise ValueError(f'size of SRW field array {res.size} does not match the wavefront mesh {correct_shape}')
+        if not res.flags['C_CONTIGUOUS']:
+            res = np.ascontiguousarray(res)
+        return res
 
-    @value.setter
-    def value(self, val):
-        if val in ['frequency', b'frequency']:
-            self._wf._srwl_wf.presFT = 0
-        elif val in ['time', b'time']:
-            self._wf._srwl_wf.presFT = 1
-        else:
-            raise ValueError('value must be "frequency" or "time"')
-
-
-class WFRadiationWSpace(RadiationField):
-
-    """Real space or  q-space WF presentation [string]"""
-
-    glossary_name = 'params/wSpace'
-
-    def __init__(self, wf):
-        """params/wSpace field"""
-
-        super(WFRadiationWSpace, self).__init__(wf)
-
-        self.attributes.update(
-            {'limits': '{"R-space", "Q-space"}',
-             'alias': 'presCA'
-             })
-
-    @property
-    def value(self):
-        """Real space or  q-space WF presentation"""
-
-        if self._wf._srwl_wf.presCA == 0:
-            return 'R-space'
-        elif self._wf._srwl_wf.presCA == 1:
-            return 'Q-space'
-        else:
-            raise ValueError('internal error, wrong wavefront field vaule')
-
-    @value.setter
-    def value(self, val):
-        if val in ['R-space', b'R-space']:
-            self._wf._srwl_wf.presCA = 0
-        elif val in ['Q-space', b'Q-space']:
-            self._wf._srwl_wf.presCA = 1
-        else:
-            raise ValueError('value must be "R-space" or "Q-space"')
-
-
-class WFRadiationWFloatType(RadiationField):
-
-    """Electric field numerical type [string]"""
-
-    glossary_name = 'params/wFloatType'
-
-    def __init__(self, wf):
-        """params/wFloatType field"""
-
-        super(WFRadiationWFloatType, self).__init__(wf)
-
-        self.attributes.update(
-            {'limits': '{"float", "double"}',
-             'alias': 'numTypeElFld'
-             })
-
-    @property
-    def value(self):
-        """Electric field numerical type"""
-        if self._wf._srwl_wf.numTypeElFld in ['f', b'f']:
-            return 'float'
-        elif self._wf._srwl_wf.numTypeElFld in ['d', b'd']:
-            return 'double'
-        else:
-            raise ValueError('internal error, wrong wavefront field value')
-
-    @value.setter
-    def value(self, val):
-        if val in ['float', b'float']:
-            self._wf._srwl_wf.numTypeElFld = 'f'
-        elif val in ['double', b'double']:
-            raise ValueError('"double" type not supprted yet')
-        #            self._wf._srwl_wf.numTypeElFld = 'd'
-        else:
-            raise ValueError('value must be "float" or "double"')
-
-
-class WFRadiationWEFieldUnit(RadiationField):
-
-    """Electric field units [string]"""
-
-    glossary_name = 'params/wEFieldUnit'
-
-    def __init__(self, wf):
-        """params/wEFieldUnit field"""
-
-        super(WFRadiationWEFieldUnit, self).__init__(wf)
-
-        self.attributes.update(
-            {'limits': r'{"sqrt(Phot/s/0.1%bw/mm^2)","sqrt(W/mm^2)",\
-             "sqrt(J/eV/mm^2)", "arbitrary"]',
-             'alias': 'unitElFld'
-             })
-
-    @property
-    def value(self):
-        """Electric field units"""
-
-        if self._wf._srwl_wf.unitElFld == 0:
-            return 'arbitrary'
-        elif self._wf._srwl_wf.unitElFld == 1:
-            return r'sqrt(Phot/s/0.1%bw/mm^2)'
-        elif self._wf._srwl_wf.unitElFld == 2:
-            if self._wf._srwl_wf.presFT == 0:
-                return "sqrt(J/eV/mm^2)"
-            elif self._wf._srwl_wf.presFT == 1:
-                return "sqrt(W/mm^2)"
+    def set(wf, val):
+        """val: 4D array (ny, nx, nSlices, nval) or flat array / array.array of the mesh size"""
+        n_total = wf._get_total_elements() * wf.params.nval
+        if isinstance(val, array.array) and len(val) != n_total:
+            warnings.warn('New array size not equal to wavefront size. You must set it by yourself.')
+        val = np.ascontiguousarray(np.array(val, dtype='float32'))
+        if val.size != n_total:
+            if val.ndim == 4:
+                warnings.warn('New array size not equal to wavefront size. '
+                              'Mesh (ny, nx, nSlices) is set from the array shape.')
+                mesh = wf.params.Mesh
+                mesh.ny, mesh.nx, mesh.nSlices = val.shape[:3]
+                other = 'arEy' if srw_attr == 'arEx' else 'arEx'
+                other_arr = getattr(wf._srwl_wf, other)  # None in a fresh SRWLWfr
+                if other_arr is None or len(other_arr) != val.size:
+                    warnings.warn(f'Field of the other polarization ({other}) does not match the new mesh, '
+                                  'it is set to zeros.')
+                    setattr(wf._srwl_wf, other, np.zeros(val.size, dtype='float32'))
             else:
-                raise ValueError('internal error, wrong wavefront field value')
+                warnings.warn('New array size not equal to wavefront size. You must set it by yourself.')
+        wf._allocate_srw_moments()
+        setattr(wf._srwl_wf, srw_attr, val.reshape(-1))
 
-        else:
-            raise ValueError('internal error, wrong wavefront field value')
-
-    @value.setter
-    def value(self, val):
-        if val in ['arbitrary', b'arbitrary']:
-            self._wf._srwl_wf.unitElFld = 0
-        elif val in ['sqrt(Phot/s/0.1%bw/mm^2)', b'sqrt(Phot/s/0.1%bw/mm^2)']:
-            self._wf._srwl_wf.unitElFld = 1
-        elif val in ['sqrt(J/eV/mm^2)', 'sqrt(W/mm^2)', b'sqrt(J/eV/mm^2)', b'sqrt(W/mm^2)']:
-            self._wf._srwl_wf.unitElFld = 2
-        else:
-            raise ValueError(
-                'value must be "arbitrary" or "sqrt(J/eV/mm^2)"' +
-                'or "sqrt(W/mm^2)" or "sqrt(Phot/s/0.1%bw/mm^2)" given: {}'.format(val))
+    return get, set
 
 
-class WFRadiationMeshNx(RadiationField):
+# ---------------------------------------------------------------- wavefront nodes
 
-    """Numbers of points, horizontal"""
+class WavefrontMesh(_Node):
+    """Mesh of the wavefront (``wf.params.Mesh``), view of ``SRWLWfr.mesh``."""
 
-    glossary_name = 'params/Mesh/nx'
+    __slots__ = ()
 
-    def __init__(self, wf):
-        """params/Mesh/nx field"""
-
-        super(WFRadiationMeshNx, self).__init__(wf)
-
-        self.attributes.update(
-            {'units': '-',
-             'limits': '[2:LONG_MAX]',
-             'alias': ''
-             })
-
-    @property
-    def value(self):
-        """Numbers of points, horizontal"""
-
-        return self._wf._srwl_wf.mesh.nx
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.mesh.nx = int(val)
-
-
-class WFRadiationMeshNy(RadiationField):
-
-    """Numbers of points, vertical"""
-
-    glossary_name = 'params/Mesh/ny'
-
-    def __init__(self, wf):
-        """params/Mesh/ny field"""
-
-        super(WFRadiationMeshNy, self).__init__(wf)
-
-        self.attributes.update(
-            {'units': '-',
-             'limits': '[2:LONG_MAX]',
-             'alias': ''
-             })
-
-    @property
-    def value(self):
-        """Numbers of points, vertical"""
-
-        return self._wf._srwl_wf.mesh.ny
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.mesh.ny = int(val)
+    # mesh size first: it is needed to load field arrays and ranges from files
+    nx = Field[int]('params/Mesh/nx', 'Numbers of points, horizontal', srw='mesh.nx', convert=int,
+                    units='-', limits='[2:LONG_MAX]', alias='')
+    ny = Field[int]('params/Mesh/ny', 'Numbers of points, vertical', srw='mesh.ny', convert=int,
+                    units='-', limits='[2:LONG_MAX]', alias='')
+    nSlices = Field[int]('params/Mesh/nSlices', 'Numbers of points vs photon energy/time for the pulse',
+                         get=lambda wf: wf._srwl_wf.mesh.ne, set=_set_n_slices,
+                         units='', limits='[1:LONG_MAX]', alias='mesh.ne')
+    zCoord = Field[float]('params/Mesh/zCoord',
+                          'Longitudinal position [m], Fast data: length of active undulator, '
+                          'Gaussian source: distance to waist',
+                          srw='mesh.zStart', convert=float, limits='{???}', alias='mesh.zStart')
+    xMin = Field[Optional[float]]('params/Mesh/xMin', 'Minimum of horizontal range [m]',
+                                  **_space_dependent_range('xStart', 'R-space', 'params/Mesh/xMin'))
+    xMax = Field[Optional[float]]('params/Mesh/xMax', 'Maximum of horizontal range [m]',
+                                  **_space_dependent_range('xFin', 'R-space', 'params/Mesh/xMax'))
+    yMin = Field[Optional[float]]('params/Mesh/yMin', 'Minimum of vertical range [m]',
+                                  **_space_dependent_range('yStart', 'R-space', 'params/Mesh/yMin'))
+    yMax = Field[Optional[float]]('params/Mesh/yMax', 'Maximum of vertical range [m]',
+                                  **_space_dependent_range('yFin', 'R-space', 'params/Mesh/yMax'))
+    qxMin = Field[Optional[float]]('params/Mesh/qxMin', 'Minimum of horizontal frequency [1/m]',
+                                   **_space_dependent_range('xStart', 'Q-space', 'params/Mesh/qxMin'))
+    qxMax = Field[Optional[float]]('params/Mesh/qxMax', 'Maximum of horizontal frequency [1/m]',
+                                   **_space_dependent_range('xFin', 'Q-space', 'params/Mesh/qxMax'))
+    qyMin = Field[Optional[float]]('params/Mesh/qyMin', 'Minimum of vertical frequency [1/m]',
+                                   **_space_dependent_range('yStart', 'Q-space', 'params/Mesh/qyMin'))
+    qyMax = Field[Optional[float]]('params/Mesh/qyMax', 'Maximum of vertical frequency [1/m]',
+                                   **_space_dependent_range('yFin', 'Q-space', 'params/Mesh/qyMax'))
+    sliceMin = Field[float]('params/Mesh/sliceMin', 'Min value of time [s] or energy [ev] for pulse (fragment)',
+                            srw='mesh.eStart', convert=float, limits='[1:LONG_MAX]', alias='mesh.eStart')
+    sliceMax = Field[float]('params/Mesh/sliceMax', 'Max value of time [s] or energy [ev] for pulse (fragment)',
+                            srw='mesh.eFin', convert=float, limits='[1:LONG_MAX]', alias='mesh.eFin')
+    # components of unit vectors of the observation plane (float; before 2026.11 they were truncated to int)
+    hvx = Field[float]('params/Mesh/hvx', 'Lab-frame horizontal base vector of the observation plane '
+                       '(/ surface in its center)', srw='mesh.hvx', convert=float, units='-', limits='[-1:1]', alias='')
+    hvy = Field[float]('params/Mesh/hvy', 'Lab-frame horizontal base vector of the observation plane '
+                       '(/ surface in its center)', srw='mesh.hvy', convert=float, units='-', limits='[-1:1]', alias='')
+    hvz = Field[float]('params/Mesh/hvz', 'Lab-frame horizontal base vector of the observation plane '
+                       '(/ surface in its center)', srw='mesh.hvz', convert=float, units='-', limits='[-1:1]', alias='')
+    nvx = Field[float]('params/Mesh/nvx', 'Lab-frame coordinate of the inner normal to observation plane '
+                       '(/ surface in its center)', srw='mesh.nvx', convert=float, units='-', limits='[-1:1]', alias='')
+    nvy = Field[float]('params/Mesh/nvy', 'Lab-frame coordinate of the inner normal to observation plane '
+                       '(/ surface in its center)', srw='mesh.nvy', convert=float, units='-', limits='[-1:1]', alias='')
+    nvz = Field[float]('params/Mesh/nvz', 'Lab-frame coordinate of the inner normal to observation plane '
+                       '(/ surface in its center)', srw='mesh.nvz', convert=float, units='-', limits='[-1:1]', alias='')
 
 
-class WFRadiationMeshNSlices(RadiationField):
+_get_w_domain, _set_w_domain = _enum_field('presFT', {0: 'frequency', 1: 'time'}, 'params/wDomain')
+_get_w_space, _set_w_space = _enum_field('presCA', {0: 'R-space', 1: 'Q-space'}, 'params/wSpace')
 
-    """Numbers of points vs photon energy/time for the pulse"""
 
-    glossary_name = 'params/Mesh/nSlices'
+class WavefrontParams(_Node):
+    """Wavefront parameters (``wf.params``), view of SRWLWfr."""
+
+    __slots__ = ('Mesh',)
+
+    Mesh: WavefrontMesh
 
     def __init__(self, wf):
-        """params/Mesh/nSlices field"""
-
-        super(WFRadiationMeshNSlices, self).__init__(wf)
-
-        self.attributes.update(
-            {'units': '',
-             'limits': '[1:LONG_MAX]',
-             'alias': 'mesh.ne'
-             })
-
-    @property
-    def value(self):
-        """Numbers of points vs photon energy/time for the pulse"""
-
-        return self._wf._srwl_wf.mesh.ne
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.mesh.ne = int(val)
-        self._wf._allocate_srw_moments()
-
-
-class WFRadiationMeshNvx(RadiationField):
-
-    """Lab-frame coordinate of the inner normal to observation plane
-    (/ surface in its center)"""
-
-    glossary_name = 'params/Mesh/nvx'
-
-    def __init__(self, wf):
-        """params/Mesh/nvx field"""
-
-        super(WFRadiationMeshNvx, self).__init__(wf)
-
-        self.attributes.update(
-            {'units': '-',
-             'limits': '[2:LONG_MAX]',
-             'alias': ''
-             })
-
-    @property
-    def value(self):
-        """Numbers of points, vertical"""
-
-        return self._wf._srwl_wf.mesh.nvx
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.mesh.nvx = int(val)
-
-
-class WFRadiationMeshNvy(RadiationField):
-
-    """Lab-frame coordinate of the inner normal to observation plane
-    (/ surface in its center)"""
-
-    glossary_name = 'params/Mesh/nvy'
-
-    def __init__(self, wf):
-        """params/Mesh/nvy field"""
-
-        super(WFRadiationMeshNvy, self).__init__(wf)
-
-        self.attributes.update(
-            {'units': '-',
-             'limits': '[2:LONG_MAX]',
-             'alias': ''
-             })
-
-    @property
-    def value(self):
-        """Numbers of points, vertical"""
-
-        return self._wf._srwl_wf.mesh.nvy
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.mesh.nvy = int(val)
-
-
-class WFRadiationMeshNvz(RadiationField):
-
-    """Lab-frame coordinate of the inner normal to observation plane
-     (/ surface in its center)"""
-
-    glossary_name = 'params/Mesh/nvz'
-
-    def __init__(self, wf):
-        """params/Mesh/nvz field"""
-
-        super(WFRadiationMeshNvz, self).__init__(wf)
-
-        self.attributes.update(
-            {'units': '-',
-             'limits': '[2:LONG_MAX]',
-             'alias': ''
-             })
-
-    @property
-    def value(self):
-        """Numbers of points, vertical"""
-
-        return self._wf._srwl_wf.mesh.nvz
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.mesh.nvz = int(val)
-
-
-class WFRadiationMeshHvx(RadiationField):
-
-    """Lab-frame horizontal base vector of the observation plane
-     (/ surface in its center) """
-
-    glossary_name = 'params/Mesh/hvx'
-
-    def __init__(self, wf):
-        """params/Mesh/hvx field"""
-
-        super(WFRadiationMeshHvx, self).__init__(wf)
-
-        self.attributes.update(
-            {'units': '-',
-             'limits': '[2:LONG_MAX]',
-             'alias': ''
-             })
-
-    @property
-    def value(self):
-        """Numbers of points, vertical"""
-
-        return self._wf._srwl_wf.mesh.hvx
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.mesh.hvx = int(val)
-
-
-class WFRadiationMeshHvy(RadiationField):
-
-    """Lab-frame horizontal base vector of the observation plane
-     (/ surface in its center) """
-
-    glossary_name = 'params/Mesh/hvy'
-
-    def __init__(self, wf):
-        """params/Mesh/hvy field"""
-
-        super(WFRadiationMeshHvy, self).__init__(wf)
-
-        self.attributes.update(
-            {'units': '-',
-             'limits': '[2:LONG_MAX]',
-             'alias': ''
-             })
-
-    @property
-    def value(self):
-        """Numbers of points, vertical"""
-
-        return self._wf._srwl_wf.mesh.hvy
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.mesh.hvy = int(val)
-
-
-class WFRadiationMeshHvz(RadiationField):
-
-    """Lab-frame horizontal base vector of the observation plane
-     (/ surface in its center) """
-
-    glossary_name = 'params/Mesh/hvz'
-
-    def __init__(self, wf):
-        """params/Mesh/hvz field"""
-
-        super(WFRadiationMeshHvz, self).__init__(wf)
-
-        self.attributes.update(
-            {'units': '-',
-             'limits': '[2:LONG_MAX]',
-             'alias': ''
-             })
-
-    @property
-    def value(self):
-        """Numbers of points, vertical"""
-
-        return self._wf._srwl_wf.mesh.hvz
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.mesh.hvz = int(val)
-
-# TODO: add wrapper for mesh._arSurf (we should know it size)
-
-
-class WFRadiationMeshXMin(RadiationField):
-
-    """Minimum of horizontal range [m]"""
-
-    glossary_name = 'params/Mesh/xMin'
-
-    def __init__(self, wf):
-        """params/Mesh/xMin field"""
-
-        super(WFRadiationMeshXMin, self).__init__(wf)
-
-    @property
-    def value(self):
-        """Minimum of horizontal range [m]"""
-
-        if self._wf.params.wSpace == 'R-space':
-            return self._wf._srwl_wf.mesh.xStart
-        else:
-            warnings.warn(
-                'params/Mesh/xMin not defined if NOT params/wSpace==R-space')
-            return None
-
-    @value.setter
-    def value(self, val):
-        if not self._wf.params.wSpace == 'R-space':
-            warnings.warn(
-                'params/Mesh/xMin not defined if NOT params/wSpace==R-space')
-
-        self._wf._srwl_wf.mesh.xStart = float(val)
-
-
-class WFRadiationMeshXMax(RadiationField):
-
-    """Maximum of horizontal range [m]"""
-
-    glossary_name = 'params/Mesh/xMax'
-
-    def __init__(self, wf):
-        """params/Mesh/xMax field"""
-
-        super(WFRadiationMeshXMax, self).__init__(wf)
-
-    @property
-    def value(self):
-        """Maximum of horizontal range [m]"""
-
-        if self._wf.params.wSpace == 'R-space':
-            return self._wf._srwl_wf.mesh.xFin
-        else:
-            warnings.warn(
-                'params/Mesh/xMax not defined if NOT params/wSpace==R-space')
-            return None
-
-    @value.setter
-    def value(self, val):
-        if not self._wf.params.wSpace == 'R-space':
-            warnings.warn(
-                'params/Mesh/xMax not defined if NOT params/wSpace==Rspace')
-
-        self._wf._srwl_wf.mesh.xFin = float(val)
-
-
-
-class WFRadiationMeshYMin(RadiationField):
-
-    """Minimum of vertical range [m]"""
-
-    glossary_name = 'params/Mesh/yMin'
-
-    def __init__(self, wf):
-        """params/Mesh/yMin field"""
-
-        super(WFRadiationMeshYMin, self).__init__(wf)
-
-    @property
-    def value(self):
-        """Minimum of vertical range [m]"""
-
-        if self._wf.params.wSpace == 'R-space':
-            return self._wf._srwl_wf.mesh.yStart
-        else:
-            warnings.warn(
-                'params/Mesh/yMin not defined if NOT params/wSpace==Rs-pace')
-            return None
-
-    @value.setter
-    def value(self, val):
-        if not self._wf.params.wSpace == 'R-space':
-            warnings.warn(
-                'params/Mesh/yMin not defined if NOT params/wSpace==R-space')
-
-        self._wf._srwl_wf.mesh.yStart = float(val)
-
-
-
-class WFRadiationMeshYMax(RadiationField):
-
-    """Maximum of vertical range [m]"""
-
-    glossary_name = 'params/Mesh/yMax'
-
-    def __init__(self, wf):
-        """params/Mesh/yMax field"""
-
-        super(WFRadiationMeshYMax, self).__init__(wf)
-
-    @property
-    def value(self):
-        """Maximum of vertical range [m]"""
-
-        if self._wf.params.wSpace == 'R-space':
-            return self._wf._srwl_wf.mesh.yFin
-        else:
-            warnings.warn(
-                'params/Mesh/yMax not defined if NOT params/wSpace==R-space')
-            return None
-
-    @value.setter
-    def value(self, val):
-        if not self._wf.params.wSpace == 'R-space':
-            warnings.warn(
-                'params/Mesh/yMax not defined if NOT params/wSpace==R-space')
-
-        self._wf._srwl_wf.mesh.yFin = float(val)
-
-class WFRadiationMeshQxMin(RadiationField):
-
-    """Minimum of horizontal frequency [1/m]"""
-
-    glossary_name = 'params/Mesh/qxMin'
-
-    def __init__(self, wf):
-        """params/Mesh/qxMin field"""
-
-        super(WFRadiationMeshQxMin, self).__init__(wf)
-
-    @property
-    def value(self):
-        """Minimum of horizontal frequency [1/m]"""
-
-        if self._wf.params.wSpace == 'Q-space':
-            return self._wf._srwl_wf.mesh.xStart
-        else:
-            warnings.warn(
-                'params/Mesh/qxMin not defined if NOT params/wSpace==Q-space')
-            return None
-
-    @value.setter
-    def value(self, val):
-        if not self._wf.params.wSpace == 'Q-space':
-            warnings.warn(
-                'params/Mesh/qxMin not defined if NOT params/wSpace==Q-space')
-
-        self._wf._srwl_wf.mesh.xStart = float(val)
-
-
-class WFRadiationMeshQxMax(RadiationField):
-
-    """Maximum of horizontal frequency [1/m]"""
-
-    glossary_name = 'params/Mesh/qxMax'
-
-    def __init__(self, wf):
-        """params/Mesh/qxMax field"""
-
-        super(WFRadiationMeshQxMax, self).__init__(wf)
-
-    @property
-    def value(self):
-        """Maximum of horizontal frequency [1/m]"""
-
-        if self._wf.params.wSpace == 'Q-space':
-            return self._wf._srwl_wf.mesh.xFin
-        else:
-            warnings.warn(
-                'params/Mesh/qxMax not defined if NOT params/wSpace==Q-space')
-            return None
-
-    @value.setter
-    def value(self, val):
-        if not self._wf.params.wSpace == 'Q-space':
-            warnings.warn(
-                'params/Mesh/qxMax not defined if NOT params/wSpace==Q-space')
-
-        self._wf._srwl_wf.mesh.xFin = float(val)
-
-
-class WFRadiationMeshQyMin(RadiationField):
-
-    """Minimum of vertical frequency [1/m]"""
-
-    glossary_name = 'params/Mesh/qyMin'
-
-    def __init__(self, wf):
-        """params/qyMin field"""
-
-        super(WFRadiationMeshQyMin, self).__init__(wf)
-
-    @property
-    def value(self):
-        """Minimum of vertical frequency [1/m]"""
-
-        if self._wf.params.wSpace == 'Q-space':
-            return self._wf._srwl_wf.mesh.yStart
-        else:
-            warnings.warn(
-                'params/Mesh/qyMin not defined if NOT params/wSpace==Q-space')
-            return None
-
-    @value.setter
-    def value(self, val):
-        if not self._wf.params.wSpace == 'Q-space':
-            warnings.warn(
-                'params/Mesh/qyMin not defined if NOT params/wSpace==Q-space')
-
-        self._wf._srwl_wf.mesh.yStart = float(val)
-
-
-class WFRadiationMeshQyMax(RadiationField):
-
-    """Maximum of vertical frequency [1/m]"""
-
-    glossary_name = 'params/Mesh/qyMax'
-
-    def __init__(self, wf):
-        """params/Mesh/qyMax field"""
-
-        super(WFRadiationMeshQyMax, self).__init__(wf)
-
-    @property
-    def value(self):
-        """Maximum of vertical frequency [1/m]"""
-
-        if self._wf.params.wSpace == 'Q-space':
-            return self._wf._srwl_wf.mesh.yFin
-        else:
-            warnings.warn(
-                'params/Mesh/qyMax not defined if NOT params/wSpace==Q-space')
-            return None
-
-    @value.setter
-    def value(self, val):
-        if not self._wf.params.wSpace == 'Q-space':
-            warnings.warn(
-                'params/Mesh/qyMax not defined if NOT params/wSpace==Q-space')
-
-        self._wf._srwl_wf.mesh.yFin = float(val)
-
-
-class WFRadiationMeshSliceMin(RadiationField):
-
-    """Min value of time [s] or energy [ev] for pulse (fragment)"""
-
-    glossary_name = 'params/Mesh/sliceMin'
-
-    def __init__(self, wf):
-        """params/Mesh/sliceMin field"""
-
-        super(WFRadiationMeshSliceMin, self).__init__(wf)
-
-        self.attributes.update(
-            {'limits': '[1:LONG_MAX]',
-             'alias': 'mesh.eFin'
-             })
-
-    @property
-    def value(self):
-        """Min value of time [s] or energy [ev] for pulse (fragment)"""
-
-        return self._wf._srwl_wf.mesh.eStart
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.mesh.eStart = float(val)
-
-
-class WFRadiationMeshSliceMax(RadiationField):
-
-    """Max value of time [s] or energy [ev] for pulse (fragment)"""
-
-    glossary_name = 'params/Mesh/sliceMax'
-
-    def __init__(self, wf):
-        """params/Mesh/sliceMax field"""
-
-        super(WFRadiationMeshSliceMax, self).__init__(wf)
-
-        self.attributes.update(
-            {'limits': '[1:LONG_MAX]',
-             'alias': 'mesh.eStart'
-             })
-
-    @property
-    def value(self):
-        """Max value of time [s] or energy [ev] for pulse (fragment)"""
-
-        return self._wf._srwl_wf.mesh.eFin
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.mesh.eFin = float(val)
-
-
-class WFRadiationRx(RadiationField):
-
-    """Instantaneous horizontal wavefront radius [m]"""
-
-    glossary_name = 'params/Rx'
-
-    def __init__(self, wf):
-        """params/Rx field"""
-
-        super(WFRadiationRx, self).__init__(wf)
-        self.attributes.update(
-            {'limits': '[FLOAT_MIN:FLOAT_MAX]',
-             'alias': 'Rx'
-             })
-
-    @property
-    def value(self):
-        """Instantaneous horizontal wavefront radius [m]"""
-
-        return self._wf._srwl_wf.Rx
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.Rx = float(val)
-
-
-class WFRadiationRy(RadiationField):
-
-    """Instantaneous vertical wavefront radius [m]"""
-
-    glossary_name = 'params/Ry'
-
-    def __init__(self, wf):
-        """params/Ry field"""
-
-        super(WFRadiationRy, self).__init__(wf)
-
-        self.attributes.update(
-            {'limits': '[FLOAT_MIN:FLOAT_MAX]',
-             'alias': 'Ry'
-             })
-
-    @property
-    def value(self):
-        """Instantaneous vertical wavefront radius [m]"""
-
-        return self._wf._srwl_wf.Ry
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.Ry = float(val)
-
-
-class WFRadiationDRx(RadiationField):
-
-    """Error of wavefront horizontal radius [m]"""
-
-    glossary_name = 'params/dRx'
-
-    def __init__(self, wf):
-        """params/dRx field"""
-
-        super(WFRadiationDRx, self).__init__(wf)
-        self.attributes.update(
-            {'limits': '[FLOAT_MIN:FLOAT_MAX]',
-             'alias': 'dRx'
-             })
-
-    @property
-    def value(self):
-        """Error of wavefront horizontal radius [m]"""
-
-        return self._wf._srwl_wf.dRx
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.dRx = float(val)
-
-
-class WFRadiationDRy(RadiationField):
-
-    """Error of wavefront horizontal radius [m]"""
-
-    glossary_name = 'params/dRy'
-
-    def __init__(self, wf):
-        """params/dRy field"""
-
-        super(WFRadiationDRy, self).__init__(wf)
-
-        self.attributes.update(
-            {'limits': '[FLOAT_MIN:FLOAT_MAX]',
-             'alias': 'dRy'
-             })
-
-    @property
-    def value(self):
-        """Error of wavefront horizontal radius [m]"""
-
-        return self._wf._srwl_wf.dRy
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.dRy = float(val)
-
-
-class WFRadiationNval(RadiationField):
-
-    """complex electric field nval==2"""
-
-    glossary_name = 'params/nval'
-
-    def __init__(self, wf):
-        """params/nval field"""
-
-        super(WFRadiationNval, self).__init__(wf)
-        self.attributes.update(
-            {'units': '',
-             'limits': '{2}',
-             'alias': '-'
-             })
-
-        self._value = 2
-
-    @property
-    def value(self):
-        """complex electric field nval==2"""
-
-        return self._value
-
-    @value.setter
-    def value(self, val):
-        self._value = int(val)
-
-
-class WFRadiationXCentre(RadiationField):
-
-    """Horizontal transverse coordinates of wavefront instant 'source center' [m]"""
-
-    glossary_name = 'params/xCentre'
-
-    def __init__(self, wf):
-        """params/xCentre field"""
-
-        super(WFRadiationXCentre, self).__init__(wf)
-
-    @property
-    def value(self):
-        """Horizontal transverse coordinates of wavefront instant 'source center' [m]"""
-
-        return self._wf._srwl_wf.xc
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.xc = float(val)
-
-
-class WFRadiationYCentre(RadiationField):
-
-    """Vertical transverse coordinates of wavefront instant 'source center' [m]"""
-
-    glossary_name = 'params/yCentre'
-
-    def __init__(self, wf):
-        """params/yCentre field"""
-
-        super(WFRadiationYCentre, self).__init__(wf)
-
-    @property
-    def value(self):
-        """Vertical transverse coordinates of wavefront instant 'source center' [m]"""
-
-        return self._wf._srwl_wf.yc
-
-    @value.setter
-    def value(self, val):
-        self._wf._srwl_wf.yc = float(val)
-
-
-class WFDataArrEhor(RadiationField):
-
+        super().__init__(wf)
+        self.Mesh = WavefrontMesh(wf)
+
+    # nval and wSpace first: they are needed to load field arrays and ranges from files
+    nval = Field[int]('params/nval', 'complex electric field nval==2',
+                      get=lambda wf: wf._nval, set=_set_nval, units='', limits='{2}', alias='-')
+    wSpace = Field[str]('params/wSpace', 'Real space or q-space WF presentation [string]',
+                        get=_get_w_space, set=_set_w_space, limits='{"R-space", "Q-space"}', alias='presCA')
+    wDomain = Field[str]('params/wDomain', 'WF in time or frequency (photon energy) domain [string]',
+                         get=_get_w_domain, set=_set_w_domain, limits='{"time", "frequency"}', alias='presFT')
+    wFloatType = Field[str]('params/wFloatType', 'Electric field numerical type [string]',
+                            get=_get_w_float_type, set=_set_w_float_type,
+                            limits='{"float", "double"}', alias='numTypeElFld')
+    wEFieldUnit = Field[str]('params/wEFieldUnit', 'Electric field units [string]',
+                             get=_get_w_efield_unit, set=_set_w_efield_unit,
+                             limits='{"sqrt(Phot/s/0.1%bw/mm^2)", "sqrt(W/mm^2)", "sqrt(J/eV/mm^2)", "arbitrary"}',
+                             alias='unitElFld')
+    photonEnergy = Field[float]('params/photonEnergy', 'Average photon energy [ev]',
+                                srw='avgPhotEn', convert=float, limits='[1:1e6]', alias='avgPhotEn')
+    Rx = Field[float]('params/Rx', 'Instantaneous horizontal wavefront radius [m]',
+                      srw='Rx', convert=float, limits='[FLOAT_MIN:FLOAT_MAX]', alias='Rx')
+    Ry = Field[float]('params/Ry', 'Instantaneous vertical wavefront radius [m]',
+                      srw='Ry', convert=float, limits='[FLOAT_MIN:FLOAT_MAX]', alias='Ry')
+    dRx = Field[float]('params/dRx', 'Error of wavefront horizontal radius [m]',
+                       srw='dRx', convert=float, limits='[FLOAT_MIN:FLOAT_MAX]', alias='dRx')
+    dRy = Field[float]('params/dRy', 'Error of wavefront vertical radius [m]',
+                       srw='dRy', convert=float, limits='[FLOAT_MIN:FLOAT_MAX]', alias='dRy')
+    xCentre = Field[float]('params/xCentre',
+                           "Horizontal transverse coordinates of wavefront instant 'source center' [m]",
+                           srw='xc', convert=float)
+    yCentre = Field[float]('params/yCentre',
+                           "Vertical transverse coordinates of wavefront instant 'source center' [m]",
+                           srw='yc', convert=float)
+
+
+_get_arr_ehor, _set_arr_ehor = _efield_array('arEx')
+_get_arr_ever, _set_arr_ever = _efield_array('arEy')
+
+
+class WavefrontData(_Node):
+    """EM field arrays of the wavefront (``wf.data``)."""
+
+    __slots__ = ()
+
+    arrEhor = Field[np.ndarray]('data/arrEhor', 'EM field (Re, Im) pairs written in 3D array, '
+                                'slice number changes first. Horizontal polarization',
+                                get=_get_arr_ehor, set=_set_arr_ehor,
+                                units='see params/wEFieldUnit', limits='[FLOAT_MIN:FLOAT_MAX]', alias='arEx')
+    arrEver = Field[np.ndarray]('data/arrEver', 'EM field (Re, Im) pairs written in 3D array, '
+                                'slice number changes first. Vertical polarization',
+                                get=_get_arr_ever, set=_set_arr_ever,
+                                units='see params/wEFieldUnit', limits='[FLOAT_MIN:FLOAT_MAX]', alias='arEy')
+
+
+version_field = Field[float]('version', 'Hdf5 format version (glossary)',
+                             get=lambda wf: wf._version, set=_set_version,
+                             units='-', limits='[???]', alias='VERSION')
+
+
+def get_wf_fields() -> Iterator[Field]:
     """
-    EM field (Re, Im) pairs written in 3D array, slice number changes first.
-    Horizontal polarization
+    All wavefront fields in the order of loading from files: mesh size and space first, field arrays last.
+
+    :return: iterator over :class:`Field`
     """
-
-    glossary_name = 'data/arrEhor'
-
-    def __init__(self, wf):
-        """data/arrEhor field"""
-
-        super(WFDataArrEhor, self).__init__(wf)
-        self.attributes.update(
-            {'units': 'see params/wEFieldUnit',
-             'limits': '[FLOAT_MIN:FLOAT_MAX]',
-             'alias': 'arEx'
-             })
-
-    @property
-    def value(self):
-        """
-        EM field (Re, Im) pairs written in 3D array, slice number changes first.
-        Horizontal polarization
-        """
-
-        res = np.asarray(self._wf._srwl_wf.arEx, dtype='float32')
-        
-        correct_shape = (self._wf.params.Mesh.ny,
-                         self._wf.params.Mesh.nx,
-                         self._wf.params.Mesh.nSlices,
-                         self._wf.params.nval)
-        if not res.shape:
-            pass
-        elif np.prod(res.shape) == np.prod(correct_shape):
-            res = res.reshape(correct_shape)
-        else:
-            print(res.shape, correct_shape)
-            raise ValueError('Alarm')
-            res = np.zeros(shape= (correct_shape),
-                    dtype='float32')
-        
-        if not res.flags['C_CONTIGUOUS']:
-            res = np.ascontiguousarray(res)
-        
-        return res
-
-    @value.setter
-    def value(self, val):
-        """
-
-        :param val: complex np 3D array or array.array. if array.array - just copy
-        """
-        n_total = self._wf._get_total_elements() * self._wf.params.nval
-        self._wf._allocate_srw_moments()
-        if type(val) == array.array:
-            if not val.count() == n_total:
-                warnings.warn(
-                    'New array size not equal to wavefront size. You must set it by yourself.')
-
-        val = np.array(val, dtype='float32')
-        
-        if not val.flags['C_CONTIGUOUS']:
-            val = np.ascontiguousarray(val)
-
-        if not np.prod(val.shape) == n_total:
-            warnings.warn(
-                'New array size not equal to wavefront size. It will set automaticaly to array size.')
-            self._wf.params.nx = val.shape[1]
-            self._wf.params.ny = val.shape[0]
-            self._wf.params.nSlices = val.shape[2]
-
-        val = val.reshape(-1)
-        self._wf._srwl_wf.arEx = val
+    yield from WavefrontParams.fields()[:2]  # nval, wSpace
+    yield from WavefrontMesh.fields()
+    yield from WavefrontParams.fields()[2:]
+    yield version_field
+    yield from WavefrontData.fields()
 
 
-class WFDataArrEver(RadiationField):
+def field_value(wf, field: Field):
+    """Value of the field in the wavefront wf."""
+    return field.__get__(field_node(wf, field))
 
+
+def shortcut(field: Field[T]) -> ReadOnlyField[T]:
     """
-    EM field (Re, Im) pairs written in 3D array, slice number changes first.
-    Vertical polarization
+    Read-only alias of a field of ``wf.params`` or ``wf.params.Mesh`` at the top level of the wavefront:
+    ``wf.nx`` is ``wf.params.Mesh.nx``. Not stored in HDF5 files (not in :func:`get_wf_fields`).
     """
-
-    glossary_name = 'data/arrEver'
-
-    def __init__(self, wf):
-        """data/arrEver field"""
-
-        super(WFDataArrEver, self).__init__(wf)
-        self.attributes.update(
-            {'units': 'see params/wEFieldUnit',
-             'limits': '[FLOAT_MIN:FLOAT_MAX]',
-             'alias': 'arEy'
-             })
-
-    @property
-    def value(self):
-        """
-        EM field (Re, Im) pairs written in 3D array, slice number changes first.
-        Vertical polarization
-        """
-
-        res = np.asarray(self._wf._srwl_wf.arEy, dtype='float32')
-        correct_shape = (self._wf.params.Mesh.ny,
-                         self._wf.params.Mesh.nx,
-                         self._wf.params.Mesh.nSlices,
-                         self._wf.params.nval)
-        if not res.shape:
-            pass
-        elif np.prod(res.shape) == np.prod(correct_shape):
-            res = res.reshape(correct_shape)
-        else:
-            print(res.shape, correct_shape)
-            raise ValueError('Alarm')
-            res = np.zeros(shape= (correct_shape),
-                    dtype='float32')
-        
-        if not res.flags['C_CONTIGUOUS']:
-            res = np.ascontiguousarray(res)
-        
-        return res
-
-    @value.setter
-    def value(self, val):
-        n_total = self._wf._get_total_elements() * self._wf.params.nval
-        self._wf._allocate_srw_moments()
-        if type(val) == array.array:
-            if not val.count() == n_total:
-                warnings.warn(
-                    'New array size not equal to wavefront size. You must set it by yourself.')
-            # self._wf._srwl_wf.arEy = array.array(str(u'f'), val)
-        # else:
-        val = np.array(val, dtype='float32')
-        
-        if not val.flags['C_CONTIGUOUS']:
-            val = np.ascontiguousarray(val)
-        
-        if not np.prod(val.shape) == n_total:
-            warnings.warn(
-                'New array size not equal to wavefront size. It will set automaticaly to array size.')
-            self._wf.params.nx = val.shape[1]
-            self._wf.params.ny = val.shape[0]
-            self._wf.params.nSlices = val.shape[2]
-
-        val = val.reshape(-1)
-        
-        self._wf._srwl_wf.arEy = val
+    node = 'params.Mesh' if field.path.startswith('params/Mesh/') else 'params'
+    res = ReadOnlyField[T](field.path, field.description, units=field.attributes['units'],
+                           get=lambda wf: field.__get__(field_node(wf, field)))
+    res.__doc__ = f"Read-only shortcut of ``wf.{node}.{field.name}``: {field.description}"
+    return res
 
 
-
-# TODO: fix allocation in N(x,y,z)
-
-# TODO: add history section
-
-# TODO: add misc section
-
-def get_wf_fields():
-    """
-    Return fields in proper order to map it in Wavefront
-
-    :return: iterator over wavefront fields in glossary
-    """
-
-    clsmembers = inspect.getmembers(sys.modules[__name__],
-                                    inspect.isclass)
-
-    # hack for normalize initialization order
-
-    for (ic, c) in enumerate(clsmembers[:]):
-        if c[1].__name__ in ['WFRadiationWSpace', 'WFRadiationMeshNSlices',
-                             'WFRadiationMeshNx', 'WFRadiationMeshNy',
-                             'WFRadiationNval']:
-            ct = clsmembers.pop(ic)
-            clsmembers.insert(0, ct)
-
-    for (key, val) in clsmembers:
-        if inspect.isclass(val):
-            if issubclass(val, RadiationField):
-                if not val.__name__ == 'RadiationField':
-                    yield val
+def field_node(wf, field: Field):
+    """Node of the wavefront wf the field belongs to."""
+    if field is version_field:
+        return wf
+    if field.path.startswith('data/'):
+        return wf.data
+    if field.path.startswith('params/Mesh/'):
+        return wf.params.Mesh
+    return wf.params
 
 
 def get_glosary_info():
     """
-    :return: dictionary field_name -> doc
+    :return: dictionary field_name -> (description, units)
     """
-
-    res = {}
-    for wf in get_wf_fields():
-        res[wf.glossary_name] = wf.__doc__, wf().find_units_label()
-    return res
+    return {f.path: (f.description, f.attributes['units']) for f in get_wf_fields()}
 
 
 def print_glossary():
     """
     Print glossary docs
     """
-
-    for wf in get_wf_fields():
-        name = wf.glossary_name
-        descr = wf.__doc__
-        descr = descr.replace('\n', ' ')
-        units = []
-        start = stop = 0
-        while start >= 0 and stop >= 0:
-            start = descr.find(r'[', stop)
-            stop = descr.find(r']', start)
-            if start >= 0 and stop >= 0:
-                units.append(descr[start+1: stop])
-
-        units = ' or '.join(units)
-        print('**{name}** - {decsription} - ***{units}***'.format(
-            name=name, decsription=descr, units=units))
-    # pprint.pprint(get_glosary_info())
+    for f in get_wf_fields():
+        print('**{name}** - {description} - ***{units}***'.format(
+            name=f.path, description=f.description, units=f.attributes['units']))
 
 
 def print_glossary_html():
     """
-    Print glossry docsas html table. Used to build alfresco documentaion page.
+    Print glossary docs as html table. Used to build alfresco documentation page.
     """
-
-    gloss = []
-    for wf in get_wf_fields():
-        name = wf.glossary_name
-        descr = wf.__doc__
-        descr = descr.replace('\n', ' ')
-        units = []
-        start = stop = 0
-        while start >= 0 and stop >= 0:
-            start = descr.find(r'[', stop)
-            stop = descr.find(r']', start)
-            if start >= 0 and stop >= 0:
-                units.append(descr[start+1: stop])
-
-        units = ' or '.join(units)
-        gloss.append([name, descr, units])
-    res = r'<table border="2">' + '\n'
-    res += r'<tr><th>Filed name</th><th>Description</th><th>Units</th></tr>' + \
-        '\n'
-    for g in sorted(gloss):
-        res += r'<tr>' + '\n'
-        for gg in g:
-            res += '\t' + r'<td>{}</td>'.format(gg) + '\n'
-        res += r'</tr>' + '\n'
-    res += r'</table>' + '\n'
+    res = '<table border="2">\n'
+    res += '<tr><th>Filed name</th><th>Description</th><th>Units</th></tr>\n'
+    for name, descr, units in sorted([f.path, f.description, f.attributes['units']] for f in get_wf_fields()):
+        res += '<tr>\n'
+        for gg in (name, descr, units):
+            res += f'\t<td>{gg}</td>\n'
+        res += '</tr>\n'
+    res += '</table>\n'
     return res
-
-# class GlossaryField(dict):
-
-#     def __init__(
-#         self,
-#         type=None,
-#         units=None,
-#         limits=None,
-#         alias=None,
-#         description=None,
-#         ):
-#         self['type'] = type
-#         self['units'] = units
-#         self['limits'] = limits
-#         self['alias'] = alias
-#         self['description'] = description
-
-
-# class GlossaryDict(object):
-
-#     def __init__(self):
-#         self.definition = {
-#             'VERSION': GlossaryField(type='float',
-#                     description='Hdf5 format version (glossary)'),
-#             'history': {
-#                 'parentContact': GlossaryField(type='string',
-#                         description=r'For fast data: section Contacts from readme'
-#                         ),
-#                 'parentData': GlossaryField(type='string',
-#                         description=r'Source file name'),
-#                 'parentMethods': GlossaryField(type='string',
-#                         description=r'For fast data - first 13 lines + "Conversion from polar to xy: fast2xy" from readme.txt'
-#                         ),
-#                 'parentTestFiles': GlossaryField(type='string',
-#                         description=r'For fast data – section test files of readme'
-#                         ),
-#                 },
-#             'Radiation': {
-#                 'photonEnergy': GlossaryField(type='float',
-#                         alias='avgPhotEn', units='ev',
-#                         description=r'average photon energy'),
-#                 'zCoord': GlossaryField(type='double',
-#                         alias='mesh.zStart', units='m',
-#                         description=r'Longitudinal position, for fast data - length of  active undulator'
-#                         ),
-#                 'wDomain': GlossaryField(type='string', limits=('twEFieldUnitime',
-#                         'frequency'), alias='presFT',
-#                         description=r'WF in time || frequency domain '
-#                         ),
-#                 'wSpace': GlossaryField(type='string', limits=('Rspace', 'Qspace'), alias='presCA',
-#                         description=r'real space || q-space WF presentation'
-#                         ),
-#                 'wFloatType': GlossaryField(type='string',
-#                         limits=('Float', 'Double'), alias='numTypeElFld', description=r'electric field numerical type'
-#                         ),
-#                 'wEFieldUnit ': GlossaryField(type='string',
-#                         limits=('sqrt(GW)',
-#                         'sqrt(Nphoton/s/0.1%bw/mm^2)', 'sqrt(Nphotons)'
-#                         ), alias='unitElFld',
-#                         description=r'units of electric field intensity |E|^2'
-#                         ),
-#                 'nx': GlossaryField(type='long', alias='mesh.nx',
-#                                     description=r'numbers of points, horizontal'
-#                                     ),
-#                 'ny': GlossaryField(type='long', alias='mesh.ny',
-#                                     description=r'numbers of points, vertical'
-#                                     ),
-#                 'xMin': GlossaryField(type='double', units='m',
-#                         alias='mesh.xStart',
-#                         description=r'minimum of horizontal range'),
-#                 'qxMin': GlossaryField(type='double', units='rad',
-#                         alias='mesh.xStart',
-#                         description=r'minimum of horizontal range'),
-#                 'xMax': GlossaryField(type='double', units='m',
-#                         alias='mesh.xFin',
-#                         description=r'maximum of horizontal range'),
-#                 'qxMax': GlossaryField(type='double', units='rad',
-#                         alias='mesh.xFin',
-#                         description=r'maximum of horizontal range'),
-#                 'yMin': GlossaryField(type='double', units='m',
-#                         alias='mesh.yStart',
-#                         description=r'minimum of vertical range'),
-#                 'qyMin': GlossaryField(type='double', units='rad',
-#                         alias='mesh.yStart',
-#                         description=r'minimum of vertical range'),
-#                 'yMax': GlossaryField(type='double', units='m',
-#                         alias='mesh.yFin',
-#                         description=r'maximum of vertical range'),
-#                 'qyMax': GlossaryField(type='double', units='rad',
-#                         alias='mesh.yFin',
-#                         description=r'maximum of vertical range'),
-#                 'nSlices': GlossaryField(type='long', alias='mesh.ne',
-#                         description=r'numbers of points vs photon energy/time for the pulse'
-#                         ),
-#                 'sliceMin': GlossaryField(type='double',
-#                         alias='mesh.eStart',
-#                         description=r'min value of time [s] or energy [ev] for pulse [fragment]'
-#                         ),
-#                 'sliceMax': GlossaryField(type='double',
-#                         alias='mesh.eFin',
-#                         description=r'max value of time [s] or energy [ev] for pulse [fragment]'
-#                         ),
-#                 'Rx': GlossaryField(type='double', units='m',
-#                                     alias='Rx,',
-#                                     description=r'instantaneous horizontal wavefront radius'
-#                                     ),
-#                 'Ry': GlossaryField(type='double', units='m', alias='Ry',
-#                                     description=r'instantaneous vertical wavefront radius'
-#                                     ),
-#                 'dRx': GlossaryField(type='double', units='m',
-#                         alias='dRx',
-#                         description=r'error of wavefront horizontal radius'
-#                         ),
-#                 'dRy': GlossaryField(type='double', units='m',
-#                         alias='dRy',
-#                         description=r'error of wavefront vertical radius'
-#                         ),
-#                 'nval': GlossaryField(type='int',
-#                         description='complex electric field nval==2'),
-#                 'xCentre': GlossaryField(type='double', units='m',
-#                         alias='xC',
-#                         description=r'horizontal transverse coordinates of wavefront instant "source center"'
-#                         ),
-#                 'yCentre': GlossaryField(type='double', units='m',
-#                         alias='yC',
-#                         description=r'vertical transverse coordinates of wavefront instant "source center"'
-#                         ),
-#                 },
-#             'Data': {'arrEhor': GlossaryField(type='float array',
-#                      alias='arEx',
-#                      description='EM field (Re, Im) pairs written in 3D array, slice number changes first. Horizontal polarization '
-#                      ), 'arrEver': GlossaryField(type='float array',
-#                      alias='arEy',
-#                      description=r'EM field. Vertical polarization')},
-#             'misc': {
-#                 'WignerDistrMoments': GlossaryField(type='string',
-#                         alias='arMomX,arMomY',
-#                         description=r'h5 structure with statistical moments (of Wigner distribution)'
-#                         ),
-#                 'aux': GlossaryField(type='string', alias='arWfrAuxData',
-#                         description=r'Name of file with array of auxiliary WF data'
-#                         ),
-#                 'SRWLPartBeam': GlossaryField(type='string',
-#                         alias='partBeam',
-#                         description=r'filename with source parameters (e.g. e-beam for SR or e-bunch for FEL ?)'
-#                         ),
-#                 'ElecPropMatr': GlossaryField(type='string',
-#                         alias='arElecPropMatr', description=r''),
-#                 },
-#             }

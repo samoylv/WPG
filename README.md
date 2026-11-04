@@ -12,9 +12,13 @@ WPG needs Python 3.10 or newer. SRW is not bundled with WPG any more: it is inst
 ```bash
 git clone https://github.com/samoylv/WPG.git
 cd WPG
-python -m pip install -e ".[test]"
+python -m pip install -e ".[test]" --config-settings editable_mode=compat
 python -m pytest
 ```
+
+`editable_mode=compat` lets IDEs and static analyzers (Pylance, pyright, mypy) find the editable WPG package.
+Wavefront fields are declared in `wpg/glossary.py`, so `wf.params.Mesh.nx`, `wf.data.arrEhor` etc.
+are known to autocompletion together with their types and units.
 
 With conda:
 

@@ -56,8 +56,8 @@ def store_dict_hdf5(hdf5_file_name, input_dict):
                     value = numpy.array(value)
 
                     # Handle unicode as hdf does not like unicode arrays.
-                    if value.dtype == numpy.dtype('<U31'):
-                        value = [v.encode('utf8') for v in value]
+                    if value.dtype.kind == 'U':
+                        value = numpy.char.encode(value, 'utf8')
 
                     # Create the dataset.
                     group.create_dataset(name,
@@ -104,11 +104,23 @@ def load_dict_slash_hdf5(hdf5_file_name):
 
     def add_item(name, obj):
         if not isinstance(obj, h5py.Group):
-            out_dict.update({name.encode(): obj[()]})
+            out_dict.update({name.encode(): _decode_strings(obj[()])})
     with h5py.File(hdf5_file_name, 'r') as h5_file:
         h5_file.visititems(add_item)
 
     return out_dict
+
+
+def _decode_strings(value):
+    """Strings are read from HDF5 as bytes: decode bytes and arrays of bytes to str."""
+    if isinstance(value, bytes):
+        return value.decode('utf-8')
+    if isinstance(value, numpy.ndarray):
+        if value.dtype.kind == 'S':
+            return numpy.char.decode(value, 'utf-8')
+        if value.dtype.kind == 'O' and value.size and all(isinstance(v, bytes) for v in value.flat):
+            return numpy.array([v.decode('utf-8') for v in value.flat]).reshape(value.shape)
+    return value
 
 
 def update_dict_slash_string(input_dict, keys_string, value):

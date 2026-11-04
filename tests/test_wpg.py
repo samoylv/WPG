@@ -172,3 +172,80 @@ def test_beamline_edit_by_name():
     b.crop_beamline('d2')
     assert [el.name for el in b.propagation_options[0]['optical_elements']] == ['d1', 'd2']
     assert len(b.propagation_options[0]['propagation_parameters']) == 2
+
+
+def test_glossary_fields_are_static():
+    """Fields are declared in node classes: a typo raises instead of creating a new attribute."""
+    import wpg
+    from wpg.glossary import WavefrontMesh, get_wf_fields
+
+    wf = wpg.Wavefront()
+    assert isinstance(type(wf.params.Mesh).__dict__['nx'], type(WavefrontMesh.nx))
+    with pytest.raises(AttributeError):
+        wf.params.nx = 40  # nx belongs to params.Mesh
+    with pytest.raises(AttributeError):
+        wf.params.Mesh.nxx = 40
+    paths = [f.path for f in get_wf_fields()]
+    assert len(paths) == len(set(paths)) == 35
+    assert paths[:2] == ['params/nval', 'params/wSpace'] and paths[-2:] == ['data/arrEhor', 'data/arrEver']
+
+
+def test_field_array_sets_mesh(tmp_path):
+    """Assigning an EM field array of another size updates the mesh (before: stray params.nx, mesh unchanged)."""
+    wf = _gauss_wavefront(nx=50, nz=2)
+    new = np.arange(30 * 40 * 2 * 2, dtype='float32').reshape(30, 40, 2, 2)
+    with pytest.warns(UserWarning, match='Mesh'):
+        wf.data.arrEhor = new  # also warns that arrEver is reset
+    assert (wf.params.Mesh.ny, wf.params.Mesh.nx, wf.params.Mesh.nSlices) == (30, 40, 2)
+    np.testing.assert_array_equal(wf.data.arrEhor, new)
+    # the other polarization follows the new mesh (zeros), so the wavefront can be stored
+    assert wf.data.arrEver.shape == new.shape and not wf.data.arrEver.any()
+    wf.store_hdf5(str(tmp_path / 'resized.h5'))
+
+
+def test_tilted_plane_roundtrip(tmp_path):
+    """Unit vectors of the observation plane are floats (before: truncated to int on loading)."""
+    import wpg
+
+    wf = _gauss_wavefront(nx=20, nz=1)
+    wf.params.Mesh.hvx, wf.params.Mesh.hvz = 0.8, 0.6
+    wf.params.Mesh.nvx, wf.params.Mesh.nvz = -0.6, 0.8
+    path = str(tmp_path / 'tilted.h5')
+    wf.store_hdf5(path)
+    wf2 = wpg.Wavefront()
+    wf2.load_hdf5(path)
+    m = wf2.params.Mesh
+    assert (m.hvx, m.hvz, m.nvx, m.nvz) == pytest.approx((0.8, 0.6, -0.6, 0.8))
+
+
+def test_wavelength():
+    wf = _gauss_wavefront(nx=20, nz=1)
+    assert wf.wavelength == pytest.approx(12.398419843320026e-7 / 5000.0, rel=1e-9)
+
+
+def test_wavefront_shortcuts():
+    """wf.nx, wf.photonEnergy, wf.Mesh are read-only shortcuts of wf.params(.Mesh) fields."""
+    from wpg.glossary import WavefrontMesh, WavefrontParams
+
+    wf = _gauss_wavefront(nx=20, nz=3)  # 3 slices: sliceMax of a single slice is NaN
+    for f in WavefrontMesh.fields():
+        assert getattr(wf, f.name) == getattr(wf.params.Mesh, f.name)
+    for f in WavefrontParams.fields():
+        assert getattr(wf, f.name) == getattr(wf.params, f.name)
+    assert wf.Mesh is wf.params.Mesh
+    with pytest.raises(AttributeError):
+        wf.nx = 10
+    with pytest.raises(AttributeError):
+        wf.paramz  # noqa: B018  (no fallback for unknown names)
+
+
+def test_field_array_on_fresh_wavefront():
+    """Assigning field arrays to a fresh Wavefront (arEx, arEy are None in SRW) sets the mesh."""
+    import wpg
+
+    wf = wpg.Wavefront()
+    ex = np.ones((8, 6, 2, 2), dtype='float32')
+    wf.data.arrEhor = ex
+    wf.data.arrEver = 2 * ex
+    assert (wf.params.Mesh.ny, wf.params.Mesh.nx, wf.params.Mesh.nSlices) == (8, 6, 2)
+    np.testing.assert_array_equal(wf.data.arrEver, 2 * ex)

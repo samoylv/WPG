@@ -91,10 +91,6 @@ class Beamline(object):
                                              'propagation_parameters': []})
             last_pp_opt = self.propagation_options[-1]
 
-        if not all([isinstance(o, srwlib.SRWLOpt) for o in last_pp_opt['optical_elements']]):
-            self.propagation_options.append({'optical_elements': [],
-                                             'propagation_parameters': []})
-
         # if current parameter is SRWOpt and last parameter was SRWOpt lets
         # stack it
         if isinstance(optical_element, srwlib.SRWLOpt):
@@ -130,10 +126,16 @@ class Beamline(object):
         """
         for propagation_option in self.propagation_options:
             if all([isinstance(o, srwlib.SRWLOpt) for o in propagation_option['optical_elements']]):
-                srwl_beamline = srwlib.SRWLOptC(
-                    propagation_option['optical_elements'],
-                    propagation_option['propagation_parameters'])
-                
+                optical_elements = propagation_option['optical_elements']
+                propagation_parameters = propagation_option['propagation_parameters']
+                if not propagation_parameters:
+                    continue  # nothing to do (empty beamline or all elements of the group removed)
+                if not optical_elements:
+                    # Empty as the first element of the group: SRW 4.2.1 rejects SRWLOptC([], [pp])
+                    # ("No objects were submitted for parsing"), resize with a drift of zero length
+                    optical_elements = [srwlib.SRWLOptD(0.)]
+                srwl_beamline = srwlib.SRWLOptC(optical_elements, propagation_parameters)
+
                 if gpu is None:
                     srwl.PropagElecField(wfr._srwl_wf, srwl_beamline)
                 else:
@@ -149,62 +151,88 @@ class Beamline(object):
                 raise ValueError('Unknown type of propagators')
 
 
+    def _elements(self):
+        """(group, number in the group, element) for optical elements of all propagation options."""
+        for group, option in enumerate(self.propagation_options):
+            for number, element in enumerate(option['optical_elements']):
+                yield group, number, element
+
     @property
     def index(self):
+        """
+        Names of optical elements and their numbers along the whole beamline (all propagation
+        options, elements without a name are 'Element <number>').
+
+        :return: dict {name: number}
+        """
         index = {}
-        
-        for itr, a in enumerate(self.propagation_options[0]['optical_elements']):
-            
+        for itr, (_, _, a) in enumerate(self._elements()):
             try:
                 index[a.name] = itr
-            except(AttributeError):
+            except AttributeError:
                 index['Element {}'.format(itr)] = itr
-            
         return index
-    
+
+    def _locate(self, oe_name):
+        """
+        (group, number in the group) of the optical element named oe_name.
+
+        :raises KeyError: if there is no element with this name
+        """
+        positions = [(group, number) for group, number, _ in self._elements()]
+        return positions[self.index[oe_name]]
+
     def get_element_properties(self, oe_name):
-       return(self.propagation_options[0]['optical_elements'][self.index[oe_name]].__dict__)
-    
+        group, number = self._locate(oe_name)
+        return self.propagation_options[group]['optical_elements'][number].__dict__
+
     def get_propagation_paramters(self, oe_name):
-        print(self.propagation_options[0]['propagation_parameters'][self.index[oe_name]])
-        
-    def replace_element(self,oe_name, el):
-        """ 
+        group, number = self._locate(oe_name)
+        print(self.propagation_options[group]['propagation_parameters'][number])
+
+    def replace_element(self, oe_name, el):
+        """
         replace an optical element labelled oe_name w/ a pre-defined element oe.
         """
-        self.propagation_options[0]['optical_elements'][self.index[oe_name]] = el
-    
+        group, number = self._locate(oe_name)
+        self.propagation_options[group]['optical_elements'][number] = el
+
     def remove_element(self, oe_name):
         """
-        remove an optical element from a beamline        
+        remove an optical element from a beamline
         """
-        del self.propagation_options[0]['propagation_parameters'][self.index[oe_name]]
-        del self.propagation_options[0]['optical_elements'][self.index[oe_name]]
+        group, number = self._locate(oe_name)
+        del self.propagation_options[group]['propagation_parameters'][number]
+        del self.propagation_options[group]['optical_elements'][number]
 
     def edit_element_property(self, oe_name, prop, value):
-        self.propagation_options[0]['optical_elements'][self.index[oe_name]].__dict__[prop] = value
-    
+        group, number = self._locate(oe_name)
+        self.propagation_options[group]['optical_elements'][number].__dict__[prop] = value
+
     def edit_propagation_parameters(self, oe_name, new_parameters):
         """
         edit the propagation parameters of an element by name
         """
-        self.propagation_options[0]['propagation_parameters'][self.index[oe_name]] = _get_srw_pp(new_parameters)
+        group, number = self._locate(oe_name)
+        self.propagation_options[group]['propagation_parameters'][number] = _get_srw_pp(new_parameters)
 
-
-    def crop_beamline(self, element1 = None, element2 = None):
+    def crop_beamline(self, element1=None, element2=None):
         """
         crop the beamline after the optical element named element1 (element1 is kept)
+
+        Elements and propagation parameters after element1 are removed, including the resizing
+        (Empty) after it and all following propagation options.
 
         :param element1: name of the last optical element to keep, None or unknown name - do nothing
         :param element2: not used
         """
-        option = self.propagation_options[0]
-        names = [getattr(el, 'name', None) for el in option['optical_elements']]
-        if element1 is None or element1 not in names:
+        if element1 is None or element1 not in self.index:
             return
-        idx1 = names.index(element1)
-        option['optical_elements'] = option['optical_elements'][:idx1+1]
-        option['propagation_parameters'] = option['propagation_parameters'][:idx1+1]
+        group, number = self._locate(element1)
+        option = self.propagation_options[group]
+        option['optical_elements'] = option['optical_elements'][:number + 1]
+        option['propagation_parameters'] = option['propagation_parameters'][:number + 1]
+        del self.propagation_options[group + 1:]
 
 
 def _check_srw_pp(pp):
