@@ -58,8 +58,16 @@ def checkout(repo, ref, workdir):
         run(['git', 'remote', 'add', 'origin', repo], cwd=workdir)
     else:
         run(['git', 'remote', 'set-url', 'origin', repo], cwd=workdir)
-    run(['git', 'fetch', '-q', '--depth', '1', 'origin', ref], cwd=workdir)
-    run(['git', 'checkout', '-q', '--force', '--detach', 'FETCH_HEAD'], cwd=workdir)
+    if subprocess.run(['git', 'fetch', '-q', '--depth', '1', 'origin', ref], cwd=workdir).returncode == 0:
+        run(['git', 'checkout', '-q', '--force', '--detach', 'FETCH_HEAD'], cwd=workdir)
+    else:
+        # GitHub serves a single commit only by its full hash: fetch the history to resolve a short one
+        print(f'shallow fetch of {ref} failed, fetching the full history of {repo}', flush=True)
+        if os.path.exists(os.path.join(workdir, '.git', 'shallow')):
+            run(['git', 'fetch', '-q', '--unshallow', '--tags', 'origin'], cwd=workdir)
+        else:
+            run(['git', 'fetch', '-q', '--tags', 'origin'], cwd=workdir)
+        run(['git', 'checkout', '-q', '--force', '--detach', ref], cwd=workdir)
 
 
 def build_env(mode, cuda_archs, jobs, python):
