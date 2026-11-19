@@ -34,7 +34,7 @@ An overview in 10 slides: [PDF](docs/slides/WPG_2026.11.pdf), [PowerPoint](docs/
   profiles, random surfaces with a given roughness spectrum, and pitch misalignment that deflects the beam.
 - Checks the numerics: the phase step between neighbouring pixels and the intensity at the window border
   of a wavefront, and the automatic choice of the propagation window (zoom) and sampling for an element.
-- Runs SRW built with OpenMP or CUDA from the latest sources (see [Advanced](#advanced)).
+- Runs SRW built with OpenMP or CUDA from the latest sources (see [Installation](#installation)).
 - Keeps wavefronts with their history in HDF5 for start-to-end simulations, e.g. in the SIMEX platform for
   simulations of experiments at the European XFEL ([Fortmann-Grote et al. 2017](https://doi.org/10.1107/S2052252517009496)).
 
@@ -56,21 +56,44 @@ profile.</em></td>
 
 ## Installation
 
-WPG needs Python 3.10 or newer and is tested on Linux and Windows. SRW is installed as the
-[`srwpy`](https://pypi.org/project/srwpy/) package, the official SRW build (wheels for Linux, macOS and
-Windows).
+WPG needs Python 3.10 or newer and is tested on Linux and Windows. The propagation is computed by SRW
+(Synchrotron Radiation Workshop), the wave optics library under WPG, which WPG takes from the
+[`srwpy`](https://pypi.org/project/srwpy/) package. Choose the SRW build first, because the install command
+depends on it:
+
+| SRW build | Use it for | Install command, in the WPG folder |
+|---|---|---|
+| Official wheel (ready binary package) from PyPI, one CPU core. Linux, macOS, Windows | the default: single wavefronts, any system | `python -m pip install -e ".[test,materials]" --config-settings editable_mode=compat` |
+| Built from the sources with OpenMP. Linux | pulses of many slices on a multi-core machine | `make install SRW_MODE=omp` |
+| Built from the sources with CUDA. Linux | the same on an NVIDIA GPU | `make install SRW_MODE=cuda` |
+
+The OpenMP build propagates the slices of a pulse (its photon energies or times) in parallel, so it speeds up
+time-dependent simulations, not a single monochromatic wavefront. For a 5 m drift of a 5 keV pulse of
+1024 × 1024 points and 128 slices, the OpenMP build on 32 cores and the CUDA build on an RTX 3090 were about
+3 times faster than the wheel (figure in [SRW with OpenMP or CUDA](#srw-with-openmp-or-cuda-linux)). A source
+build needs make, gcc and git, the CUDA build also needs the CUDA toolkit. The OpenMP build took about
+8 minutes on a 32-core server.
 
 ```bash
 git clone https://github.com/samoylv/WPG.git
 cd WPG
-python -m pip install -e ".[test,materials]" --config-settings editable_mode=compat
+make install SRW_MODE=omp     # or SRW_MODE=cuda, for the wheel use the pip command of the table
 python -m pytest
 ```
 
-`materials` installs xraylib for mirror reflectivity. `editable_mode=compat` makes the package visible to
-IDEs and type checkers (Pylance, pyright, mypy).
+`make install` installs WPG with the same extras as the pip command of the table. `test` adds pytest and the
+packages that run the sample notebooks, `materials` adds xraylib for mirror reflectivity.
+`editable_mode=compat` makes the package visible to IDEs and type checkers (Pylance, pyright, mypy).
 
-With conda:
+Later the SRW build can be changed without reinstalling WPG. `make srw SRW_MODE=omp` or
+`make srw SRW_MODE=cuda` replaces SRW with a source build, and `make srw SRW_MODE=wheel` reinstalls the
+official wheel over a source build. `make install` without `SRW_MODE` reinstalls WPG and keeps the installed
+SRW, it installs the wheel only if `srwpy` is missing. `python -m wpg_diagnose` shows which SRW build the
+environment uses. A source build has the same version as the wheel (now 4.2.1), so
+`python -m pip install --upgrade srwpy` keeps it until a newer `srwpy` appears on PyPI and then replaces it
+with the wheel.
+
+With conda (`srwpy` from conda-forge, for a source build run `make srw SRW_MODE=omp` afterwards):
 
 ```bash
 conda env create -n wpg -f environment.yml
@@ -164,14 +187,9 @@ warning: import from `srwpy.srwlib` instead.
 
 ### SRW with OpenMP or CUDA (Linux)
 
-The official `srwpy` wheels are serial. To use the parallel versions of SRW, build `srwpy` from the
-[SRW sources](https://github.com/ochubar/SRW) into the active Python environment:
-
-```bash
-make install SRW_MODE=omp     # SRW with OpenMP (FFTW2) + WPG
-make install SRW_MODE=cuda    # SRW with CUDA (FFTW3 and cuFFT) + WPG
-make srw SRW_MODE=cpu         # only SRW, serial build from the latest sources
-```
+The source builds of [Installation](#installation) compile `srwpy` from the
+[SRW sources](https://github.com/ochubar/SRW). Besides `omp` and `cuda`, `SRW_MODE=cpu` gives a serial build
+from the latest sources. Other options:
 
 - `SRW_REF`: SRW branch, tag or commit (`master` by default). `SRW_SRC`: an existing SRW checkout instead of cloning.
 - `SRW_CUDA_ARCHS=all`: compile the CUDA code for all supported GPUs (80 86 89 90 120) instead of the GPU of this machine.

@@ -20,7 +20,7 @@ Several functions gave wrong numbers and are fixed, so results of existing scrip
 
 ### Added
 
-- Builds of SRW with OpenMP or CUDA on Linux: `make srw SRW_MODE=cpu|omp|cuda [SRW_REF=...]` or `build/build_srw.py`. The script clones `ochubar/SRW` (any branch, tag or fork) or uses a local checkout. It installs `srwpy` into the active environment and checks that the library is linked with OpenMP or cuFFT as requested.
+- Builds of SRW with OpenMP or CUDA on Linux: `make install SRW_MODE=omp|cuda` (SRW and WPG), `make srw SRW_MODE=cpu|omp|cuda|wheel [SRW_REF=...]` (only SRW, `wheel` returns the official wheel) or `build/build_srw.py`. `make install` without `SRW_MODE` keeps the installed SRW and installs the wheel only if `srwpy` is missing. The script clones `ochubar/SRW` (any branch, tag or fork) or uses a local checkout. It installs `srwpy` into the active environment and checks that the library is linked with OpenMP or cuFFT as requested.
   - A 5 m drift of a 5 keV pulse of 1024 × 1024 points and 128 slices (without the semi-analytical treatment, including the conversion to the frequency domain and back) on a Linux server with 32 cores and an RTX 3090, median of 3 runs: PyPI wheel 27 s, local serial build 33 s, OpenMP on 32 cores 9.6 s, CUDA on the GPU 8.9 s.
   - OpenMP and CUDA cannot be combined, because SRW uses FFTW2 for OpenMP and FFTW3 with cuFFT for CUDA.
   - Windows uses the PyPI wheel.

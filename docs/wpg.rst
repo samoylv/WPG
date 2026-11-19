@@ -54,9 +54,12 @@ Get the sources and install WPG together with its dependencies (``srwpy``, numpy
 
 		git clone https://github.com/samoylv/WPG.git
 		cd WPG
-		python -m pip install -e .
+		python -m pip install -e ".[test,materials]" --config-settings editable_mode=compat
 
-The same with conda:
+``test`` adds pytest and the packages that run the sample notebooks, ``materials`` adds xraylib
+for mirror reflectivity.
+
+The same with conda (``srwpy`` from conda-forge):
 
 	.. code:: sh
 
@@ -67,16 +70,30 @@ The same with conda:
 SRW built from sources with OpenMP or CUDA (Linux)
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The official ``srwpy`` wheels are built without OpenMP and CUDA.
-To use the parallel SRW versions, build ``srwpy`` from the
-`SRW sources <https://github.com/ochubar/SRW>`_ into the active Python environment:
+The official ``srwpy`` wheels compute on one CPU core.
+The OpenMP build of SRW propagates the slices of a pulse (its photon energies or times) in parallel,
+so it speeds up time-dependent simulations, not a single monochromatic wavefront.
+The CUDA build propagates on an NVIDIA GPU.
+For a pulse of 128 slices both were about 3 times faster than the wheel (32 cores, RTX 3090).
+To use the OpenMP or the CUDA build, install WPG with SRW built from the
+`SRW sources <https://github.com/ochubar/SRW>`_ instead of the pip command above:
 
 	.. code:: sh
 
-		make srw SRW_MODE=omp      # OpenMP (FFTW2)
-		make srw SRW_MODE=cuda     # CUDA (FFTW3 and cuFFT)
+		git clone https://github.com/samoylv/WPG.git
+		cd WPG
+		make install SRW_MODE=omp     # or SRW_MODE=cuda
+
+The SRW build can be changed later in the same environment, WPG stays installed:
+
+	.. code:: sh
+
+		make srw SRW_MODE=omp      # OpenMP
+		make srw SRW_MODE=cuda     # CUDA
 		make srw SRW_MODE=cpu      # serial build from the latest sources
-		make install               # SRW (official wheel by default) and WPG
+		make srw SRW_MODE=wheel    # back to the official wheel
+
+``python -m wpg_diagnose`` shows which SRW build the environment uses.
 
 ``SRW_REF`` selects the SRW branch, tag or commit (``master`` by default),
 ``SRW_SRC`` points to an existing SRW checkout instead of cloning.

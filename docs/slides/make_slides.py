@@ -493,10 +493,11 @@ code_block(s, [
     "git clone https://github.com/samoylv/WPG.git",
     "cd WPG",
     'python -m pip install -e ".[test,materials]" --config-settings editable_mode=compat',
+    "make install SRW_MODE=omp     # instead of pip: Linux, SRW with OpenMP (or cuda)",
     "python -m pytest",
-], MARGIN, 2.0, SLIDE_W - 2 * MARGIN, 1.45, size=16)
+], MARGIN, 2.0, SLIDE_W - 2 * MARGIN, 1.7, size=16)
 
-_, tf = textbox(s, MARGIN, 3.6, SLIDE_W - 2 * MARGIN, 1.0)
+_, tf = textbox(s, MARGIN, 3.8, SLIDE_W - 2 * MARGIN, 1.0)
 p = tf.paragraphs[0]
 add_runs(p, "Documentation:  ", 22, ACCENT, bold=True)
 add_runs(p, DOCS_URL, 22, DARK)
