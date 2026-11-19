@@ -203,6 +203,28 @@ commit, mode) next to `srwlpy` and to `build/srw_build_info.json`. `python -m wp
 tell how to repeat the build. OpenMP and CUDA cannot be combined in one build: SRW uses FFTW2 for the OpenMP
 version and FFTW3 with cuFFT for the CUDA version.
 
+The OpenMP build uses all cores of the machine. To use fewer, for example on a shared server, set
+`OMP_NUM_THREADS` before Python starts: `OMP_NUM_THREADS=8 python script.py`. The OpenMP runtime reads the
+variable once, when `import wpg` loads SRW. In a notebook, set it in the first cell before the import:
+
+```python
+import os
+os.environ['OMP_NUM_THREADS'] = '8'   # after import wpg it has no effect until the kernel restarts
+import wpg
+```
+
+To change the number of threads in a running session, use
+[threadpoolctl](https://github.com/joblib/threadpoolctl) (`python -m pip install threadpoolctl`):
+
+```python
+from threadpoolctl import threadpool_limits
+with threadpool_limits(limits=8, user_api='openmp'):
+    bl.propagate(wf)
+```
+
+`OMP_NUM_THREADS` also limits the threads of NumPy linear algebra (OpenBLAS), threadpoolctl with
+`user_api='openmp'` limits only the libraries built with OpenMP, such as SRW.
+
 <img src="docs/images/srw_builds.png" alt="Speed of SRW builds" width="60%">
 
 *Time of the same propagation with four builds of SRW: a 5 m drift of a 5 keV pulse of 1024 × 1024 points
