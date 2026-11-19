@@ -35,6 +35,14 @@ dev = ["WPG[test,docs,materials]", "ruff"]
 Homepage = "https://github.com/samoylv/WPG"
 Documentation = "https://wpg.readthedocs.io"
 
+[project.scripts]
+# diagnostics for bug reports, also: python -m wpg_diagnose
+wpg-diagnose = "wpg_diagnose:main"
+
+[tool.setuptools]
+# outside the wpg package so that it runs when "import wpg" fails
+py-modules = ["wpg_diagnose"]
+
 [tool.setuptools.packages.find]
 include = ["wpg*"]
 

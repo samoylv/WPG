@@ -180,8 +180,9 @@ make srw SRW_MODE=cpu         # only SRW, serial build from the latest sources
 The build script is [`build/build_srw.py`](build/build_srw.py) (`python build/build_srw.py --help`). It
 needs gcc and git. CMake is installed into the environment by the script, and the CUDA build also needs the
 CUDA toolkit (`CUDA_PATH`, `/usr/local/cuda` by default). The script checks that the SRW extension module
-`srwlpy` is linked with OpenMP or CUDA as requested and saves the build description to
-`build/srw_build_info.json`. OpenMP and CUDA cannot be combined in one build: SRW uses FFTW2 for the OpenMP
+`srwlpy` is linked with OpenMP or CUDA as requested and saves the build description (SRW repository,
+commit, mode) next to `srwlpy` and to `build/srw_build_info.json`. `python -m wpg_diagnose` reads it to
+tell how to repeat the build. OpenMP and CUDA cannot be combined in one build: SRW uses FFTW2 for the OpenMP
 version and FFTW3 with cuFFT for the CUDA version.
 
 <img src="docs/images/srw_builds.png" alt="Speed of SRW builds" width="60%">
@@ -199,6 +200,26 @@ With the CUDA build, propagation runs on GPU only when requested: `Beamline.prop
 ### Docker
 
 See [Docker/readme.md](Docker/readme.md).
+
+## Reporting a problem
+
+If WPG fails or gives unexpected results, run in the same Python environment
+
+```bash
+python -m wpg_diagnose --test
+```
+
+and paste the output into a [new issue](https://github.com/samoylv/WPG/issues/new). In a notebook use
+`import wpg_diagnose; print(wpg_diagnose.report(test=True))`: `!python` can start another interpreter than
+the kernel.
+
+The report lists the Python environment, the version and location of WPG, the origin of SRW (PyPI wheel or
+a local build with the command that repeats it), whether SRW uses OpenMP or CUDA, the GPU and the versions
+of the dependencies. It also names the problems found, for example another copy of WPG or SRW that shadows
+the installed one. `--test` adds a numerical self-test of SRW of about 10 s: a drift of a Gaussian beam
+compared with the analytic size, OpenMP with one thread against all threads, and GPU against CPU. The home
+directory in paths is replaced by `~`, and only environment variables that change the behaviour of SRW are
+printed.
 
 ## Citing WPG
 

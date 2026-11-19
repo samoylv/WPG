@@ -23,6 +23,7 @@ Examples::
 
 import argparse
 import datetime
+import hashlib
 import json
 import os
 import platform
@@ -174,10 +175,16 @@ def main():
     info.update(mode=args.mode, commit=commit,
                 repo=None if args.src else args.repo, ref=None if args.src else args.ref, src=src,
                 python=python, date=datetime.datetime.now().isoformat(timespec='seconds'))
-    with open(BUILD_INFO, 'w') as f:
-        json.dump(info, f, indent=2)
+    # the checksum ties the description to this binary: python -m wpg_diagnose ignores it after a reinstall
+    with open(info['srwlpy'], 'rb') as f:
+        info['sha256'] = hashlib.sha256(f.read()).hexdigest()
+    # a copy next to srwlpy travels with the environment, the one in build/ describes only the last build
+    next_to_binary = os.path.join(os.path.dirname(info['srwlpy']), os.path.basename(BUILD_INFO))
+    for path in (BUILD_INFO, next_to_binary):
+        with open(path, 'w') as f:
+            json.dump(info, f, indent=2)
     print(json.dumps(info, indent=2))
-    print(f'build info saved to {BUILD_INFO}')
+    print(f'build info saved to {BUILD_INFO} and {next_to_binary}')
 
 
 if __name__ == '__main__':

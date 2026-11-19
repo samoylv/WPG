@@ -38,6 +38,9 @@ Several functions gave wrong numbers and are fixed, so results of existing scrip
   - `set_radius_from_field` sets the radius of curvature that SRW keeps from the phase of the field (see Known issues).
   - `suggest_propagation_parameters(wf, element)` chooses `Use_PP` zoom and sampling by trial propagations of one slice. In two test drifts of Gaussian beams (9 keV, 50 m and 30 m) the default `Use_PP()` gave RMS sizes 1.0 % and 11.5 % below the analytic ones. With the chosen parameters the difference is below 0.01 %.
 - `Mirror_plane` accepts `x0` (the profile point placed on the beam axis) and any whitespace delimiter in the profile file.
+- Diagnostics for bug reports: `python -m wpg_diagnose` (or the `wpg-diagnose` command) prints the Python environment, the version and location of WPG, the origin of SRW with the command that repeats its build, OpenMP and CUDA in SRW, the GPU and the versions of the dependencies, as Markdown to paste into an issue (`--json` for JSON). It runs also when `import wpg` fails. `--test` adds a self-test of about 10 s: a drift of a Gaussian beam against the analytic size, OpenMP with one thread against all threads, GPU against CPU.
+  - `build/build_srw.py` saves the build description with the SHA-256 checksum of `srwlpy` next to the library, so the diagnostics recognize a description left from another build.
+  - `import wpg` without SRW says how to install `srwpy` and how to report the problem.
 - About 150 unit tests (`pytest`) and the execution of 7 sample notebooks (`pytest -m notebooks`), run by GitHub Actions on Linux and Windows.
 
 ### Changed
@@ -77,6 +80,7 @@ Several functions gave wrong numbers and are fixed, so results of existing scrip
   - `get_axis`, `get_pixel_size` and `get_profile` converted the user's wavefront to another representation and did not restore the time or frequency domain. With an odd `nx` they filled the field with NaN.
   - `pulse_duration` and `get_beam_width` fitted in seconds starting from zero and could return a wrong or negative width.
   - `get_efield('vertical')` failed.
+- `build/build_srw.py` failed with a short commit hash in `SRW_REF` (GitHub serves a single commit only by its full hash), now it fetches the history and resolves the hash.
 - HDF5: `load_hdf5` kept the custom fields of the previously loaded file. Attributes holding lists of strings or bytes are now written and read correctly.
 - `Beamline`
   - Operations by name (`index`, `edit_*`, `remove_element`, `crop_beamline`) ignored elements after `Empty`, and `edit_propagation_parameters` and `crop_beamline` failed with `AttributeError`.

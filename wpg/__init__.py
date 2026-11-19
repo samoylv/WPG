@@ -12,7 +12,11 @@ The most propagation methods based on SRW library.
 
 # Load the SRW extension before numpy/scipy pull in their own FFT libraries
 # (fixes segmentation fault with FFTW from numpy MKL)
-from srwpy import srwlpy  # noqa: F401
+try:
+    from srwpy import srwlpy  # noqa: F401
+except ImportError as exc:
+    raise ImportError(f'{exc}\nWPG needs SRW: python -m pip install "srwpy>=4.2". '
+                      'To report a problem, run "python -m wpg_diagnose" and attach its output.') from exc
 
 # Create aliases for simple importing
 from .wavefront import Wavefront  # noqa: E402
