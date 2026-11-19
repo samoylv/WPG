@@ -79,6 +79,7 @@ def fill_opd_2d(opt, x, y, h, orient, theta, theta_r=None, scale=1.):
     :param x: positions along the mirror [m], increasing, relative to the beam axis
     :param y: positions across the mirror [m], increasing
     :param h: height errors [m], shape (len(y), len(x))
+
     Other parameters as in :func:`fill_opd_1d`.
     """
     from scipy.interpolate import RegularGridInterpolator
@@ -202,7 +203,7 @@ def random_profile(length, n, sigma, exponent=-2., f_min=None, seed=None):
 
 def random_surface(length, width, n_long, n_tr, sigma, exponent=-3., f_min=None, seed=None):
     """
-    Random isotropic 2D height map with a power-law PSD, ~ |f|^exponent for |f| > f_min and flat below.
+    Random isotropic 2D height map with a power-law PSD, ``~ |f|**exponent`` for ``|f| > f_min`` and flat below.
 
     :param length: size along the mirror [m]
     :param width: size across the mirror [m]

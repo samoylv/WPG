@@ -140,7 +140,7 @@ print(calculate_fwhm(wf))   # {'fwhm_x': 1.17e-06, 'fwhm_y': 1.03e-06}, m
 ```
 
 Tutorials with beamlines of the European XFEL are in [`samples/Tutorials`](samples/Tutorials) (Jupyter
-notebooks), the documentation is at [wpg.readthedocs.io](https://wpg.readthedocs.io).
+notebooks), the documentation is at [samoylv.github.io/WPG](https://samoylv.github.io/WPG/).
 
 ## Optical elements
 

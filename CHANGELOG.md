@@ -61,6 +61,7 @@ Several functions gave wrong numbers and are fixed, so results of existing scrip
 - `check_sampling` reports the sampling measured on the field (see Fixed), so the text of the report is different.
 - `import wpg` no longer silences all warnings of the process, which also hid warnings of user code. Only the informational warnings of the glossary are silenced.
 - Docker: one `Docker/Dockerfile` replaces the three images based on miniconda of 2019. Build arguments: `SRW_MODE` (wheel, cpu, omp or cuda) and `BASE` (the base image, e.g. a CUDA image for `SRW_MODE=cuda`).
+- Documentation moved from Read the Docs (not rebuilt since 2019) to GitHub Pages, https://samoylv.github.io/WPG/. GitHub Actions build it on every push and pull request and publish it from `develop`.
 
 ### Deprecated
 

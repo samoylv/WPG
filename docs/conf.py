@@ -94,7 +94,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -250,7 +250,7 @@ texinfo_documents = [
 todo_include_todos = True
 autoclass_content = 'both'
 # WPG is imported from the repository root, its dependencies (srwpy, numpy, ...)
-# are installed in the docs environment (see .readthedocs.yaml).
+# are installed in the docs environment (pip install ".[docs]", see .github/workflows/docs.yml).
 # If SRW is not installed, mock it so that autodoc still works for WPG itself.
 sys.path.insert(0, os.path.abspath('..'))
 try:

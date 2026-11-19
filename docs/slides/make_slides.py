@@ -38,7 +38,7 @@ SLIDE_W, SLIDE_H = 13.333, 7.5
 MARGIN = 0.6
 
 REPO_URL = "https://github.com/samoylv/WPG"
-DOCS_URL = "https://wpg.readthedocs.io"
+DOCS_URL = "https://samoylv.github.io/WPG"
 DOI_URL = "https://doi.org/10.1107/S160057671600995X"
 
 prs = Presentation()

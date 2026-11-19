@@ -181,7 +181,7 @@ class Reflectivity(object):
         return refl
 
     def intensity(self):
-        """|amplitude|^2, shape (n_energies, n_angles, n_components)."""
+        """``|amplitude|**2``, shape (n_energies, n_angles, n_components)."""
         return np.abs(self.amplitude) ** 2
 
     def apply(self, mirror):

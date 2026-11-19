@@ -978,7 +978,7 @@ def create_CRL(directory, voids_params,
     This function build CLR or load it from file if it was created beforehand.
     Out/input filename builded as sequence of function parameters.
 
-    Adiitinal parameters (*args) passed to srwlib.srwl_opt_setup_CRL function
+    Adiitinal parameters (``*args``) passed to srwlib.srwl_opt_setup_CRL function
 
     :param directory: output directory to save file.
     :param voids_params: void params to build CRL and construct unique file name
@@ -1033,7 +1033,7 @@ def create_CRL_from_file(directory, file_name,
     """
     This function build CLR or load it from file.
     Out/input filename builded as sequence of function parameters.
-    Adiitinal parameters (*args) passed to srwlib.srwl_opt_setup_CRL function
+    Adiitinal parameters (``*args``) passed to srwlib.srwl_opt_setup_CRL function
 
     :param directory: output directory
     :param fiel_name: CRL file name

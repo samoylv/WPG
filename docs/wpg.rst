@@ -21,15 +21,15 @@ References
 
 If you use the WPG for your research, we would appreciate it if you would refer to the following papers:
 
-1. Samoylova, L., Buzmakov, A., Chubar, O. & Sinn, H. WavePropaGator: Interactive framework for X-ray FEL optics design and simulations. // Journal of Applied Crystallography 08/2016; 49(4) pp. 1347-1355. DOI:10.1107/S160057671600995X 
-http://journals.iucr.org/j/issues/2016/04/00/zd5006/index.html
+1. Samoylova, L., Buzmakov, A., Chubar, O. & Sinn, H. WavePropaGator: Interactive framework for X-ray FEL optics design and simulations. // Journal of Applied Crystallography 08/2016; 49(4) pp. 1347-1355. DOI:10.1107/S160057671600995X
+   http://journals.iucr.org/j/issues/2016/04/00/zd5006/index.html
 
 See also 
 ========
 
 1. WPG paper http://journals.iucr.org/j/issues/2016/04/00/zd5006/zd5006.pdf
 2. XPD: XFEL Photon pulses Database
-  https://in.xfel.eu/xpd/ and XPD API https://in.xfel.eu/xpd/doc/Rest_API.html
+   https://in.xfel.eu/xpd/ and XPD API https://in.xfel.eu/xpd/doc/Rest_API.html
 3. Simex project https://www.eucall.eu/organisation/work_packages/wp4___simex/
 
 Getting started

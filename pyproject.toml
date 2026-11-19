@@ -28,12 +28,12 @@ source = ["phenom-xfel"]
 # wpg.materials (optical constants, mirror reflectivity) uses xraylib
 materials = ["xraylib"]
 test = ["pytest", "nbformat", "nbconvert", "ipykernel"]
-docs = ["sphinx"]
+docs = ["sphinx", "sphinx-rtd-theme"]
 dev = ["WPG[test,docs,materials]", "ruff"]
 
 [project.urls]
 Homepage = "https://github.com/samoylv/WPG"
-Documentation = "https://wpg.readthedocs.io"
+Documentation = "https://samoylv.github.io/WPG/"
 
 [project.scripts]
 # diagnostics for bug reports, also: python -m wpg_diagnose
