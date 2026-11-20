@@ -249,9 +249,16 @@ If WPG fails or gives unexpected results, run in the same Python environment
 python -m wpg_diagnose --test
 ```
 
-and paste the output into a [new issue](https://github.com/samoylv/WPG/issues/new). In a notebook use
-`import wpg_diagnose; print(wpg_diagnose.report(test=True))`: `!python` can start another interpreter than
-the kernel.
+and paste the output into a [new issue](https://github.com/samoylv/WPG/issues/new). In Jupyter, run in a cell
+of the notebook where the problem occurs, a restart of the kernel is not needed:
+
+```python
+import wpg_diagnose
+print(wpg_diagnose.report(test=True))
+```
+
+The report then describes the kernel and the copies of WPG and SRW loaded in it. `!python -m wpg_diagnose`
+in a cell can start another Python than the kernel.
 
 The report lists the Python environment, the version and location of WPG, the origin of SRW (PyPI wheel or
 a local build with the command that repeats it), whether SRW uses OpenMP or CUDA, the GPU and the versions
