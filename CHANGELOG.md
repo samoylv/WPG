@@ -102,7 +102,7 @@ Several functions gave wrong numbers and are fixed, so results of existing scrip
   - `wpg_uti_wf.calculate_fwhm` measured an off-axis beam through the centre of the array instead of its maximum.
 - `check_sampling` gave false alarms. Its Fresnel-zone test never succeeded for a converging beam (negative radius), used the SRW radius of curvature, which is wrong near the waist (see Known issues), and reported a beam sampled above the Nyquist limit as undersampled.
 - `AuxTransmAddSurfHeightProfileScaled` (used by `Mirror_plane` and the tutorials) is vectorized: the same result, 1.8 s → 0.03 s for a 1500 × 100 mesh. A profile with decreasing positions gave zeros.
-- s2e: the history link to the parent file used a path relative to the current folder, the batch mode failed with `PicklingError`, and `diagnostics.py` failed on missing keys and on `plt.hold`.
+- s2e: the history link to the parent file used a path relative to the current folder, the batch mode failed with `PicklingError` and hung on Linux with the OpenMP build of SRW (its worker processes were forked after SRW had started OpenMP threads, now they are started with `spawn`), and `diagnostics.py` failed on missing keys and on `plt.hold`.
 - Incompatibilities with NumPy 2, h5py 3, Matplotlib 3 and Python 3.12: `copy=False`, `Dataset.value`, `tostring`, `pyplot.hold`, `imp`, Python 2 prints.
 
 ### Known issues

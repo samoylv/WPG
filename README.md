@@ -77,9 +77,15 @@ build needs make, gcc and git, the CUDA build also needs the CUDA toolkit. The O
 ```bash
 git clone https://github.com/samoylv/WPG.git
 cd WPG
-make install SRW_MODE=omp     # or SRW_MODE=cuda, for the wheel use the pip command of the table
+source <venv>/bin/activate    # or conda activate <env>: the environment that will run WPG
+make install SRW_MODE=omp 2>&1 | tee install.log     # or SRW_MODE=cuda, for the wheel the pip command
 python -m pytest
 ```
+
+`make` installs SRW and WPG into the Python that `python3` finds, so activate the environment before it,
+or name the interpreter: `make install SRW_MODE=omp PYTHON=/path/to/env/bin/python`. The build prints
+about 1800 lines, and `2>&1 | tee install.log` keeps them, with the error messages, in `install.log` for a
+bug report.
 
 `make install` installs WPG with the same extras as the pip command of the table. `test` adds pytest and the
 packages that run the sample notebooks, `materials` adds xraylib for mirror reflectivity.
@@ -224,6 +230,11 @@ with threadpool_limits(limits=8, user_api='openmp'):
 
 `OMP_NUM_THREADS` also limits the threads of NumPy linear algebra (OpenBLAS), threadpoolctl with
 `user_api='openmp'` limits only the libraries built with OpenMP, such as SRW.
+
+A process pool of `multiprocessing` on Linux starts its workers with fork by default (until Python 3.14).
+A worker forked after the OpenMP build of SRW has computed anything hangs at its first OpenMP region,
+because the OpenMP runtime of gcc (libgomp) does not survive fork. Start such pools with
+`multiprocessing.get_context('spawn').Pool(...)`, as the batch mode of `s2e/prop/propagate_s2e.py` does.
 
 <img src="docs/images/srw_builds.png" alt="Speed of SRW builds" width="60%">
 

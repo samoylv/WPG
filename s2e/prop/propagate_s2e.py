@@ -299,11 +299,25 @@ def directory_process(in_dname, out_dname, get_beamline, cpu_number):
 
     :param in_dname: input directory name
     :param out_dname: ouput directory name
-    :param get_beamline: function to build beamline, or path to the Python file with get_beamline()
-        (a path is needed for the 'spawn' start method of multiprocessing, the default on Windows and macOS)
+    :param get_beamline: function to build beamline, or path to the Python file with get_beamline().
+        The function must be importable by the worker processes: defined in a module or in a script,
+        not in a notebook cell (pass the path to the file then)
     :param cpu_number: NUmber of CPUs for parallel computing
 
+    The worker processes are started with the 'spawn' method, not with fork: a process forked after
+    SRW with OpenMP has computed anything hangs at its first OpenMP parallel region (libgomp does not
+    survive fork), which made the batch mode hang on Linux with the OpenMP build of SRW.
     """
+    if callable(get_beamline):
+        module = sys.modules.get(get_beamline.__module__)
+        if get_beamline.__module__ == 'custom_beamline' and getattr(module, '__file__', None):
+            # loaded by load_beamline_function: the worker processes load the same file
+            get_beamline = module.__file__
+        elif get_beamline.__module__ == '__main__' and not getattr(module, '__file__', None):
+            # a worker process cannot import a function of a notebook or of an interactive session,
+            # it would fail on every task and Pool.map would wait forever
+            raise ValueError('get_beamline is defined in a notebook or an interactive session: '
+                             'put it into a Python file and pass the path to that file')
     input_dir = in_dname
     input_files = glob(os.path.join(input_dir, 'FELsource_out*.h5'))
     out_files = []
@@ -317,7 +331,7 @@ def directory_process(in_dname, out_dname, get_beamline, cpu_number):
 
     batch_params = zip(input_files, out_files, [get_beamline]*len(input_files))
 
-    p=multiprocessing.Pool(processes=cpu_number)
+    p = multiprocessing.get_context('spawn').Pool(processes=cpu_number)
     p.map(propagate_wrapper, batch_params, chunksize=1)
     p.close()
     p.join()

@@ -82,7 +82,12 @@ To use the OpenMP or the CUDA build, install WPG with SRW built from the
 
 		git clone https://github.com/samoylv/WPG.git
 		cd WPG
-		make install SRW_MODE=omp     # or SRW_MODE=cuda
+		source <venv>/bin/activate    # or conda activate <env>
+		make install SRW_MODE=omp 2>&1 | tee install.log     # or SRW_MODE=cuda
+
+``make`` installs into the Python that ``python3`` finds, so activate the environment before it,
+or name the interpreter: ``make install SRW_MODE=omp PYTHON=/path/to/env/bin/python``.
+``tee install.log`` keeps the build messages (about 1800 lines) in a file for a bug report.
 
 The SRW build can be changed later in the same environment, WPG stays installed:
 

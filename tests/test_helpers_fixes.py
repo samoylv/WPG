@@ -414,6 +414,28 @@ def test_beamline_function_pickles(s2e_run):
     assert pickle.loads(pickle.dumps(get_beamline)) is get_beamline
 
 
+def test_directory_process_loaded_function(s2e_run, tmp_path):
+    """The batch mode accepts get_beamline loaded by load_beamline_function: the 'spawn' workers
+    load the same file. The pool used fork before, and with the OpenMP build of SRW the workers hung."""
+    from s2e.prop import propagate_s2e as ps
+    get_beamline = ps.load_beamline_function(str(s2e_run / 'beamline.py'))
+    with contextlib.redirect_stdout(io.StringIO()):
+        ps.directory_process(str(s2e_run / 'in'), str(tmp_path), get_beamline, 1)
+    assert (tmp_path / 'prop_out_0000001.h5').exists()
+
+
+def test_directory_process_rejects_notebook_function(monkeypatch):
+    """A function of a notebook cell cannot be imported by a 'spawn' worker: clear error, not a hang."""
+    from s2e.prop import propagate_s2e as ps
+
+    def get_beamline():
+        pass
+    get_beamline.__module__ = '__main__'
+    monkeypatch.delattr(sys.modules['__main__'], '__file__', raising=False)
+    with pytest.raises(ValueError, match='notebook'):
+        ps.directory_process('in', 'out', get_beamline, 1)
+
+
 def test_directory_process_output(s2e_run):
     """p9: batch mode with a pool of workers produces the output with a readable parent link."""
     out = s2e_run / 'out' / 'prop_out_0000001.h5'
