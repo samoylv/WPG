@@ -21,6 +21,7 @@ import os
 import platform
 import re
 import shutil
+import site
 import subprocess
 import sys
 import time
@@ -96,12 +97,14 @@ def python_info():
     else:
         kind = 'system or base interpreter'
     in_notebook = 'ipykernel' in sys.modules
+    user_site = site.getusersitepackages() if site.ENABLE_USER_SITE else 'disabled'
     return {
         'version': sys.version.split()[0],
         'implementation': platform.python_implementation(),
         'executable': sys.executable,
         'environment': kind,
         'prefix': prefix,
+        'user_site_packages': user_site,
         'platform': f'{platform.system()} {platform.release()} ({platform.version()})',
         'machine': platform.machine(),
         'cpu_count': os.cpu_count(),
@@ -460,6 +463,47 @@ def self_test(srw):
 
 # ------------------------------------------------------------------ report
 
+def _same_path(a, b):
+    return os.path.normcase(os.path.realpath(a)) == os.path.normcase(os.path.realpath(b))
+
+
+def _inside(path, directory):
+    path, directory = (os.path.normcase(os.path.realpath(p)) for p in (path, directory))
+    return path == directory or path.startswith(directory.rstrip(os.sep) + os.sep)
+
+
+def interpreter_problems(rep):
+    """Installations that went outside the environment the user believes to work in."""
+    w = []
+    venv = os.environ.get('VIRTUAL_ENV')
+    # a Jupyter kernel may legitimately run another environment than the one of the server that started it
+    if venv and not rep['python'].get('jupyter_kernel') and not _same_path(venv, sys.prefix):
+        w.append(f'VIRTUAL_ENV={venv} is activated, but this Python is {sys.executable} (prefix {sys.prefix}): '
+                 f'another Python comes earlier in PATH (module load after activate?), and pip installs '
+                 f'outside the environment. Run '
+                 f'{os.path.join(venv, "Scripts" if os.name == "nt" else "bin", "python")} or activate the '
+                 f'environment again')
+    user_site = rep['python'].get('user_site_packages')
+    if user_site and user_site != 'disabled' and not _inside(user_site, sys.prefix):
+        wpg_dist = _wpg_distribution()
+        places = [('srwpy', rep['srw'].get('srwlpy')),
+                  ('WPG', str(wpg_dist.locate_file('')) if wpg_dist else None)]
+        for name, path in places:
+            if path and _inside(path, user_site):
+                w.append(f'{name} is installed in the user site-packages {user_site} (pip install --user, or pip '
+                         f'fell back to it because {sys.prefix} is not writable): every Python '
+                         f'{sys.version_info.major}.{sys.version_info.minor} of this user sees it, '
+                         f'other environments included')
+    # an OpenMP runtime from neither this Python nor the system is found through LD_LIBRARY_PATH or RPATH
+    # and changes with the loaded modules
+    own = (sys.prefix, sys.base_prefix, '/usr', '/lib', '/lib64')
+    for lib in rep.get('openmp_runtime', {}).get('loaded_libraries', []) or []:
+        if re.search(r'lib(g|i)?omp', os.path.basename(lib)) and not any(_inside(lib, d) for d in own):
+            w.append(f'the OpenMP runtime {lib} is loaded from outside this Python ({sys.prefix}) and the system '
+                     'libraries (through LD_LIBRARY_PATH?)')
+    return w
+
+
 def _warnings(rep):
     w = []
     srw, wpg = rep['srw'], rep['wpg']
@@ -476,6 +520,10 @@ def _warnings(rep):
     if wpg.get('git_modified_files'):
         w.append(f'the WPG checkout has {wpg["git_modified_files"]} modified files')
     w.extend(rep['copies'])
+    try:
+        w.extend(interpreter_problems(rep))
+    except Exception as exc:
+        w.append(f'check of the environment failed: {_error(exc)}')
     # build/ of a WPG checkout describes only its last build (several environments can share one checkout),
     # a description next to srwlpy that does not match it is left from a previous installation
     next_to_binary = os.path.dirname(srw['srwlpy']) if srw.get('srwlpy') else None

@@ -97,6 +97,40 @@ def test_command_line():
     assert json.loads(res.stdout)['command'] == 'python -m wpg_diagnose --json'
 
 
+def _rep(**srw):
+    return {'python': wpg_diagnose.python_info(), 'srw': srw, 'openmp_runtime': {}}
+
+
+def test_activated_environment_is_not_this_python(monkeypatch, tmp_path):
+    """Maxwell: VIRTUAL_ENV set, but module load put the shared Python earlier in PATH."""
+    monkeypatch.setenv('VIRTUAL_ENV', str(tmp_path / 'venv'))
+    w = wpg_diagnose.interpreter_problems(_rep())
+    assert any('VIRTUAL_ENV=' in item and 'is activated, but this Python is' in item for item in w), w
+    monkeypatch.setenv('VIRTUAL_ENV', sys.prefix)
+    assert not any('VIRTUAL_ENV=' in item for item in wpg_diagnose.interpreter_problems(_rep()))
+
+
+def test_srwpy_in_user_site(monkeypatch, tmp_path):
+    """pip fell back to ~/.local because the shared Python is not writable."""
+    monkeypatch.delenv('VIRTUAL_ENV', raising=False)
+    user_site = tmp_path / 'local' / 'site-packages'
+    rep = _rep(srwlpy=str(user_site / 'srwpy' / 'srwlpy.so'))
+    rep['python']['user_site_packages'] = str(user_site)
+    w = wpg_diagnose.interpreter_problems(rep)
+    assert any(item.startswith('srwpy is installed in the user site-packages') for item in w), w
+    rep['python']['user_site_packages'] = 'disabled'
+    assert not any('user site-packages' in item for item in wpg_diagnose.interpreter_problems(rep))
+
+
+def test_openmp_runtime_from_another_prefix(monkeypatch, tmp_path):
+    monkeypatch.delenv('VIRTUAL_ENV', raising=False)
+    rep = _rep()
+    rep['openmp_runtime'] = {'loaded_libraries': [str(tmp_path / 'mamba' / 'lib' / 'libgomp.so.1.0.0'),
+                                                  os.path.join(sys.prefix, 'lib', 'libgomp.so.1')]}
+    w = [item for item in wpg_diagnose.interpreter_problems(rep) if 'OpenMP runtime' in item]
+    assert len(w) == 1 and str(tmp_path) in w[0], w
+
+
 def test_wpg_imported_from_another_directory(monkeypatch, tmp_path):
     monkeypatch.setattr(wpg_diagnose, '_installed_wpg_dir', lambda: str(tmp_path / 'wpg'))
     found = wpg_diagnose.wpg_copies(wpg_diagnose.wpg_info())
