@@ -65,7 +65,8 @@ def _direct_url(dist):
 
 def _run(cmd, cwd=None, timeout=10):
     try:
-        res = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout)
+        # errors='replace': messages in the system code page (Windows) must not break the report
+        res = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, errors='replace', timeout=timeout)
     except (OSError, subprocess.SubprocessError):
         return None
     return res.stdout.strip() if res.returncode == 0 else None
@@ -112,13 +113,71 @@ def python_info():
     }
 
 
-def _wpg_distribution():
-    """Installed WPG metadata; WPG.egg-info in the source tree (on sys.path when run from it) is a fallback."""
+def _wpg_origin():
+    """File of the wpg package that `import wpg` takes (None if wpg is not found)."""
     spec = importlib.util.find_spec('wpg')
-    source = os.path.abspath(os.path.dirname(os.path.dirname(spec.origin))) if spec else None
-    dists = [d for d in metadata.distributions() if (d.metadata['Name'] or '').lower() == 'wpg']
-    installed = [d for d in dists if os.path.abspath(str(d.locate_file(''))) != source]
-    return (installed or dists or [None])[0]
+    return spec.origin if spec is not None else None
+
+
+def _in_source_tree(dist):
+    """WPG.egg-info in a source tree: on sys.path through an editable install or the current directory,
+    not an installation of its own."""
+    path = str(getattr(dist, '_path', ''))
+    return path.endswith('.egg-info') and os.path.exists(os.path.join(os.path.dirname(path), 'pyproject.toml'))
+
+
+def _wpg_dists(in_source_tree=False):
+    """WPG distributions on sys.path in sys.path order, each directory once."""
+    found, seen = [], set()
+    for d in metadata.distributions():
+        if (d.metadata['Name'] or '').lower() != 'wpg' or _in_source_tree(d) != in_source_tree:
+            continue
+        key = os.path.normcase(os.path.realpath(str(getattr(d, '_path', d.locate_file('')))))
+        if key not in seen:
+            seen.add(key)
+            found.append(d)
+    return found
+
+
+def _editable_source(dist):
+    """Source directory of an editable install (None for a regular one)."""
+    from urllib.parse import urlparse
+    from urllib.request import url2pathname
+    url = _direct_url(dist)
+    if url and url.get('dir_info', {}).get('editable') and url.get('url', '').startswith('file:'):
+        return url2pathname(urlparse(url['url']).path)
+    return None
+
+
+def _owns(dist, origin):
+    """The distribution installed this wpg/__init__.py (its RECORD lists it)."""
+    try:
+        files = dist.files or []
+    except Exception:
+        return False
+    return any(tuple(f.parts[-2:]) == ('wpg', '__init__.py') and _same_path(str(dist.locate_file(f)), origin)
+               for f in files)
+
+
+def _wpg_distribution():
+    """Metadata of the WPG installation that `import wpg` takes.
+
+    Several installations can be on sys.path, for example a regular one in the environment and an old
+    editable one in the user site-packages (a venv with --system-site-packages sees it): the one in use is
+    the one whose RECORD lists the imported wpg/__init__.py, or the editable one of the imported source tree.
+    WPG.egg-info in the source tree is a fallback for running from the source tree without installation."""
+    origin = _wpg_origin()
+    installed = _wpg_dists()
+    if origin:
+        source = os.path.dirname(os.path.dirname(origin))
+        for d in installed:
+            if _owns(d, origin):
+                return d
+        for d in installed:
+            editable = _editable_source(d)
+            if editable and _same_path(editable, source):
+                return d
+    return (installed or _wpg_dists(in_source_tree=True) or [None])[0]
 
 
 def wpg_info():
@@ -152,15 +211,11 @@ def wpg_info():
 
 def _installed_wpg_dir():
     """Directory of the wpg package that pip installed (editable: in the source tree it points to)."""
-    from urllib.parse import urlparse
-    from urllib.request import url2pathname
     dist = _wpg_distribution()
     if dist is None:
         return None
-    url = _direct_url(dist)
-    if url and url.get('dir_info', {}).get('editable') and url.get('url', '').startswith('file:'):
-        return os.path.join(url2pathname(urlparse(url['url']).path), 'wpg')
-    return str(dist.locate_file('wpg'))
+    editable = _editable_source(dist)
+    return os.path.join(editable, 'wpg') if editable else str(dist.locate_file('wpg'))
 
 
 def wpg_copies(wpg):
@@ -171,10 +226,8 @@ def wpg_copies(wpg):
     if here and installed and os.path.normcase(os.path.abspath(installed)) != os.path.normcase(os.path.abspath(here)):
         found.append(f'wpg is imported from {here}, but pip installed WPG in {installed} '
                      '(PYTHONPATH or the current directory?)')
-    source = os.path.abspath(os.path.dirname(here)) if here else None
     # WPG.egg-info in the source tree of an editable install is the same installation, not a copy
-    dists = [d for d in metadata.distributions() if (d.metadata['Name'] or '').lower() == 'wpg'
-             and os.path.abspath(str(d.locate_file(''))) != source]
+    dists = _wpg_dists()
     if len(dists) > 1:
         found.append(f'{len(dists)} installed distributions named WPG: '
                      + ', '.join(str(d.locate_file('')) for d in dists))
@@ -485,9 +538,9 @@ def interpreter_problems(rep):
                  f'environment again')
     user_site = rep['python'].get('user_site_packages')
     if user_site and user_site != 'disabled' and not _inside(user_site, sys.prefix):
-        wpg_dist = _wpg_distribution()
-        places = [('srwpy', rep['srw'].get('srwlpy')),
-                  ('WPG', str(wpg_dist.locate_file('')) if wpg_dist else None)]
+        # every WPG installation, not only the one in use: an old one in the user site-packages
+        # can add a source tree to sys.path through its .pth file
+        places = [('srwpy', rep['srw'].get('srwlpy'))] + [('WPG', str(d.locate_file(''))) for d in _wpg_dists()]
         for name, path in places:
             if path and _inside(path, user_site):
                 w.append(f'{name} is installed in the user site-packages {user_site} (pip install --user, or pip '

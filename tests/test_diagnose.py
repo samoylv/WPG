@@ -131,6 +131,58 @@ def test_openmp_runtime_from_another_prefix(monkeypatch, tmp_path):
     assert len(w) == 1 and str(tmp_path) in w[0], w
 
 
+def _fake_wpg_tree(tmp_path):
+    """Maxwell: a regular install in the environment, an old editable one in ~/.local, and WPG.egg-info in
+    the source tree that the .pth file of the editable one adds to sys.path. The editable one is listed
+    first: the old code took the first distribution not in the directory of the imported package."""
+    from importlib import metadata
+
+    def write(path, text):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+
+    meta = 'Metadata-Version: 2.1\nName: WPG\nVersion: 2026.11\n'
+    env = tmp_path / 'venv' / 'site-packages'
+    write(env / 'wpg' / '__init__.py', '')
+    write(env / 'wpg-2026.11.dist-info' / 'METADATA', meta)
+    write(env / 'wpg-2026.11.dist-info' / 'RECORD', 'wpg/__init__.py,,\nwpg-2026.11.dist-info/METADATA,,\n')
+    checkout = tmp_path / 'WPG'
+    write(checkout / 'pyproject.toml', '')
+    write(checkout / 'wpg' / '__init__.py', '')
+    write(checkout / 'WPG.egg-info' / 'PKG-INFO', meta)
+    write(checkout / 'WPG.egg-info' / 'SOURCES.txt', 'wpg/__init__.py\n')
+    user = tmp_path / 'local' / 'site-packages'
+    write(user / 'wpg-2026.11.dist-info' / 'METADATA', meta)
+    write(user / 'wpg-2026.11.dist-info' / 'RECORD', '__editable__.wpg-2026.11.pth,,\n')
+    write(user / 'wpg-2026.11.dist-info' / 'direct_url.json',
+          json.dumps({'url': checkout.as_uri(), 'dir_info': {'editable': True}}))
+    dists = [metadata.PathDistribution(p) for p in (user / 'wpg-2026.11.dist-info', checkout / 'WPG.egg-info',
+                                                     env / 'wpg-2026.11.dist-info')]
+    return env, user, checkout, dists
+
+
+def test_distribution_in_use_not_the_first_on_sys_path(monkeypatch, tmp_path):
+    env, user, checkout, dists = _fake_wpg_tree(tmp_path)
+    monkeypatch.setattr(wpg_diagnose.metadata, 'distributions', lambda: iter(dists))
+    monkeypatch.setattr(wpg_diagnose, '_wpg_origin', lambda: str(env / 'wpg' / '__init__.py'))
+    assert os.path.samefile(str(wpg_diagnose._wpg_distribution().locate_file('')), env)
+    found = wpg_diagnose.wpg_copies({'location': str(env / 'wpg')})
+    assert not any('pip installed WPG in' in f for f in found), found
+    copies = [f for f in found if 'installed distributions named WPG' in f]
+    assert len(copies) == 1 and copies[0].startswith('2 ') and str(checkout) not in copies[0], found
+    monkeypatch.delenv('VIRTUAL_ENV', raising=False)
+    rep = _rep()
+    rep['python']['user_site_packages'] = str(user)
+    w = wpg_diagnose.interpreter_problems(rep)
+    assert any(item.startswith('WPG is installed in the user site-packages') for item in w), w
+    # the editable install itself: the source tree is imported, its egg-info is not a second copy
+    monkeypatch.setattr(wpg_diagnose.metadata, 'distributions', lambda: iter(dists[:2]))
+    monkeypatch.setattr(wpg_diagnose, '_wpg_origin', lambda: str(checkout / 'wpg' / '__init__.py'))
+    assert os.path.samefile(str(wpg_diagnose._wpg_distribution().locate_file('')), user)
+    found = wpg_diagnose.wpg_copies({'location': str(checkout / 'wpg')})
+    assert not any('pip installed WPG in' in f or 'installed distributions' in f for f in found), found
+
+
 def test_wpg_imported_from_another_directory(monkeypatch, tmp_path):
     monkeypatch.setattr(wpg_diagnose, '_installed_wpg_dir', lambda: str(tmp_path / 'wpg'))
     found = wpg_diagnose.wpg_copies(wpg_diagnose.wpg_info())
