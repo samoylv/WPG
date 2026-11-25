@@ -167,6 +167,7 @@ so any other SRW element (`srwpy.srwlib.SRWLOpt*`) can be appended to a beamline
 | Plane mirror with height errors | `Mirror_plane(orient, theta, length, range_xy, filename)`, `Mirror_plane_2d(...)` | `SRWLOptT` | 1D or 2D measured height profile from a file |
 | Grating | `VLS_grating(substrate, m, grDen, grDen1, ...)` | `SRWLOptG` | mirror substrate, diffraction order, groove density as a polynomial (varied line spacing) |
 | Phase screen | `WF_dist(nx, ny, Dx, Dy)` | `SRWLOptT` | empty transmission element to fill with an optical path difference |
+| Transmission from arrays | `Transmission(amplitude, opd, rx, ry)` | `SRWLOptT` | amplitude transmission and optical path difference on a mesh (ny, nx), the field is multiplied by amplitude·exp(i·k·opd) |
 | Surface height errors | `wpg.surface.Surface_errors(orient, theta, profile, width)` | `SRWLOptT` | 1D profile or 2D map of heights (measured or from `random_profile`, `random_surface`), placed after its mirror |
 | Resizing | `Empty()` | none | only changes the window and sampling with its `Use_PP` |
 | Screen | `Screen(filename)` | none | resizing, and the wavefront is written to an HDF5 file |
