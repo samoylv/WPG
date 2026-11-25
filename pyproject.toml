@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=64"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,7 +7,8 @@ name = "WPG"
 version = "2026.11"
 description = "WavePropaGator: interactive framework for X-ray wavefront propagation based on SRW"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = "LicenseRef-WPG"  # the own license of European XFEL, no SPDX identifier
+license-files = ["LICENSE"]
 authors = [
     {name = "Alexey Buzmakov", email = "buzmakov@gmail.com"},
     {name = "Liubov Samoylova"},

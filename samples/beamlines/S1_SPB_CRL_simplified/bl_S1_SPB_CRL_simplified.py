@@ -10,7 +10,7 @@ def get_beamline():
     src_to_crl = 887.8  # Distance source to CRL [m]
 #     src_to_exp = 920.42 # Distance source to experiment [m]
     z0 = src_to_hom1
-    
+
     # Drift to focus aperture
     #crl_to_exp_drift = Drift( src_to_exp - src_to_crl )
     z = 34.0
@@ -47,7 +47,7 @@ def get_beamline():
     #bl0.append( hom2_to_crl_drift, Use_PP(semi_analytical_treatment=0))
     bl0.append( hom2_to_crl_drift, Use_PP(semi_analytical_treatment=1))
 
-    
+
     # Define CRL
     crl_focussing_plane = 3 # Both horizontal and vertical.
     crl_delta = 4.7177e-06 # Refractive index decrement (n = 1- delta - i*beta)
@@ -85,5 +85,5 @@ def get_beamline():
     crl_to_exp_drift = Drift( z ); z0 = z0+z
     bl0.append( crl_to_exp_drift, Use_PP(semi_analytical_treatment=1, zoom=1, sampling=1))
 #     bl0.append(Empty(),Use_PP(zoom=0.25, sampling=0.25))
-   
+
     return bl0

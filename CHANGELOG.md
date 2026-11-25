@@ -49,7 +49,7 @@ Several functions gave wrong numbers and are fixed, so results of existing scrip
 
 - SRW comes from the `srwpy` package: the PyPI wheel 4.2.1 or a local build (see Added). The SRW copy of 2019 in `wpg/srw` is removed.
 - Python 3.10 or newer is required. Tested with Python 3.10 (Linux) and 3.12 (Windows, NumPy 2.5, h5py 3.16, Matplotlib 3.11). GitHub Actions are configured for Python 3.10 and 3.13.
-- Packaging is in `pyproject.toml`. Install with `pip install -e ".[test]" --config-settings editable_mode=compat`: the compat mode of the setuptools editable install lets IDEs and static analyzers find the package.
+- Packaging is in `pyproject.toml` (setuptools 77 or newer, the license as the SPDX expression `LicenseRef-WPG` with the file `LICENSE`). Install with `pip install -e ".[test]" --config-settings editable_mode=compat`: the compat mode of the setuptools editable install lets IDEs and static analyzers find the package.
 - Field names of the wavefront parameters are declared in one module, `wpg/glossary.py`, with their types and units. Autocompletion and type checkers recognize `wf.params.Mesh.nx` and the like, and a misspelled field name raises `AttributeError` instead of creating a new attribute. The shortcuts `wf.nx`, `wf.Rx` and so on are read-only properties: assignment like `wf.nx = 100` raises an error, set `wf.params.Mesh.nx` instead. The HDF5 format is unchanged, files of the old version load identically.
 - `build_gauss_wavefront`
   - The field is in √(W/mm²) (SRW field-units flag `unitElFld = 2`), so the spectrum of a pulse integrates to its energy. Previously SRW took the field as photons per second per 0.1 % bandwidth, and for a 1 mJ pulse the spectrum integrated to 6.2·10¹² instead of 10⁻³ J.
@@ -75,9 +75,11 @@ Several functions gave wrong numbers and are fixed, so results of existing scrip
 - `setup.py`, `pytest.ini` and `requirements_win.txt`, replaced by `pyproject.toml`.
 - `build/Makefile`: the build of the SRW fork of S. Yakubov (branch `openmp_memoryfix`) with a manually built FFTW2. The fork fixed a memory error of the OpenMP version. The fix has been in SRW since 2022 (commit bdc833c), and on the current SRW master the error is not reproduced (checked with AddressSanitizer).
 - `Docker/base`, `Docker/develop` and `Docker/openmp`.
+- `s2e/prop/utest/BeamlinesTest.py` and `Test.py`: they imported a module that no longer exists, the s2e tests are in `tests/test_helpers_fixes.py`. `ReferenceTest.py` (comparison with reference files on the XFEL server) is kept.
 
 ### Fixed
 
+- Memory of `Wavefront` (issue #63). The parameter objects `wf.params`, `wf.params.Mesh` and `wf.data` kept a reference to the wavefront, so a wavefront was freed only by the cyclic garbage collector, late for large fields. In a loop of 40 propagations of a 10 MB pulse the memory of the process grew from 159 to 440 MB (9.5 MB per step), also with `del`. Now `wf.params` and `wf.data` are views created at each access, a wavefront is freed as soon as it is not used, and the memory stays at 100–110 MB.
 - Beam parameters of `Wavefront`
   - `divergence` and the profiles along qx and qy took the intensity before the transform to angular space, swapped the axes and returned spatial frequency instead of angle (see Upgrade notes).
   - `get_axis`, `get_pixel_size` and `get_profile` converted the user's wavefront to another representation and did not restore the time or frequency domain. With an odd `nx` they filled the field with NaN.
