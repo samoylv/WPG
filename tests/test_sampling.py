@@ -21,6 +21,14 @@ def _gauss(sig, d2waist, half, n=256, xoff=0.):
                                                   yMax=half, sigX=sig, sigY=sig, d2waist=d2waist, xoff=xoff))
 
 
+def _gauss_srw_radius(sig, d2waist, half, n=256):
+    """Gaussian beam with the radius that SRW alone keeps, Rx = Ry = distance to the waist (WPG before
+    2026.11, other sources): the field is curved as R(z), the parameter is wrong near the waist."""
+    w = _gauss(sig, d2waist, half, n)
+    w._srwl_wf.Rx = w._srwl_wf.Ry = d2waist
+    return w
+
+
 def _drift(w, L, pp):
     import wpg
     from wpg.optical_elements import Drift
@@ -82,7 +90,7 @@ def test_report_wrong_srw_radius():
     """Waist 1 mm away: SRW keeps Rx = 1 mm, the field is nearly flat (R = 8.3e8 m): reported as a disagreement."""
     from wpg.sampling import sampling_report
     from wpg.wpg_uti_wf import check_sampling
-    w = _gauss(1e-4, 1e-3, 6e-4)
+    w = _gauss_srw_radius(1e-4, 1e-3, 6e-4)
     rep = sampling_report(w)
     zR = 4 * np.pi * 1e-4 ** 2 / LAM
     assert rep['x']['R_params'] == pytest.approx(1e-3)
@@ -109,7 +117,7 @@ def test_set_radius_from_field_fixes_resizing():
     from wpg.sampling import set_radius_from_field
     pp = Use_PP(semi_analytical_treatment=0, sampling=1.5)
     expect = _sigma(1e-4, 50.01)
-    w = _gauss(1e-4, 0.01, 8e-4)
+    w = _gauss_srw_radius(1e-4, 0.01, 8e-4)
     assert _drift(w, 50., pp) > 3 * expect
     changed = set_radius_from_field(w)
     assert set(changed) == {'x', 'y'} and changed['x'][0] == pytest.approx(0.01)
@@ -141,7 +149,7 @@ def test_suggest_wrong_srw_radius_warns():
     """A beam 1 cm from its waist: the function warns about the SRW radius and chooses no semi-analytical
     treatment; the wavefront of the user is not changed."""
     from wpg.sampling import suggest_propagation_parameters
-    w = _gauss(1e-4, 0.01, 8e-4)
+    w = _gauss_srw_radius(1e-4, 0.01, 8e-4)
     with pytest.warns(UserWarning, match='set_radius_from_field'):
         pp, rep = suggest_propagation_parameters(w, 50.)
     assert rep['semi_analytical_treatment'] == 0 and set(rep['radius_fixed']) == {'x', 'y'}
@@ -161,3 +169,45 @@ def test_single_slice_of_pulse():
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         assert np.isfinite(s.get_intensity()).all()
+
+
+# ---------------------------------------------------------------------------- radius of build_gauss_wavefront
+
+@pytest.mark.parametrize('d2waist', [1e-3, 1., 50., -1.])
+def test_gauss_radius_exact(d2waist):
+    """build_gauss_wavefront_xy keeps the radius of the field R = z (1 + (zR/z)^2), not z (issue #133)."""
+    from wpg.sampling import sampling_report
+    w = _gauss(2e-5, d2waist, 2e-4)
+    zR = 4 * np.pi * 2e-5 ** 2 / LAM
+    for attr in ('Rx', 'Ry'):
+        assert getattr(w._srwl_wf, attr) == pytest.approx(d2waist * (1 + (zR / d2waist) ** 2), rel=1e-9)
+    rep = sampling_report(w)
+    assert rep['x']['semi_ok'] and rep['y']['semi_ok']
+
+
+def test_drift_near_waist():
+    """9 keV, RMS 20 um (zR = 36.5 m), 1 m from the waist, drift 100 m with zoom 4 and sampling 0.5: with
+    Rx = 1 m of SRW the RMS size was 788 um, the analytic one is 59 um."""
+    from wpg.optical_elements import Use_PP
+    pp = Use_PP(semi_analytical_treatment=1, zoom=4, sampling=0.5)
+    expect = _sigma(2e-5, 101.)
+    assert _drift(_gauss(2e-5, 1., 2e-4), 100., pp) == pytest.approx(expect, rel=1e-2)
+    assert _drift(_gauss_srw_radius(2e-5, 1., 2e-4), 100., pp) > 5 * expect
+
+
+@pytest.mark.parametrize('nz', [9, 10])
+def test_pulse_in_time_domain(nz):
+    """build_gauss_wavefront gives a pulse in the time domain: the wavelength of the report is the one of
+    photonEnergy, not of the slice time (with nz odd the central slice at t = 0 gave R_fit = 0)."""
+    import wpg
+    from wpg.generators import build_gauss_wavefront
+    from wpg.sampling import sampling_report, set_radius_from_field
+    w = wpg.Wavefront(build_gauss_wavefront(64, 64, nz, EKEV, -2e-4, 2e-4, -2e-4, 2e-4, 0.12e-15, 2e-5, 2e-5, 1.))
+    assert w.params.wDomain == 'time'
+    exact = 1. * (1 + (4 * np.pi * 2e-5 ** 2 / LAM) ** 2)
+    rep = sampling_report(w)
+    assert rep['x']['R_params'] == pytest.approx(exact, rel=1e-9) and rep['x']['semi_ok']
+    w._srwl_wf.Rx = w._srwl_wf.Ry = 1.
+    changed = set_radius_from_field(w)
+    assert set(changed) == {'x', 'y'}
+    assert changed['x'][1] == pytest.approx(exact, rel=1e-2)

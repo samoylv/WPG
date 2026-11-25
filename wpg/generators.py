@@ -6,6 +6,35 @@ import warnings
 from srwpy import srwlib
 from srwpy.srwlib import srwl
 
+import numpy as np
+
+
+#: h*c [eV*m]
+_HC_EV_M = 1.239841984e-6
+
+
+def _gauss_radius(sig, d2waist, ekev):
+    """
+    Radius of curvature of a Gaussian beam at the distance d2waist from its waist: R = z (1 + (z_R/z)^2)
+    with the Rayleigh length z_R = 4 pi sig^2 / lambda (sig is the RMS size of the intensity at the waist,
+    the field waist is 2 sig). The same for the Gauss-Hermite modes of higher orders.
+
+    SRW computes the field with this curvature, but keeps Rx = Ry = d2waist for the semi-analytical
+    treatment and resizing: near the waist (d2waist << z_R) the propagation then fails (issue #133).
+    At the waist SRW shifts the observation point by 0.01 lambda (srgsnbm.cpp), so does this function.
+    """
+    lam = _HC_EV_M / (ekev * 1e3)
+    z = d2waist if d2waist != 0 else 0.01 * lam
+    z_r = 4 * np.pi * sig ** 2 / lam
+    return z + z_r ** 2 / z
+
+
+def _set_gauss_radius(wfr, gsn_bm, d2waist, ekev):
+    """Set the radius of curvature that SRW keeps (Rx, Ry) to the one of the Gaussian beam."""
+    z = d2waist - gsn_bm.z
+    wfr.Rx = _gauss_radius(gsn_bm.sigX, z, ekev)
+    wfr.Ry = _gauss_radius(gsn_bm.sigY, z, ekev)
+
 
 def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, sigY, d2waist, 
                           pulseEn=None, pulseRange=None, _mx=None, _my=None):
@@ -114,6 +143,7 @@ def build_gauss_wavefront(nx, ny, nz, ekev, xMin, xMax, yMin, yMax, tau, sigX, s
     arPrecPar = [sampFactNxNyForProp]
     #**********************Calculating Initial Wavefront
     srwl.CalcElecFieldGaussian(wfr, GsnBm, arPrecPar)
+    _set_gauss_radius(wfr, GsnBm, d2waist, ekev)
     # The field in time domain is in sqrt(W/mm^2) (energy over x, y, t equals pulseEn).
     # SRW keeps the default unitElFld = 1 (sqrt(Phot/s/0.1%bw/mm^2)) and uses it at the
     # time -> frequency conversion: with 1 the spectrum comes out in photons/0.1%bw, with 2 in J/eV.
@@ -211,6 +241,7 @@ def build_gauss_wavefront_xy(nx, ny, ekev, xMin, xMax, yMin, yMax, sigX, sigY, d
     sampFactNxNyForProp = -1  # sampling factor for adjusting nx, ny (effective if > 0)
     arPrecPar = [sampFactNxNyForProp]
     srwl.CalcElecFieldGaussian(wfr, GsnBm, arPrecPar)
+    _set_gauss_radius(wfr, GsnBm, d2waist, ekev)
     return wfr
 
 

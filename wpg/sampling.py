@@ -51,8 +51,9 @@ def _field_2d(wf):
 
 
 def _slice_energy_ev(wf, k):
+    """Photon energy [eV] of slice k: in the time domain the slices are times, the carrier is photonEnergy."""
     m = wf.params.Mesh
-    if m.nSlices == 1:
+    if m.nSlices == 1 or wf.params.wDomain == 'time':
         return wf.params.photonEnergy
     return np.linspace(m.sliceMin, m.sliceMax, m.nSlices)[k]
 
