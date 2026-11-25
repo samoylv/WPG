@@ -101,8 +101,19 @@ class Wavefront(object):
         self._version = 0.1  # HDF5 format version
         self._nval = 2  # complex electric field: (Re, Im)
         self.custom_fields = {}
-        self.params = glossary.WavefrontParams(self)
-        self.data = glossary.WavefrontData(self)
+
+    # The nodes are created at each access and not kept on the wavefront: a node refers to the wavefront,
+    # and a stored node made a reference cycle, so a wavefront was freed only by the cyclic garbage collector,
+    # late for large fields (issue #63: +9.5 MB per step in a loop of propagations of a 10 MB wavefront).
+    @property
+    def params(self) -> glossary.WavefrontParams:
+        """Wavefront parameters (view of the SRW structure)."""
+        return glossary.WavefrontParams(self)
+
+    @property
+    def data(self) -> glossary.WavefrontData:
+        """Electric field arrays (view of the SRW structure)."""
+        return glossary.WavefrontData(self)
 
     @property
     def _wf(self):

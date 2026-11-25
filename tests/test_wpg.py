@@ -244,7 +244,8 @@ def test_wavefront_shortcuts():
         assert getattr(wf, f.name) == getattr(wf.params.Mesh, f.name)
     for f in WavefrontParams.fields():
         assert getattr(wf, f.name) == getattr(wf.params, f.name)
-    assert wf.Mesh is wf.params.Mesh
+    # the nodes are views created at each access (issue #63): the same wavefront, not the same object
+    assert type(wf.Mesh) is type(wf.params.Mesh) and wf.Mesh._wf is wf.params.Mesh._wf is wf
     with pytest.raises(AttributeError):
         wf.nx = 10
     with pytest.raises(AttributeError):
@@ -261,3 +262,27 @@ def test_field_array_on_fresh_wavefront():
     wf.data.arrEver = 2 * ex
     assert (wf.params.Mesh.ny, wf.params.Mesh.nx, wf.params.Mesh.nSlices) == (8, 6, 2)
     np.testing.assert_array_equal(wf.data.arrEver, 2 * ex)
+
+
+def test_wavefront_freed_without_gc():
+    """Issue #63: the parameter nodes kept the wavefront in a reference cycle, so a wavefront (and its field)
+    was freed only by the cyclic garbage collector, late for large fields. Now `del` frees it at once,
+    also after access to the parameters, a deep copy and a propagation."""
+    import copy
+    import gc
+    import weakref
+    from wpg.beamline import Beamline
+    from wpg.optical_elements import Drift, Use_PP
+    gc.disable()
+    try:
+        wf = _gauss_wavefront(nx=20, nz=3)
+        _ = (wf.params.Mesh.nx, wf.data.arrEhor.shape, wf.Mesh.nSlices)
+        wf2 = copy.deepcopy(wf)
+        bl = Beamline()
+        bl.append(Drift(1.), Use_PP())
+        bl.propagate(wf2)
+        refs = [weakref.ref(wf), weakref.ref(wf2)]
+        del wf, wf2, _
+        assert [r() for r in refs] == [None, None]
+    finally:
+        gc.enable()
