@@ -432,3 +432,71 @@ def test_screen_existing_file_message(tmp_path):
     fn.write_bytes(b'')
     with pytest.raises(IOError, match='screen.h5'):
         Screen(str(fn))
+
+
+# ---------------------------------------------------------------------------- issues #92 and #83
+
+def test_crl_numpy_delta():
+    """Issue #92: CRL with delta and attenuation length vs photon energy as numpy arrays failed with TypeError
+    (SRW recognizes only lists); now the same element as with lists."""
+    from wpg.optical_elements import CRL
+    delta, att = np.array([4.80e-6, 4.79e-6, 4.78e-6]), np.array([6.0e-3, 6.1e-3, 6.2e-3])
+    args = dict(_foc_plane=3, _shape=1, _apert_h=1e-3, _apert_v=1e-3, _r_min=5e-4, _n=10, _wall_thick=50e-6,
+                _xc=0, _yc=0, _e_start=8400., _e_fin=8460., _nx=21, _ny=21)
+    a = CRL(_delta=delta, _atten_len=att, **args)
+    b = CRL(_delta=list(delta), _atten_len=list(att), **args)
+    assert a.mesh.ne == 3 and np.array_equal(np.asarray(a.arTr), np.asarray(b.arTr))
+
+
+def _gauss_9kev(d2waist):
+    import wpg
+    from wpg.generators import build_gauss_wavefront_xy
+    return wpg.Wavefront(build_gauss_wavefront_xy(128, 128, 9., -2e-4, 2e-4, -2e-4, 2e-4, 20e-6, 20e-6, d2waist))
+
+
+def _through(w, *elements):
+    import wpg
+    from wpg.optical_elements import Use_PP
+    w = copy.deepcopy(w)
+    bl = wpg.Beamline()
+    for el in elements:
+        bl.append(el, Use_PP())
+    bl.propagate(w)
+    return w
+
+
+def test_transmission_amplitude_and_phase():
+    """Issue #83: amplitude 0.5 and OPD lambda/8 multiply the field by 0.5 exp(+i pi/4)."""
+    from wpg.optical_elements import Transmission
+    lam = 1.239841984e-6 / 9e3
+    w = _gauss_9kev(1.)
+    t = Transmission(np.full((32, 32), 0.5), np.full((32, 32), lam / 8), 8e-4, 8e-4)
+    e0 = w.get_real_part()[64, 64, 0] + 1j * w.get_imag_part()[64, 64, 0]
+    w1 = _through(w, t)
+    e1 = w1.get_real_part()[64, 64, 0] + 1j * w1.get_imag_part()[64, 64, 0]
+    assert abs(e1 / e0) == pytest.approx(0.5, rel=1e-4)
+    assert np.angle(e1 / e0) == pytest.approx(np.pi / 4, abs=1e-4)
+
+
+def test_transmission_prism_deflects():
+    """Issue #83: a linear OPD s*x deflects the beam by +s: after 20 m the centroid moves by 40 um for s = 2 urad."""
+    from wpg.optical_elements import Drift, Transmission
+    xs = np.linspace(-4e-4, 4e-4, 32)
+    prism = Transmission(1., np.broadcast_to(2e-6 * xs[None, :], (32, 32)), 8e-4, 8e-4, ext_tr=1)
+    w = _gauss_9kev(1.)
+
+    def cx(w):
+        m = w.params.Mesh
+        p = w.get_intensity()[..., 0].sum(0)
+        return (p * np.linspace(m.xMin, m.xMax, m.nx)).sum() / p.sum()
+
+    shift = cx(_through(w, prism, Drift(20.))) - cx(_through(w, Drift(20.)))
+    assert shift == pytest.approx(40e-6, rel=1e-2)
+
+
+def test_transmission_wrong_shape():
+    from wpg.optical_elements import Transmission
+    with pytest.raises(ValueError):
+        Transmission(np.ones(5), np.zeros(5), 1e-3, 1e-3)
+    with pytest.raises(ValueError):
+        Transmission(np.ones((4, 5)), np.zeros((5, 4)), 1e-3, 1e-3)

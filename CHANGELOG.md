@@ -38,6 +38,7 @@ Several functions gave wrong numbers and are fixed, so results of existing scrip
   - `sampling_report` and `check_sampling` measure the phase step between neighbouring pixels (with and without the quadratic phase that the semi-analytical treatment removes) and the intensity at the window border.
   - `set_radius_from_field` sets the radius of curvature that SRW keeps from the phase of the field, for wavefronts whose radius does not describe the field (for example a Gaussian beam built by SRW directly, see Fixed).
   - `suggest_propagation_parameters(wf, element)` chooses `Use_PP` zoom and sampling by trial propagations of one slice. In two test drifts of Gaussian beams (9 keV, 50 m and 30 m) the default `Use_PP()` gave RMS sizes 1.0 % and 11.5 % below the analytic ones. With the chosen parameters the difference is below 0.01 %.
+- `Transmission(amplitude, opd, rx, ry)` builds a transmission element from two arrays, the amplitude transmission and the optical path difference (issue #83). The field after it is multiplied by amplitude·exp(i·k·opd).
 - `Mirror_plane` accepts `x0` (the profile point placed on the beam axis) and any whitespace delimiter in the profile file.
 - Diagnostics for bug reports: `python -m wpg_diagnose` (or the `wpg-diagnose` command) prints the Python environment, the version and location of WPG, the origin of SRW with the command that repeats its build, OpenMP and CUDA in SRW, the GPU and the versions of the dependencies, as Markdown to paste into an issue (`--json` for JSON). Among the problems it lists an activated environment that is not the running Python, WPG or SRW installed in the user site-packages (`~/.local`) and an OpenMP runtime loaded from another installation. It runs also when `import wpg` fails. `--test` adds a self-test of about 10 s: a drift of a Gaussian beam against the analytic size, OpenMP with one thread against all threads, GPU against CPU.
   - `build/build_srw.py` saves the build description with the SHA-256 checksum of `srwlpy` next to the library, so the diagnostics recognize a description left from another build.
@@ -92,6 +93,7 @@ Several functions gave wrong numbers and are fixed, so results of existing scrip
   - `Mirror_plane_2d` laid the height map out so that a tilt along the mirror became a transverse tilt.
   - The normal of a mirror with `roll` was not a unit vector (its length was 1.00005 at 10 mrad).
   - `propagate_wavefront` changed its input wavefront.
+  - `CRL` with the refractive index decrement and the attenuation length vs photon energy given as numpy arrays failed with `TypeError`, because SRW recognizes only lists (issue #92).
   - `build_gauss_wavefront` ignored the vertical beam quality factor `_my`, and `_mx` alone crashed SRW.
   - `build_gauss_wavefront` and `build_gauss_wavefront_xy` kept the radius of curvature that SRW sets, the distance to the waist z, instead of z·(1 + (z_R/z)²) with the Rayleigh length z_R (issue #133). SRW computes the field with the right curvature, but uses that radius for the semi-analytical treatment and resizing. A 9 keV beam with a 20 µm RMS waist (z_R = 36.5 m), generated 1 m from its waist on 256 × 256 points over 400 µm, had an RMS size of 148 µm after a 100 m drift with `Use_PP(semi_analytical_treatment=1)` and 1171 µm with zoom 4 and sampling 0.5. The analytic size is 58.86 µm. With the exact radius both give 58.8–58.9 µm.
   - `source.sase_pulse` mixed up the axes and the time and frequency domains and produced wrong vertical and circular polarizations (the remaining problems are in Known issues).
@@ -105,7 +107,7 @@ Several functions gave wrong numbers and are fixed, so results of existing scrip
 - `check_sampling` gave false alarms. Its Fresnel-zone test never succeeded for a converging beam (negative radius), used the SRW radius of curvature, which is wrong near the waist (see `build_gauss_wavefront` above), and reported a beam sampled above the Nyquist limit as undersampled.
 - `AuxTransmAddSurfHeightProfileScaled` (used by `Mirror_plane` and the tutorials) is vectorized: the same result, 1.8 s → 0.03 s for a 1500 × 100 mesh. A profile with decreasing positions gave zeros.
 - s2e: the history link to the parent file used a path relative to the current folder, the batch mode failed with `PicklingError` and hung on Linux with the OpenMP build of SRW (its worker processes were forked after SRW had started OpenMP threads, now they are started with `spawn`), and `diagnostics.py` failed on missing keys and on `plt.hold`.
-- Incompatibilities with NumPy 2, h5py 3, Matplotlib 3 and Python 3.12: `copy=False`, `Dataset.value`, `tostring`, `pyplot.hold`, `imp`, Python 2 prints.
+- Incompatibilities with NumPy 2, h5py 3, Matplotlib 3 and Python 3.12: `copy=False`, `Dataset.value`, `tostring`, `pyplot.hold`, `imp`, Python 2 prints, `cPickle` in two sample notebooks (issue #128).
 
 ### Known issues
 

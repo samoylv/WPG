@@ -21,11 +21,7 @@ import srwpy.srwlib
 import numpy as np
 from scipy.interpolate import griddata
 
-import sys
-if sys.version_info[0] == 3:
-    import pickle
-else:
-    import cPickle as pickle
+import pickle
 
 
 class WPGOpticalElement(object):
@@ -884,10 +880,45 @@ def CRL(_foc_plane, _delta, _atten_len, _shape, _apert_h, _apert_v, _r_min, _n,
     :param _e_fin: final photon energy
     :return: transmission (SRWLOptT) type optical element which simulates CRL
     """
-
+    # SRW takes _delta and _atten_len as dependent on photon energy only if they are lists or array.array:
+    # a numpy array failed with TypeError (issue #92)
+    _delta, _atten_len = (v.tolist() if isinstance(v, np.ndarray) else v for v in (_delta, _atten_len))
     return srwl_opt_setup_CRL(_foc_plane, _delta, _atten_len, _shape,
                               _apert_h, _apert_v, _r_min, _n, _wall_thick,
                               _xc, _yc, _void_cen_rad, _e_start, _e_fin, _nx, _ny)
+
+
+def Transmission(amplitude, opd, rx, ry, x=0., y=0., ext_tr=0, focal_length=(1e23, 1e23)):
+    """
+    Transmission element from two arrays: the amplitude transmission and the optical path difference (issue #83).
+
+    The field after the element is the incident field multiplied by amplitude * exp(i k opd), k = 2 pi / lambda,
+    as in SRW SRWLOptT. Both arrays are given on the same mesh: shape (ny, nx), x along the second axis,
+    the points span rx and ry (the pixel is rx / (nx - 1)), the mesh is centred at (x, y).
+
+    :param amplitude: amplitude (not intensity) transmission, array (ny, nx) or one number for the whole mesh
+    :param opd: optical path difference [m], array (ny, nx) or one number
+    :param rx: horizontal size of the mesh [m]
+    :param ry: vertical size of the mesh [m]
+    :param x: horizontal coordinate of the mesh centre [m]
+    :param y: vertical coordinate of the mesh centre [m]
+    :param ext_tr: transmission outside the mesh: 0 - zero, 1 - the same as on the mesh border
+    :param focal_length: (Fx, Fy) estimated focal lengths [m] that SRW uses to choose the propagation
+        parameters, default - no focusing
+    :return: SRWLOptT
+    """
+    amplitude, opd = np.asarray(amplitude, dtype=float), np.asarray(opd, dtype=float)
+    shape = np.broadcast_shapes(amplitude.shape, opd.shape)
+    if len(shape) != 2:
+        raise ValueError('amplitude and opd should be 2D arrays (ny, nx) of the same shape, got {} and {}'.format(
+            amplitude.shape, opd.shape))
+    ny, nx = shape
+    flat = np.empty(2 * nx * ny)
+    flat[0::2] = np.broadcast_to(amplitude, shape).ravel()
+    flat[1::2] = np.broadcast_to(opd, shape).ravel()
+    from array import array
+    return SRWLOptT(_nx=nx, _ny=ny, _rx=rx, _ry=ry, _arTr=array('d', flat), _extTr=ext_tr,
+                    _Fx=focal_length[0], _Fy=focal_length[1], _x=x, _y=y)
 
 
 def calculateOPD(wf_dist, mdatafile, ncol, delim, Orient, theta, scale=1., length=1., xscale=1., x0=0., bPlot=False):
