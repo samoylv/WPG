@@ -536,3 +536,39 @@ def test_plot_wf_and_q_space_run(tmp_path, capsys):
     w = Wavefront()
     w.load_hdf5(str(tmp_path / 'q.h5'))
     assert w.params.wSpace == 'Q-space'
+
+
+def test_plot_slices_r_and_q_space(tmp_path, capsys):
+    """plot_slices: maps of the slices above the threshold, in mm for R-space and in urad for Q-space; the
+    FWHM of a 9 keV Gaussian beam with an RMS size of 20 um is 8 pixels of 6.35 um in R-space and 3 pixels of
+    0.34 urad in Q-space (2.355 lambda / (4 pi sigma) = 1.29 urad)."""
+    import matplotlib
+    matplotlib.use('Agg')
+    from srwpy.srwlib import srwl
+    from wpg import Wavefront
+    from wpg.generators import build_gauss_wavefront
+    from wpg.wpg_uti_wf import plot_slices
+    wf = Wavefront(build_gauss_wavefront(64, 64, 21, 9., -2e-4, 2e-4, -2e-4, 2e-4, 2e-15, 2e-5, 2e-5, 1.))
+    res = plot_slices(wf, threshold=0.9, save=str(tmp_path / 'r_'))
+    assert list(res['selected_slices']) == [9, 10, 11]
+    assert res['slice_values'][1] == pytest.approx(0., abs=1e-20) and res['slice_power'].min() >= 0.9
+    assert sorted(p.name for p in tmp_path.iterdir()) == ['r_10.png', 'r_11.png', 'r_9.png']
+    assert 'FWHM 0.05079 x 0.05079 mm' in capsys.readouterr().out
+    srwl.SetRepresElecField(wf._srwl_wf, 'f')
+    srwl.SetRepresElecField(wf._srwl_wf, 'a')
+    res = plot_slices(wf, threshold=0.9, save=str(tmp_path / 'q_'))
+    assert len(res['selected_slices']) >= 1 and 8990 < res['slice_values'][0] < 9010
+    assert 'FWHM 1.017 x 1.017 urad' in capsys.readouterr().out
+
+
+def test_plot_slices_warns_odd_q_mesh(tmp_path):
+    import matplotlib
+    matplotlib.use('Agg')
+    from srwpy.srwlib import srwl
+    from wpg import Wavefront
+    from wpg.generators import build_gauss_wavefront_xy
+    from wpg.wpg_uti_wf import plot_slices
+    wf = Wavefront(build_gauss_wavefront_xy(65, 65, 9., -2e-4, 2e-4, -2e-4, 2e-4, 2e-5, 2e-5, 1.))
+    srwl.SetRepresElecField(wf._srwl_wf, 'a')
+    with pytest.warns(UserWarning, match='issues/70'):
+        plot_slices(wf, threshold=0.5, save=str(tmp_path / 'q_'))

@@ -416,6 +416,76 @@ def plot_intensity_qmap(wf, output_file=None, save='',
     return
 
 
+def plot_slices(wf, threshold=0.2, polarization='total', save='', range_x=None, range_y=None,
+                im_aspect='equal'):
+    """
+    Plot the intensity maps of the slices whose power is above ``threshold`` of the most powerful slice.
+
+    The axes follow the representation of the wavefront: coordinates in mm (R-space) or angles in urad
+    (Q-space, e.g. a copy after ``srwl.SetRepresElecField(wf._srwl_wf, 'a')``; use an even number of points:
+    with an odd nx or ny SRW returns a wrong field, https://github.com/ochubar/SRW/issues/70). The title of a
+    map is the time of the slice [fs] or its photon energy [eV]. The intensity is computed once for all slices
+    and the wavefront is not copied. From the slice plots of L. Samoylova.
+
+    :param wf: Wavefront
+    :param threshold: power of a slice (intensity summed over x, y) relative to the most powerful one
+    :param polarization: 'total', 'horizontal' or 'vertical'
+    :param save: '' - show the figures, else the prefix of the files: <save><slice number>.png
+    :param range_x: x-axis range [mm in R-space, urad in Q-space], None - the whole mesh
+    :param range_y: y-axis range, as range_x
+    :param im_aspect: aspect of the map, see matplotlib set_aspect()
+    :return: dict: 'selected_slices' (numbers), 'slice_power' (relative to the maximum), 'slice_values'
+        (time [s] or photon energy [eV] of the selected slices)
+    """
+    import warnings
+    import matplotlib.pyplot as plt
+    m = wf.params.Mesh
+    qspace = wf.params.wSpace == 'Q-space'
+    if qspace and (m.nx % 2 or m.ny % 2):
+        warnings.warn('plot_slices: {} x {} points in Q-space: SRW converts a mesh with an odd number of points '
+                      'to angles wrongly (https://github.com/ochubar/SRW/issues/70)'.format(m.nx, m.ny))
+    intensity = wf.get_intensity(polarization=polarization)
+    power = intensity.sum(axis=(0, 1))
+    power = power / power.max()
+    selected = numpy.flatnonzero(power >= threshold)
+    values = numpy.linspace(m.sliceMin, m.sliceMax, m.nSlices)
+    xmin, xmax, ymax, ymin = wf.get_limits()  # [m] in R-space, [rad] in Q-space
+    scale, unit = (1e6, r'$\mu$rad') if qspace else (1e3, 'mm')
+    x = numpy.linspace(xmin, xmax, m.nx) * scale
+    y = numpy.linspace(ymin, ymax, m.ny) * scale
+    for k in selected:
+        cut = intensity[:, :, k]
+        plt.figure(figsize=(10, 10), dpi=100)
+        profile = plt.subplot2grid((3, 3), (1, 0), colspan=2, rowspan=2)
+        profile.imshow(cut, extent=[x[0], x[-1], y[-1], y[0]], cmap="YlGnBu_r")
+        profile.set_aspect(im_aspect)
+        profile.set_xlabel(unit, fontsize=12)
+        profile.set_ylabel(unit, fontsize=12)
+        x_projection = plt.subplot2grid((3, 3), (0, 0), sharex=profile, colspan=2)
+        x_projection.plot(x, cut.sum(axis=0))
+        if wf.params.wDomain == 'time':
+            x_projection.set_title('slice {}: t = {:.4g} fs'.format(k, values[k] * 1e15))
+        else:
+            x_projection.set_title('slice {}: E = {:.3f} eV'.format(k, values[k]))
+        y_projection = plt.subplot2grid((3, 3), (1, 2), rowspan=2, sharey=profile)
+        y_projection.plot(cut.sum(axis=1), y)
+        plt.minorticks_off()
+        profile.set_xlim([x[0], x[-1]] if range_x is None else [-range_x / 2., range_x / 2.])
+        profile.set_ylim([y[0], y[-1]] if range_y is None else [-range_y / 2., range_y / 2.])
+        # FWHM through the maximum of the slice, as calculate_fwhm
+        iy, ix = numpy.unravel_index(numpy.argmax(cut), cut.shape)
+        fwhm = [numpy.count_nonzero(line > line.max() / 2) * step
+                for line, step in ((cut[iy, :], x[1] - x[0]), (cut[:, ix], y[1] - y[0]))]
+        print('slice {}: power {:.3f} of the maximum, FWHM {:.4g} x {:.4g} {}'.format(
+            k, power[k], fwhm[0], fwhm[1], 'urad' if qspace else 'mm'))
+        if save != '':
+            plt.savefig('{}{}.png'.format(save, k))
+            plt.close()
+        else:
+            plt.show()
+    return {'selected_slices': selected, 'slice_power': power[selected], 'slice_values': values[selected]}
+
+
 def propagate_wavefront(wavefront, beamline, output_file=None, gpu=None):
     """
     Propagate wavefront and store it in output file.
