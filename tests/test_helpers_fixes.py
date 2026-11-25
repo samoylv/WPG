@@ -481,3 +481,58 @@ def test_show_diagnostics(s2e_run, monkeypatch):
         assert [ln.get_label() for ln in ax.get_lines()] == ['original', 'propag']
     finally:
         plt.close('all')
+
+
+@pytest.mark.parametrize('domain', ['time', 'frequency'])
+def test_angular_intensity_as_srw(domain):
+    """angular_intensity (FFT of the field, used by look_at_q_space) agrees with the intensity after
+    srwl.SetRepresElecField(..., 'a') summed over the slices: the same limits and values (even nx, ny)."""
+    import copy as _copy
+    from srwpy.srwlib import srwl
+    from wpg import Wavefront
+    from wpg.generators import build_gauss_wavefront
+    from wpg.wpg_uti_wf import angular_intensity
+    wf = Wavefront(build_gauss_wavefront(64, 48, 9, 9., -2e-4 + 3e-5, 2e-4 + 3e-5, -2e-4, 2e-4, 2e-15,
+                                         2e-5, 1.5e-5, 1.))
+    if domain == 'frequency':
+        srwl.SetRepresElecField(wf._srwl_wf, 'f')
+    a = _copy.deepcopy(wf._srwl_wf)
+    srwl.SetRepresElecField(a, 'a')
+    wa = Wavefront(a)
+    ref = wa.get_intensity().sum(axis=-1)
+    inten, limits = angular_intensity(wf, chunk=4)
+    assert inten.shape == ref.shape
+    assert np.allclose(limits, wa.get_limits(), rtol=1e-9)
+    assert np.abs(inten - ref).max() < 1e-5 * ref.max()
+
+
+def test_angular_intensity_odd_mesh():
+    """Odd nx: no NaN (SRW 'a' gives NaN at some points), the angular step is 1/(n dx)."""
+    from wpg import Wavefront
+    from wpg.generators import build_gauss_wavefront
+    from wpg.wpg_uti_wf import angular_intensity
+    wf = Wavefront(build_gauss_wavefront(65, 65, 9, 9., -2e-4, 2e-4, -2e-4, 2e-4, 2e-15, 2e-5, 2e-5, 1.))
+    inten, (xmin, xmax, ymax, ymin) = angular_intensity(wf)
+    dx = 4e-4 / 64
+    assert np.isfinite(inten).all()
+    assert (xmax - xmin) / 64 == pytest.approx(wf.wavelength / (65 * dx), rel=1e-9)
+
+
+def test_plot_wf_and_q_space_run(tmp_path, capsys):
+    """plot_wf (intensity computed once) and look_at_q_space (FFT, SRW only to store Q-space) run and print
+    the FWHM; the file in Q-space is written."""
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    from wpg import Wavefront
+    from wpg.generators import build_gauss_wavefront
+    from wpg.wpg_uti_wf import look_at_q_space, plot_wf
+    wf = Wavefront(build_gauss_wavefront(32, 32, 9, 9., -2e-4, 2e-4, -2e-4, 2e-4, 2e-15, 2e-5, 2e-5, 1.))
+    plot_wf(wf)
+    look_at_q_space(wf, output_file=str(tmp_path / 'q.h5'))
+    plt.close('all')
+    out = capsys.readouterr().out
+    assert 'FWHM in x' in out and "'fwhm_x'" in out
+    w = Wavefront()
+    w.load_hdf5(str(tmp_path / 'q.h5'))
+    assert w.params.wSpace == 'Q-space'

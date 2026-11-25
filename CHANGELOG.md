@@ -79,6 +79,7 @@ Several functions gave wrong numbers and are fixed, so results of existing scrip
 
 ### Fixed
 
+- Plots of `wpg_uti_wf` are faster for long pulses. `plot_wf` computes the intensity once instead of four times. `look_at_q_space` builds the angular map by FFT of the field on all cores (`angular_intensity`) instead of copying the wavefront and converting it with SRW, which converts the slices one by one in one thread. For a SACLA pulse of 201 × 201 points and 2662 slices on a 32-core server with SRW built with OpenMP (8 threads): `plot_wf` 0.70 → 0.27 s, `look_at_q_space` 6.97 → 1.71 s. For an odd number of points SRW took the angular step 1/((n − 1)·dx) instead of 1/(n·dx) and gave NaN at some points, so the angular FWHM printed for this pulse was 0.26 µrad in x and 4.4 µrad in y, now 4.4 µrad in both.
 - Memory of `Wavefront` (issue #63). The parameter objects `wf.params`, `wf.params.Mesh` and `wf.data` kept a reference to the wavefront, so a wavefront was freed only by the cyclic garbage collector, late for large fields. In a loop of 40 propagations of a 10 MB pulse the memory of the process grew from 159 to 440 MB (9.5 MB per step), also with `del`. Now `wf.params` and `wf.data` are views created at each access, a wavefront is freed as soon as it is not used, and the memory stays at 100–110 MB.
 - Beam parameters of `Wavefront`
   - `divergence` and the profiles along qx and qy took the intensity before the transform to angular space, swapped the axes and returned spatial frequency instead of angle (see Upgrade notes).
