@@ -191,7 +191,6 @@ def plot_intensity_map(wf, save='', range_x=None, range_y=None,
 
     # Setup a figure.
     plt.figure(figsize=(10, 10), dpi=100)
-    plt.axis('tight')
     # Profile plot.
     profile = plt.subplot2grid((3, 3), (1, 0), colspan=2, rowspan=2)
 
@@ -236,9 +235,9 @@ def plot_intensity_map(wf, save='', range_x=None, range_y=None,
 
     # Set title.
     if(wf.params.wDomain == 'time'):
-        x_projection.set_title('t0={:03.1g} s '.format(t0))
+        x_projection.set_title('t = {:.4g} fs'.format(t0 * 1e15))
     else:  # frequency domain
-        x_projection.set_title('E0={:05.2g} eV'.format(t0))
+        x_projection.set_title('E = {:.3f} eV'.format(t0))
 
     # y-projection plot right of main plot.
     y_projection = plt.subplot2grid((3, 3), (1, 2), rowspan=2, sharey=profile)
@@ -371,7 +370,6 @@ def plot_intensity_qmap(wf, output_file=None, save='',
 
     import matplotlib.pyplot as plt
     plt.figure(figsize=(10, 10), dpi=100)
-    plt.axis('tight')
 
     profile = plt.subplot2grid((3, 3), (1, 0), colspan=2, rowspan=2)
 
